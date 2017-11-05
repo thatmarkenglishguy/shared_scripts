@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+. read_repos
+
+if [ $? -eq 0 ]
+then
+  for d in "${repo_directories[@]}"; do
+    echo "${d}"
+    pushd "${d}" >/dev/null
+    if [ -f pom.xml ]
+    then
+      mvn install
+    elif [ -f build.gradle ]
+    then
+      gradle clean build publishToMavenLocal
+    else
+      echo 'I do not know how to publish '$(pwd)
+    fi
+    popd >/dev/null
+  done
+fi

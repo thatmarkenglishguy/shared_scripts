@@ -1,0 +1,12 @@
+#!/usr/bin/env sh
+
+ps | grep ssh-agent | grep -v grep
+if [ $? != 0 ]
+then
+  [ ! -d ~/temp ] && mkdir ~/temp
+  ssh-agent 1>~/temp/ssh-agent.sh
+  . ~/temp/ssh-agent.sh
+  #This will ask for a password.
+  ssh-add ~/.ssh/id_rsa_anaplan
+  ssh-add ~/.ssh/id_rsa_wafflesouffle
+fi

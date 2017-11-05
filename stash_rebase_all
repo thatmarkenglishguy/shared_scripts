@@ -1,0 +1,13 @@
+#!/usr/bin/env sh
+
+for x in $(gitsubdirs); do
+  cd "${x}" >/dev/null
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  echo ---"${x}" "${branch}"---
+  git stash
+  git fetch
+  git rebase
+  git stash pop
+  cd - >/dev/null
+  echo
+done

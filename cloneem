@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+. read_repos
+
+for repo in "${repo_directories[@]}"
+do
+  reponame=${repo%.git}
+  if [ ! -d "${reponame}" ] && [ ! -d "${repo}" ]
+  then
+    git clone "${repo_base}/${reponame}" ${repo}
+  fi
+  if [ -d "${reponame}" ] && [ "${reponame}" != "${repo}" ]
+  then
+    mv "${reponame}" "${repo}"
+  fi
+done

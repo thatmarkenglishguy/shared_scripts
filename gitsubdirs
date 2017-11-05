@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+target=${1-.}
+
+if [ "${target}" = "." ]; then
+  function flurgh() {
+    local d
+    d=$(dirname "${1}")
+    #Do not need the ./ at the front.
+    echo "${d:2}"
+  }
+else
+  function flurgh() {
+    dirname "${1}"
+  }
+fi
+
+export -f flurgh
+find ${target} -type d -name '.git' -exec bash -c 'flurgh "${0}"' {} \;
+
+#find ${target} -type d -name '.git' -exec dirname {} \;

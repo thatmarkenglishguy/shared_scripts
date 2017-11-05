@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+#E.g. Change fooBarLa to barLa in all java files below current directory
+# remove_string_lowercase_next foo java
+
+remove=${1}
+if [ -z "${1}" ]
+then
+  echo 'Must specify string to remove.'
+else
+  shift
+  fileext=${1:-java}
+  filepattern="*.${fileext}"
+
+  for x in $(grep -l "${remove}" -r . --include="${filepattern}"); do perl -pe 's/'"${remove}"'([A-Z])/lc($1)/ge' "${x}" >temp."${fileext}"; mv temp."${fileext}" "${x}"; done
+fi
+#for x in $(grep -l with -r . --include='*.java'); do perl -pe 's/with([A-Z])/lc($1)/ge' "${x}" >temp.java; mv temp.java "${x}"; done
+

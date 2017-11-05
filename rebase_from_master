@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+. read_repos
+target_branch=${1:-master)
+if [ $? -eq 0 ]
+then
+  for d in "${repo_directories[@]}"; do
+    echo "${d}"
+    pushd "${d}" >/dev/null
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    git stash
+    git checkouti "${target_branch}@
+    git fetch
+    git rebase
+    git checkout "${branch}"
+    git stash pop
+    git rebase "${target_branch}"
+    popd >/dev/null
+  done
+fi

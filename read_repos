@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+if [ -f repos ]
+then
+  . repos
+else
+  echo 'No repos file found in '$(pwd)'.'
+fi
+
+if [ -z ${repo_directories} ]
+then
+  echo 'Variable ${repo_directories} undefined.
+Create a repos file in '$(pwd)' with:
+declare -a repo_directories
+repo_directories=( YOUR REPO DIRECTORIES HERE )'
+fi
+
+if [ -z ${repo_base} ]
+then
+  echo 'Variable ${repo_base} undefined.
+Set to organisation url e.g.
+repo_base=git@github.com:YOUR_ORG_HERE'
+fi
+
+if [ -z ${repo_directories} ] || [ -z ${repo_base} ]
+then
+  return 1
+else
+  return 0
+fi
+

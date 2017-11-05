@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+declare -a subdirs
+subdirs=( $(gitsubdirs) )
+
+if [ ${#subdirs[@]} -eq 0 ] || [[ -z ${subdirs[0]} ]]
+then
+  echo 'gitsubdirs - it does nothing'
+else
+  org=$(cd "${subdirs[0]}"; git config --get remote.origin.url)
+  org=${org#*:} #Remove everything up to :
+  org=${org%/*} #Remove everything after /
+  target_file=${1:-repos}
+
+  echo '#!/usr/bin/env bash
+
+declare -a repo_directories
+declare -a other_repo_directories
+repo_directories=( '$(gitsubdirs | tr '\n' ' ')' )
+other_repo_directories=( )
+repo_base=git@github.com:'"${org}"'
+' > "${target_file}"
+fi

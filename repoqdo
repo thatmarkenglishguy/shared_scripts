@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+. read_repos
+
+if [ $? -eq 0 ]
+then
+  for repo in "${repo_directories[@]}"
+  do
+    pushd "${repo}" >/dev/null
+    eval "${@}"
+    popd >/dev/null
+  done
+fi
+

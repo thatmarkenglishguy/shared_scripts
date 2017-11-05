@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+. read_repos
+
+if [ $? -eq 0 ]
+then
+  for d in "${repo_directories[@]}"; do
+    echo "${d}"
+    pushd "${d}" >/dev/null
+    mvn install
+    popd >/dev/null
+  done
+fi
