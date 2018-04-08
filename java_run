@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+
+tmpdir=$(mktemp -d)
+classname=Temp
+tmpfile=${tmpdir}/${classname}.java
+bContinue=1
+if [ -t 0 ]
+then
+  input_file=${1}
+  shift
+  if [ -z "${input_file}" ]
+  then
+    echo 'ERROR No input on STDIN or on command line.'
+    bContinue=0
+  else
+    filename=${input_file##*/}
+    classname=${filename%%,*}
+    tmpfile=${tmpdir}/${filename}
+    cp "${input_file}" "${tmpfile}"
+  fi
+else
+  cat /dev/stdin >"${tmpfile}"
+  classname=$(cat "${tmpfile}" | sed -e 's/.* class \([^{ 	]\+\).*/\1/;t;d')
+  newtmpfile=${tmpdir}/${classname}.java
+  mv "${tmpfile}" "${newtmpfile}"
+  tmpfile=${newtmpfile}
+fi
+
+if [ ${bContinue} -eq 1 ]
+then
+  package_classname=${classname}
+  package_dir=${tmpdir}
+  package=$(cat "${tmpfile}" | sed -e 's/[ 	]*package[ 	]\+\([^; 	]\+\).*/\1/;t;d')
+  if [ -n "${package}" ]
+  then
+    package_subdir=$(echo "${package}" | tr '.' '/')
+    package_dir=${tmpdir}/${package_subdir}
+    mkdir -p "${package_dir}"
+    mv "${tmpfile}" "${package_dir}"
+    tmpfile=${package_dir}/${classname}.java
+    package_classname=${package}.${classname}
+  fi
+  javac "${tmpfile}"
+  java -cp "${tmpdir}" ${package_classname} "${@}"
+  rm "${tmpfile}"
+  rm "${package_dir}/${classname}.class"
+fi
+rm -rf "${tmpdir}"
