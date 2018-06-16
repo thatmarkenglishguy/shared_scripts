@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+global_assert_errors=0
+
 function assert_exited_with_success() {
   local description
   local exit_code
@@ -28,6 +30,7 @@ function assert_exited_with_success() {
     fi
   fi
 
+  (( global_assert_errors += ${exit_code} ))
   return ${exit_code}
 }
 
@@ -61,7 +64,7 @@ function assert_contains_text() {
         if [[ ! "${text}" = *"${check}"* ]]
         then
           (( exit_code += 1 ))
-          echo "Failure: ${check} not found" >&2
+          echo "Failure: '${check}' not found" >&2
         fi
       done
 
@@ -71,6 +74,8 @@ function assert_contains_text() {
       else
         echo "SUCCESS ${description}"
       fi
+
+      (( global_assert_errors += ${exit_code} ))
     fi
   fi
 

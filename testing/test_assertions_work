@@ -26,22 +26,27 @@ assert_result_fails_with_error_text "$(assert_contains_text description 'input' 
 
 if  [ ${run_tests} -eq 1 ]
 then
+  global_assert_errors=0
   echo
   echo '---Example tests---'
   echo 'This should succeed'
   laugh_maniacally_and_exit 0 >/dev/null
   assert_exited_with_success 'Happy laughter' ${?}
+  echo "Global assert errors: ${global_assert_errors}"
   echo
   echo 'This should fail'
   laugh_maniacally_and_exit 1 >/dev/null
   assert_exited_with_success 'Sad laughter' ${?}
+  echo "Global assert errors: ${global_assert_errors}"
   echo
   echo 'This should find some text'
   laugh_result=$(laugh_maniacally_and_exit 0)
   assert_exited_with_success 'Textual laughter' ${?}
   assert_contains_text 'laughed a lot' "${laugh_result}" 'muah' 'ha' 'phew'
+  echo "Global assert errors: ${global_assert_errors}"
   echo
   echo 'This should fail to find yuck and muck'
   assert_contains_text 'laughed a lot text search'  "${laugh_result}" 'muah' 'ha' 'phew' 'yuck' 'muck'
+  echo "Global assert errors: ${global_assert_errors}"
   echo "And now the exit code is ${?}"
 fi
