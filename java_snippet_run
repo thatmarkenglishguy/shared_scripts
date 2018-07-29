@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Example command line
+# java_snippet_run 'System.out.println("hi");'
+# 
+tmpdir=$(mktemp -d)
+classname=Temp
+filename=${classname}.java
+tmpfile=${tmpdir}/${classname}.java
+bContinue=1
+gotStdin=0
+gotArgs=0
+if [ -t 0 ]
+then
+  if [ -z "${1}" ]
+  then
+    echo 'ERROR No input on STDIN or on command line.'
+    bContinue=0
+  else
+    gotArgs=1
+  fi
+else
+  gotStdin=1
+fi
+
+if [ ${bContinue} -eq 1 ]
+then
+  cat << EOF >"${tmpfile}"
+public class ${classname} {
+  public static void main(String[] args) {
+EOF
+  if [ ${gotArgs} -eq 1 ]
+  then
+    echo "${@}" >>"${tmpfile}"
+    :
+  fi
+
+  if [ ${gotStdin} -eq 1 ]
+  then
+    cat /dev/stdin >>"${tmpfile}"
+  fi
+  echo >>"${tmpfile}"
+  cat << EOF >>"${tmpfile}"
+  }
+}
+EOF
+  #echo "${tmpfile}"
+  #cat "${tmpfile}"
+  javac "${tmpfile}"
+  #set -x
+  java -cp "${tmpdir}" "${classname}" "${@}"
+  #set +x
+  #rm "${tmpfile}"
+  #rm "${tmpdir}/${classname}.class"
+fi
+#rmdir "${tmpdir}"
+
