@@ -1,10 +1,12 @@
 #!/usr/bin/env bash
 
+# E.g.
+#echo '  class Foo { public static void main(String args[]) { System.out.println("Hi"); } }' | java_run
+
 tmpdir="$(mktemp -d)"
 classname=Temp
 tmpfile="${tmpdir}/${classname}.java"
-bContinue=1
-set -x
+ok=1
 
 if [ -t 0 ]
 then
@@ -13,7 +15,7 @@ then
   if [ -z "${input_file}" ]
   then
     echo 'ERROR No input on STDIN or on command line.'
-    bContinue=0
+    ok=0
   else
     filename="${input_file##*/}"
     classname="${filename%%.*}"
@@ -22,11 +24,13 @@ then
   fi
 else
   cat /dev/stdin >"${tmpfile}"
+  #Difficult with BSD sed to detect class at start of line with whitespace vs.
+  #class with modifiers on front. In otherwords 'thisclass {' will match below.
   classname=$(sed -n '
   #n Find lines containing class through to end of file and execute sub-group
-  /.*  *class  */,${
+  /.* *class  */,${
     # Substitute the class portion with the captured name
-    s/.*  *class  *\([a-zA-Z0-9_][a-zA-Z0-9_]*\) *{*.*/\1/p
+    s/.* *class  *\([a-zA-Z0-9_][a-zA-Z0-9_]*\) *{*.*/\1/p
     # And then quit
     q
   }' "${tmpfile}")
@@ -36,7 +40,13 @@ else
   tmpfile="${newtmpfile}"
 fi
 
-if [ ${bContinue} -eq 1 ]
+if [ -z "${classname}" ]
+then
+  echo 'No classname found.'
+  ok=0
+fi
+
+if [ ${ok} -eq 1 ]
 then
   package_classname="${classname}"
   package_dir="${tmpdir}"
@@ -64,3 +74,4 @@ then
   rm "${package_dir}/${classname}.class"
 fi
 rm -rf "${tmpdir}"
+
