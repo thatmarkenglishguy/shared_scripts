@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+exit_code=0
+
+if [ -z "${1}" ]
+then
+  echo 'No branch specified.' >&2
+  exit_code=1
+else
+  . read_repos
+
+  if [ $? -eq 0 ]
+  then
+    for repo in "${repo_directories[@]}"
+    do
+      pushd "${repo}" >/dev/null
+      if git show-ref --quiet --verify -- "refs/remotes/origin/${1}"
+      then
+        echo "${repo}"
+        #echo "${repo} origin/${1}"
+      fi
+      popd >/dev/null
+    done
+  fi
+fi
+
+exit ${exit_code}

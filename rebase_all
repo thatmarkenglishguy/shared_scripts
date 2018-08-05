@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+. read_repos
+
+if [ $? -eq 0 ]
+then
+  for d in "${repo_directories[@]}"; do
+    pushd "${d}" >/dev/null
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    echo
+    echo "${d}:${branch}"
+    git stash
+    git fetch
+    git rebase
+    git stash pop
+    popd >/dev/null
+  done
+fi
