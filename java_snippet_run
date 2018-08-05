@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Example command line
 # java_snippet_run 'System.out.println("hi");'
-# 
+# echo 'System.out.println("hi");' | java_snippet_run
+
 tmpdir=$(mktemp -d)
 classname=Temp
 filename=${classname}.java
