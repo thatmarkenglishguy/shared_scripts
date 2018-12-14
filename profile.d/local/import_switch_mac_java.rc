@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+if [ -f '/usr/libexec/java_home' ]
+then
+  alias j10="export JAVA_HOME=`/usr/libexec/java_home -v 10.0.1`; java -version"
+  alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_162`; java -version"
+fi
+

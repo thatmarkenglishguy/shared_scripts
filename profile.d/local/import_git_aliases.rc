@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+
+if [ -f '~/code/shared/shared_scripts.git/git_commit_branch' ]
+then
+  alias gcb='~/code/shared/shared_scripts.git/git_commit_branch'
+fi
+
