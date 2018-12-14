@@ -1,0 +1,28 @@
+#!/usr/bin/env sh
+
+exit_code=0
+
+if [ -z "${1}" ]
+then
+  echo 'No branch specified.' >&2
+  exit_code=1
+else
+  . read_repos
+
+  if [ $? -eq 0 ]
+  then
+    for repo in "${repo_directories[@]}"
+    do
+      pushd "${repo}" >/dev/null
+      branch=$(git rev-parse --abbrev-ref HEAD)
+      if [ "${branch}" != "${1}" ]
+      then
+        echo "${repo}":"${branch}" 
+      fi
+      popd >/dev/null
+    done
+  fi
+fi
+
+exit ${exit_code}
+
