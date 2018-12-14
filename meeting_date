@@ -1,0 +1,77 @@
+#!/usr/bin/env sh
+# date -j -v'+2d' -f '%d %m %Y' '01 01 2020' '+%A %d %B %Y'
+function usage() {
+  echo 'meeting_date [DAY] [MONTH] [YEAR] [GAP=178]
+
+Parameters:
+  DAY   - Day of month in numeric format (1-31). Defaults to today.
+  MONTH - Month in numeric format (where 1=Jan). Defaults to today.
+  YEAR  - Year in numeric format (four digits). Defaults to today.
+  GAP   - Amount of time to add, including time unit suffix. Defaults to 180 days (180d).
+
+Example:
+  # Meeting date 179d from today.
+  meeting_date
+  # Meeting date 10d from today.
+  meeting_date 10d
+  # Meeting date 10d from 1st day of this month.
+  meeting_date 1 10d
+  # Meeting date 10d from 8th October 2018
+  meeting_date 8 10 2018 10d
+'
+}
+
+function adjust_date() {
+  local input_string
+  local input_format
+  local gap
+  input_string="${1}"
+  input_format="${2}"
+  gap="${3}"
+  read -r -d '' date_command <<-EOF
+date -j -v"+${gap}" -f "${input_format}" "${input_string}" '+%A %d %B %Y'
+EOF
+  #echo "${date_command}"
+  eval "${date_command}"
+}
+
+input_string=''
+input_format=''
+gap="${1}"
+delimiter=''
+shift
+
+if [ -z "${gap}" ]
+then
+  gap=179d
+elif [ "${gap}" == '--help' ]
+then
+  usage
+  exit
+fi
+
+if [ -n "${1}" ] # If got day
+then
+  input_string="${input_string}${delimiter}${gap}"
+  input_format="${input_format}${delimiter}%d"
+  delimiter=' '
+  gap=${1}
+  shift
+  if [ -n "${1}" ] #If got month
+  then
+    input_string="${input_string}${delimiter}${gap}"
+    input_format="${input_format}${delimiter}%m"
+    gap=${1}
+    shift
+    if [ -n "${1}" ] #If got year
+    then
+      input_string="${input_string}${delimiter}${gap}"
+      input_format="${input_format}${delimiter}%Y"
+      gap=${1}
+      shift
+    fi
+  fi
+fi
+
+adjust_date "${input_string}" "${input_format}" "${gap}"
+
