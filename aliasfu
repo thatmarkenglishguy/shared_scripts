@@ -13,7 +13,7 @@ script_file="${script_path##*/}"
 absolute_script_path="${script_dir}/${script_file}"
 
 args="${*}"
-real_alias_path=$(which alias 2>/dev/null)
+real_alias_path=$(which alias)
 falias=alias
 
 #echo "args: '${args[@]}'"
@@ -32,8 +32,13 @@ then
 else
   #set -x
   unalias alias
-  ${falias} "${left}"="${right}"
-  ${falias} alias=". ${absolute_script_path}"
-  #set +x
+  if [ -z "${left}" ]
+  then
+    ${falias}
+  else
+    ${falias} "${left}"="${right}"
+    ${falias} alias=". ${absolute_script_path}"
+    #set +x
+  fi
 fi
 
