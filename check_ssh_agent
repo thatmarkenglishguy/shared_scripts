@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+result=1
+if [ -f ~/temp/ssh-agent.sh ]
+then  
+  . ~/temp/ssh-agent.sh >/dev/null
+  if [ -n ${SSH_AGENT_PID} ]
+  then
+    if ps ${SSH_AGENT_PID} >/dev/null
+    then
+      result=0
+    fi
+  fi 
+fi
+
+exit ${result}
+
