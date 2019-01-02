@@ -1,0 +1,102 @@
+#!/usr/bin/env sh
+trap cleanup 0
+
+
+ANDROID_DIR=~/Downloads/apps/Android
+ESCAPED_ANDROID_DIR=\~/Downloads/apps/Android
+SDK_TOOLS_ZIP=sdk-tools-darwin-4333796.zip
+SCRIPTS_PATH=~/code/mE/onpath/shscripts
+if [ ! -d "${SCRIPTS_PATH}" ]
+then
+  SCRIPTS_PATH=~/code/onpath/shscripts
+fi
+
+ADDANDROID=addandroid
+RESTOREANDROID=restoreandroid
+
+#Temp vars for debugging
+#ANDROID_DIR=~/Downloads/apps/AndroidTEMP
+#ESCAPED_ANDROID_DIR=\~/Downloads/apps/AndroidTEMP
+#SCRIPTS_PATH=./shscriptsTEMP
+#ADDANDROID=addandroidTEMP
+#RESTOREANDROID=restoreandroidTEMP
+
+#set -x
+ADD_ANDROID_SCRIPT_PATH="${SCRIPTS_PATH}/${ADDANDROID}"
+RESTORE_ANDROID_SCRIPT_PATH="${SCRIPTS_PATH}/${RESTOREANDROID}P"
+
+function cleanup() {
+  :
+}
+
+if which adb 2>&1 1>/dev/null
+then
+  echo 'adb already installed !' >&2
+  which adb
+  exit 1
+fi
+
+if ! which "${ADDANDROID}" 2>&1 1>/dev/null
+then
+  if ! which unzip 2>&1 1>/dev/null
+  then
+    if ! which brew 2>&1 1>/dev/null
+    then
+      echo 'Neither unzip nor brew installed. What the what ?' >&2
+      exit 2
+    else
+      brew install unzip
+    fi
+  fi
+
+  if ! which unzip 2>&1 1>/dev/null
+  then
+    echo 'unzip not installed. What the what ?' >&2
+    exit 3
+  fi
+
+  mkdir -p "${ANDROID_DIR}"
+
+  curl "https://dl.google.com/android/repository/${SDK_TOOLS_ZIP}" --output "${ANDROID_DIR}/${SDK_TOOLS_ZIP}"
+  unzip "${ANDROID_DIR}/${SDK_TOOLS_ZIP}" -d "${ANDROID_DIR}"
+
+  mkdir -p "${SCRIPTS_PATH}"
+  echo "Writing to ${ADD_ANDROID_SCRIPT_PATH}"
+  cat << EOF >"${ADD_ANDROID_SCRIPT_PATH}"
+if [ -z \${OLD_ANDROID_PATH+x} ]; then
+  export OLD_ANDROID_PATH=\${PATH}
+fi
+
+export PATH=\${PATH}:${ESCAPED_ANDROID_DIR}/tools/bin:${ESCAPED_ANDROID_DIR}/platform-tools
+EOF
+
+  if ! which "${RESTOREANDROID}" 2>&1 1>/dev/null
+  then
+    cat << 'EOF' >"${RESTORE_ANDROID_SCRIPT_PATH}"
+if [ -z ${OLD_ANDROID_PATH+x} ]; then
+  echo 'OLD_ANDROID_PATH not defined'
+else
+  export PATH=${OLD_ANDROID_PATH}
+  unset OLD_ANDROID_PATH
+fi
+EOF
+  fi
+fi
+
+. "${ADDANDROID}"
+
+export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home
+echo y | sdkmanager platform-tools
+
+echo 'To add android SDK tools to path:
+> .. addandroid 
+To restore path to what it was before android SDK tools were added:
+> . restoreandroid'
+echo "NOTE: Make sure that '${SCRIPTS_PATH}' is on your path."
+echo
+echo 'For reference sdkmanager is installed here:'
+which sdkmanager
+
+echo 'and adb is installed here:'
+which adb
+pwd
