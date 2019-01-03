@@ -1,11 +1,30 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 trap cleanup 0
 
+function cleanup() {
+  :
+}
 
-ANDROID_DIR=~/Downloads/apps/Android
-ESCAPED_ANDROID_DIR=\~/Downloads/apps/Android
 SDK_TOOLS_ZIP=sdk-tools-darwin-4333796.zip
 SCRIPTS_PATH=~/code/mE/onpath/shscripts
+
+directories=( ~/Downloads/apps ~/stuff/downloads/apps )
+escaped_directories=( \~/Downloads/apps \~/stuff/downloads/apps )
+for dir_index_iter in "${!directories[@]}"
+do
+  dir_iter="${directories[${dir_index_iter}]}"
+  escaped_dir_iter="${escaped_directories[${dir_index_iter}]}"
+  ANDROID_DIR="${dir_iter}"
+  ESCAPED_ANDROID_DIR="${escaped_dir_iter}"
+  if [ -d "${dir_iter}" ]
+  then
+    break
+  fi
+done
+
+ANDROID_DIR="${ANDROID_DIR}/Android"
+ESCAPED_ANDROID_DIR="${ESCAPED_ANDROID_DIR}/Android"
+
 if [ ! -d "${SCRIPTS_PATH}" ]
 then
   SCRIPTS_PATH=~/code/onpath/shscripts
@@ -15,19 +34,14 @@ ADDANDROID=addandroid
 RESTOREANDROID=restoreandroid
 
 #Temp vars for debugging
-#ANDROID_DIR=~/Downloads/apps/AndroidTEMP
-#ESCAPED_ANDROID_DIR=\~/Downloads/apps/AndroidTEMP
+#ANDROID_DIR="${ANDROID_DIR}TEMP"
+#ESCAPED_ANDROID_DIR="${ESCAPED_ANDROID_DIR}TEMP"
 #SCRIPTS_PATH=./shscriptsTEMP
 #ADDANDROID=addandroidTEMP
 #RESTOREANDROID=restoreandroidTEMP
 
-#set -x
 ADD_ANDROID_SCRIPT_PATH="${SCRIPTS_PATH}/${ADDANDROID}"
-RESTORE_ANDROID_SCRIPT_PATH="${SCRIPTS_PATH}/${RESTOREANDROID}P"
-
-function cleanup() {
-  :
-}
+RESTORE_ANDROID_SCRIPT_PATH="${SCRIPTS_PATH}/${RESTOREANDROID}"
 
 if which adb 2>&1 1>/dev/null
 then
@@ -36,30 +50,65 @@ then
   exit 1
 fi
 
+directories=( /Library/Java/JavaVirtualMachines /c/java )
+for dir_iter in "${directories[@]}"
+do
+  if [ -d "${dir_iter}" ]
+  then
+    java_root=$(find "${dir_iter}" -name 'jdk1.8*' -type d -maxdepth 1 | tail -n 1)
+    if [ -n "${java_root}" ]
+    then
+      break
+    fi
+  fi
+done
+
+if [ -z "${java_root}" ] || [ ! -d "${java_root}" ]
+then
+  echo "No Java 8 installation detected." >&2
+  echo 'Please install Java 8.'
+  exit 2
+fi
+
 if ! which "${ADDANDROID}" 2>&1 1>/dev/null
 then
   if ! which unzip 2>&1 1>/dev/null
   then
-    if ! which brew 2>&1 1>/dev/null
-    then
-      echo 'Neither unzip nor brew installed. What the what ?' >&2
-      exit 2
-    else
-      brew install unzip
-    fi
+    case $(uname -a) in
+      *Darwin*)
+        if ! which brew 2>&1 1>/dev/null
+        then
+          echo 'Neither unzip nor brew installed. What the what ?' >&2
+          exit 4
+        else
+          brew install unzip
+        fi
+        ;;
+
+      *Msys*|*Mingw*)
+        pacman -S unzip
+        ;;
+
+    esac
   fi
 
   if ! which unzip 2>&1 1>/dev/null
   then
     echo 'unzip not installed. What the what ?' >&2
-    exit 3
+    exit 5
   fi
 
   mkdir -p "${ANDROID_DIR}"
 
-  curl "https://dl.google.com/android/repository/${SDK_TOOLS_ZIP}" --output "${ANDROID_DIR}/${SDK_TOOLS_ZIP}"
-  unzip "${ANDROID_DIR}/${SDK_TOOLS_ZIP}" -d "${ANDROID_DIR}"
-
+  if [ ! -d "${ANDROID_DIR}"/tools ]
+  then
+    if [ ! -f "${ANDROID_DIR}/${SDK_TOOLS_ZIP}" ]
+    then
+      curl "https://dl.google.com/android/repository/${SDK_TOOLS_ZIP}" --output "${ANDROID_DIR}/${SDK_TOOLS_ZIP}"
+    fi
+    unzip "${ANDROID_DIR}/${SDK_TOOLS_ZIP}" -d "${ANDROID_DIR}"
+  fi
+  
   mkdir -p "${SCRIPTS_PATH}"
   echo "Writing to ${ADD_ANDROID_SCRIPT_PATH}"
   cat << EOF >"${ADD_ANDROID_SCRIPT_PATH}"
@@ -73,26 +122,37 @@ EOF
   if ! which "${RESTOREANDROID}" 2>&1 1>/dev/null
   then
     cat << 'EOF' >"${RESTORE_ANDROID_SCRIPT_PATH}"
-if [ -z ${OLD_ANDROID_PATH+x} ]; then
-  echo 'OLD_ANDROID_PATH not defined'
-else
-  export PATH=${OLD_ANDROID_PATH}
-  unset OLD_ANDROID_PATH
-fi
+  if [ -z ${OLD_ANDROID_PATH+x} ]; then
+    echo 'OLD_ANDROID_PATH not defined'
+  else
+    export PATH=${OLD_ANDROID_PATH}
+    unset OLD_ANDROID_PATH
+  fi
 EOF
   fi
 fi
 
-. "${ADDANDROID}"
+. "${ADD_ANDROID_SCRIPT_PATH}"
 
-export JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_181.jdk/Contents/Home
+case $(uname -a) in
+  *Darwin*)
+    export JAVA_HOME="${java_root}/Contents/Home"
+    ;;
+
+  *Msys*|*Mingw*)
+    export JAVA_HOME="${java_root}"
+    ;;
+
+esac
 echo y | sdkmanager platform-tools
 
 echo 'To add android SDK tools to path:
-> .. addandroid 
+> . addandroid 
 To restore path to what it was before android SDK tools were added:
 > . restoreandroid'
 echo "NOTE: Make sure that '${SCRIPTS_PATH}' is on your path."
+echo 'E.g.
+PATH=${PATH}:'"${SCRIPTS_PATH}"
 echo
 echo 'For reference sdkmanager is installed here:'
 which sdkmanager
@@ -100,3 +160,4 @@ which sdkmanager
 echo 'and adb is installed here:'
 which adb
 pwd
+
