@@ -1,7 +1,6 @@
 " set rtp+=~/.vim/autoload/plug.vim
 call plug#begin('~/.vim/plugged')
 
-Plug 'VundleVim/Vundle.vim'
 Plug 'elixir-lang/vim-elixir'
 Plug 'mattreduce/vim-mix'
 Plug 'kien/ctrlp.vim'
