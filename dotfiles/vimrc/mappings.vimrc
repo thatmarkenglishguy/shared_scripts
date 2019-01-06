@@ -1,3 +1,6 @@
+" Enable backspace deleting
+set backspace=indent,eol,start
+
 " Expand %% to current directory
 cabbr <expr> %% expand('%:p:h')
 
