@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+script_dir="$(cd "$(dirname "$0")"; pwd)"
+
+python3 -m unittest discover -t "${script_dir}/lib" -s "${script_dir}/lib/tests" "${@}"
+
