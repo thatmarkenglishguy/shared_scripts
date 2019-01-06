@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+
+source="${1:-/dev/stdin}"
+
+while read line || [ -n "${line}" ]
+do
+  printf '"'"${line}"'" '
+done < "${source}"
+echo
+
