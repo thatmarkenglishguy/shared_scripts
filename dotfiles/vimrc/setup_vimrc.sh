@@ -181,3 +181,9 @@ else
   echo '.vimrc already pointing at this git repository.'
 fi
 
+if [ -f "${script_dir}/setup_youcompleteme.sh" ]
+then
+  echo 'Attempting to install youcompleteme.'
+  "${script_dir}/setup_youcompleteme.sh"
+fi
+
