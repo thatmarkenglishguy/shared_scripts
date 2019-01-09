@@ -30,6 +30,7 @@ function adjust_date() {
   gap="${3}"
   read -r -d '' date_command <<-EOF
 date -j -v"+${gap}" -f "${input_format}" "${input_string}" '+%A %d %B %Y'
+date -j -v"+${gap}" -f "${input_format}" "${input_string}" '+In annoying US format %m/%d/%Y'
 EOF
   #echo "${date_command}"
   eval "${date_command}"
