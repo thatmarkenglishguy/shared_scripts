@@ -1,0 +1,5 @@
+if [ -d ~/code/mE/python/lib ]
+then
+  export PYTHONPATH=${PYTHONPATH}:~/code/mE/python/lib
+fi
+

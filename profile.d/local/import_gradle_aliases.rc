@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+unalias unalias 1>/dev/null 2>&1
+unalias alias 1>/dev/null 2>&1
+
+if [ -d /opt/gradle/gradle-4* ]
+then
+  unalias addgradle4 1>/dev/null 2>&1
+  alias gradle4='[ -n "${GRADLE_HOME}" ] && pathremove "${GRADLE_HOME}/bin"; unset GRADLE_HOME; GRADLE_HOME=`find /opt/gradle -name "gradle-4*" -type d -maxdepth 1 | tail -n 1`; pathappend "${GRADLE_HOME}/bin"; export PATH; export GRADLE_HOME; which gradle'
+fi
+
+if [ -d /opt/gradle/gradle-5* ]
+then
+  unalias gradle5 1>/dev/null 2>&1
+  alias gradle5='[ -n "${GRADLE_HOME}" ] && pathremove "${GRADLE_HOME}/bin"; unset GRADLE_HOME; GRADLE_HOME=`find /opt/gradle -name "gradle-5*" -type d -maxdepth 1 | tail -n 1`; pathappend "${GRADLE_HOME}/bin"; export PATH; export GRADLE_HOME; which gradle'
+fi
+

@@ -1,0 +1,10 @@
+#!/usr/bin/env sh
+case $(uname -a) in
+  *Mingw*|*Msys*|*Cygwin*)
+    echo 'No idea how to find this script directory out. add_onpath_shscripts_to_path'
+    ;;
+  *)
+    pathappend "$(dirname $(dirname $(dirname ${BASH_SOURCE})))/onpath" PATH
+    ;;
+esac
+
