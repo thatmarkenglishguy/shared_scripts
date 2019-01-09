@@ -51,7 +51,21 @@ fi
 # Setup the core .bashrc (with a symlink)
 if [ -f ~/code/mE/shscripts/marke_mac_bash.rc ] && [ ! -f ~/.bashrc ]
 then
-  ln -s ~/code/mE/shscripts/marke_mac_bash.rc ~/.bashrc
+  case "$(uname -a)" in 
+    *Msys*|*Mingw*)
+      source_line='source ${HOME}/code//shscripts/marke_mac_bash.rc'
+      if ! grep "${source_line}" ~/.bashrc 2>&1 1>/dev/null
+      then
+        echo "${source_line}" >> ~/.bashrc
+      fi
+      ;;
+    *Darwin*)
+      ln -s ~/code/mE/shscripts/marke_mac_bash.rc ~/.bashrc
+      ;;
+#    *)
+#      :
+#      ;;
+  esac
 fi
 
 # Sort out git completion
@@ -88,15 +102,17 @@ if [ ${add_git} -eq 1 ]; then
 source ~/.git-completion.bash' >>~/.bashrc
 fi
 
-#Deduce this script's directory
-if [ -z ${BASH_SOURCE} ]; then
-  script_dir=$(readlink -f $(dirname "${0}"))
-else
-  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-fi
-
 if [ -f "${setup_script_dir}/setup_dotfiles.sh" ]
 then
   "${setup_script_dir}/setup_dotfiles.sh"
+fi
+
+if ! which src-hilite-lesspipe.sh 1>/dev/null 2>&1
+then
+  case $(uname -a) in
+    *Darwin*)
+      brew install source-highlight
+      ;;
+  esac
 fi
 
