@@ -1,0 +1,39 @@
+#!/usr/bin/env sh
+
+case $(uname -a) in
+  *Darwin*)
+    if /usr/libexec/java_home -v 11 1>/dev/null 2>&1 
+    then
+      alias j11="export JAVA_HOME=`/usr/libexec/java_home -v 11 2>/dev/null`; java -version"
+    else
+      #  echo java 11 is a no
+      alias j11='echo java 11 not found.'
+    fi
+
+    if /usr/libexec/java_home -v 10.0.2 1>/dev/null 2>&1 
+    then
+      alias j10="export JAVA_HOME=`/usr/libexec/java_home -v 10.0.2 2>/dev/null`; java -version"
+    else
+      #  echo java 10 is a no
+      alias j10='echo java 10 not found.'
+    fi
+
+    if /usr/libexec/java_home -v 1.8.0_191 1>/dev/null 2>&1 
+    then
+      alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_191 2>/dev/null`; java -version"
+    else
+      #  echo java 8 is a no
+      alias j8='echo java 8 not found.'
+    fi
+
+    if /usr/libexec/java_home -v 1.7.0_80 1>/dev/null 2>&1 
+    then
+      alias j7="export JAVA_HOME=`/usr/libexec/java_home -v 1.7.0_80 2>/dev/null`; java -version"
+    else
+      #  echo java 7 is a no
+      alias j7='echo java 7 not found.'
+    fi
+    ;;
+esac
+
+
