@@ -29,7 +29,7 @@ then
 else
   script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
-set -x
+#set -x
 if [ -f "${script_dir}/dotfiles/setup_local_bashrc.sh" ]
 then
   echo 'Setting up bashrc.' >&2
