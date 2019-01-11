@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+search_directory=${1:-.}
+
+while read package
+do
+  if ! grep --quiet --recursive "package ${package}" "${search_directory}" --include 'package-info.java' --exclude-dir 'test'
+  then
+    echo "${package}: does not have a corresponding package-info.java"
+    grep --recursive "^package ${package}" "${search_directory}" --include '*.java' --exclude-dir 'test'
+    echo
+  fi
+done < <(grep --recursive --only-matching --no-filename '^package [^;]\+' "${search_directory}" --include '*.java' --exclude 'package-info.java' --exclude-dir 'test' | cut -c 9- | sort | uniq)
+
