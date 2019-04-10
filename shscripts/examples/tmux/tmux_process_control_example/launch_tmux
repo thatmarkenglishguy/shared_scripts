@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+set -x
+
+session="${USER}_fishsouprun_${$}"
+# Start a new tmux session
+# -d Detached
+# -2 256 colors
+# -s Named session
+tmux -2 new-session -d -s "${session}"
+
+# Split the current window vertically
+tmux split-window -v
+# Select the first pane
+tmux select-pane -t 0
+# Split the first pane horizontally
+tmux split-window -h
+# Select the third pane (the original pane from the first vertical split)
+tmux select-pane -t 2
+# Send the pane a resize command because resizing directly does not seem to work in Mac
+tmux send-keys 'tmux resize-pane -D 10' C-m
+# Send the run master script commmand
+tmux send-keys "pushd ${script_dir}; ./close_tmux '${session}'" C-m
+
+# Select the first pane from the new horizontal split
+tmux select-pane -t 0
+# Run the fish script
+tmux send-keys "pushd ${script_dir}; ./fish" C-m
+# Select the second pane from the new horizontal split
+tmux select-pane -t 1
+# Run the soup script
+tmux send-keys "pushd ${script_dir}; ./soup" C-m
+
+# Create a new window for the la and ba scripts
+tmux new-window -t ${session}:1 -n "Laba"
+# Split the laba window vertically
+tmux split-window -v
+# Select the first pane of the laba window
+tmux select-pane -t 0
+# Run the la script
+tmux send-keys "pushd ${script_dir}; ./la" C-m
+# Select the second pane of the laba window
+tmux select-pane -t 1
+# Run the ba script
+tmux send-keys "pushd ${script_dir}; ./ba" C-m
+
+# Select the first pane window
+tmux select-window -t "${session}:0"
+# Select the third, control pane
+tmux select-pane -t 2
+#tmux send-keys 'tmux resize-pane -D 10' C-m
+#tmux send-keys "pushd ${script_dir}; ./close_tmux '${session}'" C-m
+set +x
+tmux attach-session -t "${session}"
+#while true
+#do
+#  sleep 1
+#done
+
+

@@ -1,0 +1,68 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+session="${1}"
+this_dir="$(pwd)"
+# -d Detached
+# -2 256 colors
+# -s Named session
+tmux send-keys "# Ctrl-C to kill fish and soup..." C-m
+function kill_panes() {
+  set -x
+  # Select the laba window
+  tmux select-window -t "${session}:1"
+  # Select the la pane
+  tmux select-pane -t 0
+  # Kill the la process
+  tmux send-keys 'C-c' C-m
+  # Wait for la process to end
+  tmux send-keys 'tmux wait-for -S la-dead' C-m \; wait-for la-dead
+  # Select the ba pane
+  tmux select-pane -t 1
+  # Kill the ba process
+  tmux send-keys 'C-c' C-m
+  # Wait for the ba process to end
+  tmux send-keys 'tmux wait-for -S ba-dead' C-m \; wait-for ba-dead
+  # Kill the la ba window
+  tmux kill-window -t "${session}:1"
+
+  # Select the first window
+  tmux select-window -t "${session}:0"
+  # Select the fish pane
+  tmux select-pane -t 0
+  # Kill the fish process
+  tmux send-keys 'C-c' C-m
+  # Wait for the fish process to end
+  tmux send-keys 'tmux wait-for -S fish-dead' C-m \; wait-for fish-dead
+  # Select the soup process
+  tmux select-pane -t 1
+  # Kill the soup process
+  tmux send-keys 'C-c' C-m
+  # Wait for the soup process to end
+  tmux send-keys 'tmux wait-for -S soup-dead' C-m \; wait-for soup-dead
+  # Select the control pane
+  tmux select-pane -t 2
+  # Wait for user input
+  read -p 'Press enter to close...'
+  # Kill the window
+  tmux kill-window -t "${session}:0"
+  # Detatch the tmux session
+  tmux detatch-session -t "${session}"
+  # Kill the tmux session
+  tmux kill-session -C -t "${session}"
+  set +x
+  exit
+}
+trap kill_panes SIGINT
+
+while true
+do
+  sleep 1
+done
+
+
