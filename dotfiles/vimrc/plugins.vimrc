@@ -9,6 +9,7 @@ Plug 'altercation/vim-colors-solarized'
 Plug '~/code/thirdparty/fzf/fzf.git'
 Plug 'junegunn/fzf.vim'
 Plug 'dylon/vim-antlr'
+Plug 'gyim/vim-boxdraw'
 
 call plug#end()
 
