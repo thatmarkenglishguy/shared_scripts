@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+# If you pass a file, the gradle dependencies will be cached in it to reduce round trip time.
+# E.g.
+# generate_gradle_build_includes thedepdendencies.txt
+# Required global variables:$
+#  target_project_dir - relative or absolute path to directory containing target gradle project E.g. ~/code/orgs/my-org/my-project
+#  target_gradle_project - Target gradle project id. E.g. my-project
+#  target_gradle_group - Target gradle project group. E.g. com.example
+#  dependency_configuration - Gradle configuration to get dependencies from. Defaults to 'implementation'
+#
+# Source this file, then call include build for the bits you are interested in.
+# E.g.
+# source generate_gradle_build_includes
+# setup_global_gradle_dependency_file "${target_project_dir}" "${target_gradle_project}" "${target_gradle_group}" "${dependency_configuration}"
+#
+# include_build 'dataregistry' 'pfour-dataregistry'
+# include_build 'nonprod' 'pfour-nonprod'
+# include_build 'fastlane' 'pfour-fastlane'
+# echo
+# echo 'ignore.the.group data-service' | find_org_dir '../../pfour-fastlane' | produce_include_build_entry
+
+destroy_dependency_file=0
+
+# Ensure global variable ${dependency_file}
+function ensure_dependency_file() {
+  if [ -z "${dependency_file}" ]
+  then
+    dependency_file=$(mktemp)
+    destroy_dependency_file=1
+  fi
+}
+
+function verify_parameters() {
+  local ok_to_continue
+
+  ok_to_continue=1
+  if [ -z "${target_project_dir}" ]
+  then
+    echo 'Error: target_project_dir (parameter 2) not specified' >&2
+    ok_to_continue=0
+  fi
+  
+  if [ -z "${target_gradle_project}" ]
+  then
+    #echo 'Error: target_gradle_project (parameter 3) not specified' >&2
+    #ok_to_continue=0
+    :
+  fi
+  
+  if [ -z "${target_gradle_group}" ]
+  then
+    echo 'Error: target_gradle_group (parameter 4) not specified' >&2
+    ok_to_continue=0
+  fi
+
+  if [ -z "${dependency_configuration}" ]
+  then
+    dependency_configuration='implementation'
+    if [[ "${target_gradle_project}" == *"test"* ]]
+    then
+      dependency_configuration='testRuntime'
+    fi
+  fi
+
+  if [ ${ok_to_continue} -ne 1 ]
+  then
+    exit 1
+  fi
+}
+# End of parameters
+
+function cleanup_global_gradle_dependency_file() {
+  if [ -f "${dependency_file}" ] && [ "${destroy_dependency_file}" -ne 0 ]
+  then
+    rm "${dependency_file}"
+  fi
+
+  seen=( )
+}
+function get_target_gradle_dependencies() {
+  local dependency_file
+  local target_project_dir
+  local target_project_group
+  local dependency_file_path
+
+  dependency_file="${1}"
+  target_project_dir="${2}"
+  target_gradle_group="${3}"
+
+  if [ ! -s "${dependency_file}" ]
+  then
+    dependency_file_dir=$(dirname "${dependency_file}")
+    dependency_file_dir=$(cd "${dependency_file_dir}"; pwd)
+    dependency_file_name=$(basename "${dependency_file}")
+    dependency_file_path="${dependency_file_dir}/${dependency_file_name}"
+    (pushd "${target_project_dir}" >/dev/null; gradle "${target_gradle_project}:dependencies" --configuration "${dependency_configuration}" >"${dependency_file_path}"; popd >/dev/null)
+  fi
+}
+
+function gradle_dependencies() {
+  local dependency_file
+  dependency_file="${1}"
+
+  cat "${dependency_file}" | cut -c 6-
+}
+
+# Outputs: 'group.name packagename'
+function filter_by_org_and_group() {
+  local orgname
+  local filter_group
+  orgname="${1}"
+  filter_group="${2}"
+
+  grep "${orgname}" | sed -n "s!.*\("${filter_group}"[^:]*\):\([^:]*\).*!\1 \2!gp"
+}
+
+function find_org_dir() {
+  local orgdir
+  local projectname
+  local group_and_project
+  local project_found
+  local grep_result
+
+  orgdir="${1}"
+  # Read 'group.name projectname' from stdin.
+  while read group_and_project
+  do
+    projectname=$(echo "${group_and_project}" | cut -d' ' -f2)
+    project_found=0
+    # Look for directory containing a gradle settings file including the rootProject for projectname.
+    while read grep_result
+    do
+      project_found=1
+      dirname "${grep_result}"
+    done < <(grep -rl "rootProject\.name\s=\s['\"]${projectname}['\"]" "${orgdir}" --include 'settings.gradle')
+
+    # If couldn't find projectname in gradle settings file
+    if [ ${project_found} -eq 0 ]
+    then
+      # Look for appropriately named directory (bit weak but good enough for now)
+      find "${orgdir}" -name "${projectname}" -type d -print -quit
+    fi
+  done < /dev/stdin
+}
+
+function topmost_gradle_project() {
+  local gradle_dir
+  local parent_dir
+  local gradle_project_dir
+
+  while read gradle_project_dir
+  do
+    gradle_dir="${gradle_project_dir}"
+    parent_dir=$(dirname "${gradle_project_dir}")
+    while [ -f "${parent_dir}/settings.gradle" ]
+    do
+      gradle_dir="${parent_dir}"
+      parent_dir=$(dirname "${parent_dir}")
+    done
+    echo "${gradle_dir}"
+  done < /dev/stdin
+}
+
+function produce_include_build_entry() {
+  local gradle_project
+
+  while read gradle_project
+  do
+    echo "includeBuild '${gradle_project}'"
+  done < /dev/stdin
+}
+
+### Only output things once...
+function unseen() {
+  local something
+  local i
+  local found
+
+  while read something
+  do
+    found=0
+    for ((i=0; i < ${#seen[@]}; ++i))
+    do
+      if [ "${something}" == "${seen[${i}]}" ]
+      then
+        found=1
+      fi
+    done
+
+    if [ ${found} -eq 0 ]
+    then
+      seen=( "${seen[@]}" "${something}" )
+      echo "${something}"
+    fi
+  done < /dev/stdin
+}
+
+function include_build() {
+  local orgname
+  local orgdir
+
+  orgname="${1}"
+  orgdir="${2}"
+  gradle_dependencies "${dependency_file}" | \
+    filter_by_org_and_group "${orgname}" "${target_gradle_group}"| \
+    find_org_dir "../../${orgdir}" | \
+    topmost_gradle_project | \
+    unseen | \
+    produce_include_build_entry
+}
+
+function setup_global_gradle_dependency_file() {
+  # Note dependency_file is a global variable.
+  local target_project_dir
+  local target_gradle_project
+  local target_gradle_group
+
+  target_project_dir="${1}"
+  target_gradle_project="${2}"
+  target_gradle_group="${3}"
+
+  verify_parameters
+  ensure_dependency_file "${dependency_file}"  
+  get_target_gradle_dependencies "${dependency_file}" "${target_project_dir}" "${target_gradle_group}"
+  declare -a seen
+  seen=( )
+}
+

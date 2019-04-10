@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+rootdir="${1:-.}"
+if [ -z "${rootdir}" ] || [ ! -d "${rootdir}" ] || case "${rootdir}" in -h|--help|/?) true; ;; *) false; ;; esac;
+then
+  echo "$(basename ${0}) [ROOTDIRECTORY]"
+  echo 'Create a gradle workspace for ROOTDIRECTORY.
+Parameters:
+  ROOTDIRECTORY - Directory to create workspace for. Defaults to ".". Should be root directory containing gradle projects to include in workspace.
+'
+  exit
+fi
+
+absolute_rootdir=$(pushd "${rootdir}" >/dev/null; pwd; popd>/dev/null)
+workspace_name=$(basename "${absolute_rootdir}")
+workspace_dirname="workspace-${workspace_name}"
+workspace_dir_prefix=''
+if [ "${rootdir:0:1}" == '.' ]
+then
+  workspace_dir_prefix="../"
+fi
+
+
+mkdir -p "${workspace_dirname}"
+
+while read project_dir
+do
+  echo "includeBuild  '${workspace_dir_prefix}${project_dir}'"
+done < <(find "${rootdir}" -name 'build.gradle' -type f -exec dirname {} \;) >"${workspace_dirname}/settings.gradle"
+
+cat << EOF > "${workspace_dirname}/build.gradle"
+task buildAll {
+    dependsOn gradle.includedBuilds*.task(':build')
+}
+EOF
+
