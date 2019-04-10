@@ -1,0 +1,142 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+template_dir="${script_dir}/Templates"
+#template_path="${template_dir}/Name_MarkE_OneToOne_Template.docx"
+template_path="${template_dir}/Name_MarkE_OneToOne_Template.md"
+template_extension="${template_path##*.}"
+
+declare -a args
+args=( "${@}" )
+args_length="${#args[@]}"
+
+function usage() {
+  echo "$(basename ${0}) [-n|--name NAME] [-d|--date DATE] [NAME] [DATE]"
+  echo 'Create meeting notes for NAME on DATE in the meeting_notes folder.'
+  echo 'Note that name can be prefixed with a directory - e.g. staging/bob.'
+}
+
+for (( i=0; i<${args_length}; i++ ))
+do
+  case "${args[${i}]}" in
+    -d|--date)
+      (( i++ ))
+      one2one_date="${args[${i}]}"
+      ;;
+    -n|--name)
+      (( i++ ))
+      one2one_name="${args[${i}]}"
+      ;;
+    -h|--help|/?)
+      usage
+      exit
+      ;;
+    *)
+      if [ -z "${one2one_name}" ]
+      then
+        one2one_name="${args[${i}]}"
+      elif [ -z "${one2one_date}" ]
+      then
+        one2one_date="${args[${i}]}"
+      else
+        echo "Unknown argument '${args[${i}]}'" >&2
+        exit 1
+      fi
+      ;;
+  esac
+done
+
+meeting_notes_dir="${script_dir}/meeting_notes"
+#meeting_notes_dir="${HOME}/Box/Team Wild Shrews/OneToOnes/meeting_notes"
+mkdir -p "${meeting_notes_dir}"
+one2one_meetingnotes_dir="${meeting_notes_dir}/${one2one_name}_one_to_one"
+
+while [ ! -d "${one2one_meetingnotes_dir}" ]
+do
+  echo "Name '${one2one_name}' not found. Existing names are:" >&2
+  ls -1 "${meeting_notes_dir}"
+  echo
+  read -p "Use name '${one2one_name}' (y/[n])? " response
+  case "${response}" in
+    y*|Y*)
+      mkdir -p "${one2one_meetingnotes_dir}"
+      echo "Please set up the appropriate collaborators for '${one2one_meetingnotes_dir}'."
+      echo 'Right-click/Share/Manage Collaborators...'
+      echo "Invite Collaborators... Invite ${one2one_name}'s email address."
+      Open "${one2one_meetingnotes_dir}"
+      read -p "Press enter to continue..."
+      ;;
+    *)
+      read -p "Enter new name: " one2one_name
+      echo
+      if [ -n "${one2one_name}" ]
+      then
+        one2one_meetingnotes_dir="${meeting_notes_dir}/${one2one_name}_one_to_one"
+      fi
+      ;;
+  esac
+done
+
+if [ ! -d "${one2one_meetingnotes_dir}" ]
+then
+  echo "Could not find meeting notes for '${one2one_name}' in '${one2one_meetingnotes_dir}'" >&2
+  exit 2
+fi
+
+if [ -z "${one2one_date}" ]
+then
+  date_format="%Y%m%d"
+  last_one2one_date=$(ls -1 "${one2one_meetingnotes_dir}" | tail -n 1 | cut -d'_' -f 2)
+  last_one2one_date="${last_one2one_date%.*}"
+  if [ -z "${last_one2one_date}" ]
+  then
+    while [ -z "${one2one_date}" ]
+    do
+      echo "Could not deduce one 2 one date from existing files." >&2
+      ls "${one2one_meetingnotes_dir}"
+      echo
+      current_date=$(date "+${date_format}")
+      read -p "Enter new one2one date in YYYYMMDD format (default to ${current_date}): " one2one_date
+      if [ -z "${one2one_date}" ]
+      then
+        one2one_date="${current_date}"
+      elif ! date -j -f "${date_format}" "${one2one_date}" 1>/dev/null 2>&1
+      then
+        echo "Unable to parse date '${one2one_date}'..."
+        one2one_date=''
+      fi
+    done
+  else
+    echo "last one2one date: ${last_one2one_date}"
+    one2one_date=$(date -j -v"+2w" -f "${date_format}" "${last_one2one_date}" "+${date_format}")
+    if [ ${?} -ne 0 ]
+    then
+      echo "Unable to parse date '${last_one2one_date}' to deduce next date..." >&2
+      exit 3
+    fi
+  fi
+fi
+
+if [ -z "${one2one_date}" ]
+then
+  echo "No one 2 one meeting date" >&2
+  exit 4
+fi
+
+one2one_final_name="${one2one_name##*/}"
+one2one_meetingnotes_date_file="${one2one_meetingnotes_dir}/${one2one_final_name}_${one2one_date}.${template_extension}"
+one2one_template_path="${template_path}"
+
+if [ -f "${template_dir}/${one2one_final_name}_MarkE_OneToOne_Template.md" ]
+then
+  one2one_template_path="${template_dir}/${one2one_final_name}_MarkE_OneToOne_Template.md"
+fi
+
+human_readable_date=$(date -j -f "%Y%m%d" "${one2one_date}" '+%a %d %b %Y')
+sed -e "s/Name/${one2one_final_name}/g" -e "s/Date/${human_readable_date}/g" "${one2one_template_path}" >"${one2one_meetingnotes_date_file}"
