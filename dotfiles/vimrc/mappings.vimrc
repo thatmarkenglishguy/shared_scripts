@@ -16,10 +16,25 @@ cabbr <expr> %% expand('%:p:h')
 " Toggling list (whitespace visible)
 :nnoremap <leader>wv :set list!<cr>
 
+" mE YouCompleteMe
+" IntelliJ uses Command+B and Alt+Command+B.
+" Let's do the same, and also leader...
+:nnoremap <leader>b :YcmCompleter GoToDeclaration<cr>
+" This doesn't seem to work on Mac for mapping Alt
+:nnoremap <leader><A-b> :YcmCompleter GoToDefinition<cr>
+:nnoremap <leader>∫ :YcmCompleter GoToDefinition<cr>
+:nnoremap <leader>v :YcmCompleter GoToDefinition<cr>
+:nnoremap <leader>f :YcmCompleter FixIt<cr>
+:nnoremap <leader>i :YcmCompleter GoToInclude<cr>
+
 " Identify the syntax highlighting group used at the cursor
 " http://vim.wikia.com/wiki/Identify_the_syntax_highlighting_group_used_at_the_cursor
-map <F10> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<'
-\ . synIDattr(synID(line("."),col("."),0),"name") . "> lo<"
-\ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">"<CR>
-
+map <F10> :echo "hi<"
+\ . synIDattr(synID(line("."),col("."),1),"name")
+\ .' (' . synIDattr(synIDtrans(synID(line("."), col("."), 1)), "fg") . ')'
+\ . '> trans<'
+\ . synIDattr(synID(line("."),col("."),0),"name")
+\ . "> lo<"
+\ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name")
+\. ">"<CR>
 
