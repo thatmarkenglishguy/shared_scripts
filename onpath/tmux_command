@@ -252,7 +252,7 @@ do
   tmux resize-pane -t ${i} -y ${pane_height}
 done
 
-# Select the fourth (control) pane
+# Rename the control pane
 tmux select-pane -t ${control_pane} -T 'Rebase control'
 # Resize the pane
 tmux resize-pane -t ${control_pane} -y ${control_pane_height}
@@ -272,6 +272,9 @@ do
   pane_name="${pane_names[${i}]}"
   send_command_to_pane ${i} "${dir_prefix}${pane_name}" "${pane_name}"
 done
+
+# Select the control pane
+tmux select-pane -t ${control_pane}
 
 tmux attach-session -t "${session}"
 
