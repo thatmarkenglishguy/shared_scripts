@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+command='./somescript' dir_prefix='somedir/myprefix-' tmux_command project1 project2
+
+
