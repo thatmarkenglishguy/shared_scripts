@@ -17,7 +17,7 @@ cd flogging
 #Checkout your flogging repos into this directory...
 make_repo_file
 ```
-Edit repos to contain the directories you commonly work on in repo_directories, or leave as is for _all_ repos.  
+Edit repos to contain the directories you commonly work on in `repos`, or leave as is for _all_ repos.  
 Note it won't update as repos are added.
 #### Workflow
 Change to branch mybranch in all repos.  
@@ -70,6 +70,9 @@ chmod 755 somedir/someprefix-project2/somescript
 # Run './somescript' in somedir/someprefix-project1 and somedir/someprefix-project2 in separate tmux panes.
 # Ctrl+C <wait for processes to end>, Enter to exit...
 command='./somescript' dir_prefix='somedir/myprefix-' tmux_command project1 project2
+
+# Same as above but just show command in pane rather than executing it
+dry_run=1 command='./somescript' dir_prefix='somedir/myprefix-' tmux_command project1 project2
 ```
 
 ## [testing](testing)
