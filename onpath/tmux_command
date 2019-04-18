@@ -1,0 +1,277 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  file_path="${0}"
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  file_path="${BASH_SOURCE[0]}"
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+function usage() {
+  cat <<EOF >&2
+Opens up panes for running command on each directory.
+Global variables:
+ command [REQUIRED]: The command to run in each directory.
+ command_name: The shell friendly name to use for the command.
+ dir_prefix: If specified, each directory path is a combination of parameter N prefixed with this string.
+ dry_run: If specified as not 0 then echo commands rather than carrying them out.
+
+Parameters:
+  Each parameter is a directory (optionally prefixed with dir_prefix) in which the command is run.
+
+Example usage:
+ Run command in myprefix-project1 myprefix-project2 myprefix-project3 all located under the relative directory somedir
+ command='mycommand' dir_prefix="somedir/myprefx-" tmux_command 'project1' 'project2' 'project3'
+
+ Dry run command myprefix-project1 myprefix-project2 myprefix-project3 in somedir
+ dry_run=1 command='mycommand' dir_prefix="somedir/myprefx-" tmux_command 'project1' 'project2' 'project3'
+
+ Run a command in somedir/myprefix-project1 and a command with the same name in somedir/myprefix-project2
+ command='./mylocalcommand' dir_prefix="somedir/myprefix-' tmux_command project1 project2
+
+ Wrapper script for a specific command
+ Run command in myprefix-project1 myprefix-project2 myprefix-project3 all located under the relative directory somedir
+ command=mycommand "${script_dir}/tmux_command" "${@}"
+EOF
+}
+
+if [ -z "${command}" ]
+then
+  echo "ERROR: 'command' variable MUST be specified when invoking ${file_path}" >&2
+  usage
+  exit 1
+fi
+
+if [ -z "${1}" ]
+then
+  usage
+  exit 1
+fi
+
+# Set global variables for call
+if [ -z "${command_name}" ]
+then
+  command_name=${command##*/}
+  command_name="${command_name%% *}"
+fi
+
+if [ -z "${dir_prefix}" ]
+then
+  dir_prefix=''
+fi
+
+# Handle a common typo
+if [ -z "${dry_run}" ] && [ -n "${dryrun}" ]
+then
+  dry_run="${dryrun}"
+fi
+
+if [ -z "${dry_run}" ] || [ "${dry_run}" = '0' ] || [ "${dry_run}" == 'false' ]
+then
+  dry_run=0
+else
+  dry_run=1
+fi
+
+# Opens up panes for running command on each directory.
+# Global variables:
+#  command [REQUIRED]: The command to run in each directory.
+#  command_name: The shell friendly name to use for the command.
+#  dir_prefix: If specified, each directory path is a combination of parameter N prefixed with this string.
+#  dry_run: If specified as not 0 then echo commands rather than carrying them out.
+
+# Example usage:
+#  Run command in myprefix-project1 myprefix-project2 myprefix-project3 all located under the relative directory somedir
+#  command='mycommand' dir_prefix="somedir//myprefx-" "${script_dir}/tmux_command" 'project1' 'project2' 'project3'
+#  Dry run command myprefix-project1 myprefix-project2 myprefix-project3 in somedir
+#  dry_run=1 command='mycommand' dir_prefix="somedir/myprefx-" "${script_dir}/tmux_command" 'project1' 'project2' 'project3'
+
+#  Wrapper script for a specific command
+#  Run command in myprefix-project1 myprefix-project2 myprefix-project3 all located under the relative directory somedir
+#  command=mycommand "${script_dir}/tmux_command" "${@}"
+
+window_height=$(tmux display -p '#{window_height}' 2>/dev/null)
+if [ -z "${window_height}" ]
+then
+  window_height=$(tput lines)
+fi
+window_width=$(tmux display -p '#{window_width}' 2>/dev/null)
+if [ -z "${window_width}" ]
+then
+  window_width=$(tput cols)
+fi
+
+declare -a pane_names
+if [ "${1}" = 'wait_for_close' ]
+then
+  session="${2}"
+  pane_names=( "${@:3}" )
+else
+  session="${USER}_${command_name}_${$}"
+  pane_names=( "${@}" )
+fi
+
+control_pane_height=8
+# Calculate the properties
+number_of_panes=${#pane_names[@]}
+control_pane=${number_of_panes}
+(( pane_height=(window_height-control_pane_height) / number_of_panes ))
+
+if [ "${1}" = 'wait_for_close' ]
+then
+  startdir="$(pwd)"
+
+  function kill_the_panes() {
+    local i
+    local pane_name
+    local signal_name
+
+    echo
+    echo 'Killing processes...'
+    for (( i=0; i<number_of_panes; ++i ))
+    do
+      signal_name="${pane_names[${i}]}-${command_name}"
+      # Kill the process
+      tmux send-keys -t ${i} 'C-c' C-m
+      # Tell the pane to signal the process end
+      tmux send-keys -t ${i} "tmux wait-for -S '${signal_name}'" C-m
+    done
+
+    for (( i=0; i<number_of_panes; ++i ))
+    do
+      signal_name="${pane_names[${i}]}-${command_name}"
+      # Wait for the pane to complete
+      tmux wait-for "${signal_name}"
+    done
+
+    # Note if you've send-keys anything, it goes to stdin somehow and this read becomes a bit of a pain...
+    read -p 'Press Enter to close '
+
+    for (( i=number_of_panes; i>=0; --i ))
+    do
+      tmux kill-pane -t $(( i-1 ))
+    done
+
+    tmux kill-window -t "${session}:0"
+    tmux kill-session -C -t "${session}"
+  }
+
+  # DEPRECATED - use ctrl+c and kill_the_panes instead
+  # WAXME
+  function wait_for_close() {
+    local i
+    local pane_name
+
+    tmux select-pane -t ${control_pane}
+    echo "Waiting for ${command_name} to complete"
+    for (( i=0; i<number_of_panes; ++i ))
+    do
+      pane_name="${pane_names[${i}]}"
+      echo "Waiting for ${pane_name}..."
+      # Wait for the pane to complete
+      tmux wait-for "${pane_name}-${command_name}"
+    done
+
+    # Note if you've send-keys anything, it goes to stdin somehow and this read becomes a bit of a pain...
+    read -p 'Press Enter to close '
+
+    for (( i=number_of_panes; i>=0; --i ))
+    do
+      tmux kill-pane -t $(( i-1 ))
+    done
+
+    tmux kill-window -t "${session}:0"
+    tmux kill-session -C -t "${session}"
+  }
+
+  trap "kill_the_panes \; cd '${startdir}' \;" SIGINT
+  echo 'Ctrl-C to end...'
+  #wait_for_close
+  while true
+  do
+    sleep 10
+  done
+  exit 0
+fi
+
+function send_command_to_pane() {
+  local pane_number
+  local target_directory
+  local pane_name
+  local signal_name
+  local run
+  pane_number=${1}
+  target_directory="${2}"
+  pane_name="${3}"
+  signal_name="${pane_name}-${command_name}"
+  if [ ${dry_run} -ne 0 ]
+  then
+    run='echo '
+  fi
+
+  if [ ! -d "${target_directory}" ]
+  then
+    tmux send-keys -t ${pane_number} "#ERROR - '${target_directory}' is not a directory;
+tmux wait-for -S '${signal_name}'" C-m
+  else
+    tmux select-pane -t ${pane_number} -T "${pane_name}"
+    #trap 'tmux wait-for -S "project2-sleep" SIGINT'
+    tmux send-keys -t ${pane_number} "pushd '${target_directory}' >/dev/null;
+trap 'tmux wait-for -S "'"'"${signal_name}"'"'"' SIGINT;
+${run}${command};
+popd >/dev/null;
+tmux wait-for -S '${signal_name}'" C-m
+  fi
+}
+
+
+# Start a new tmux session.
+# Specify window width and height because the default is small, which means cannot create panes the correct size.
+tmux -2 new-session -d -s "${session}" -x ${window_width} -y ${window_height}
+
+# Create output panes (including initial pane as first pane)
+for (( i=1; i<number_of_panes; ++i ))
+do
+  # Split current window vertically
+  tmux split-window -v -l ${pane_height}
+  # Select the first pane
+  tmux select-pane -t 0
+done
+
+
+# Create control pane
+tmux select-pane -t $(( number_of_panes-1 ))
+tmux split-window -t $(( number_of_panes-1 )) -v -l ${control_pane_height}
+
+# Now that all the panes exist, resize the non-control panes
+for (( i=0; i<number_of_panes; ++i ))
+do
+  # Resize the pane to the standard height
+  tmux resize-pane -t ${i} -y ${pane_height}
+done
+
+# Select the fourth (control) pane
+tmux select-pane -t ${control_pane} -T 'Rebase control'
+# Resize the pane
+tmux resize-pane -t ${control_pane} -y ${control_pane_height}
+
+# Kick off the wait and close script
+wait_for_close_command="'${file_path}' wait_for_close '${session}' "
+for pane_name in "${pane_names[@]}"
+do
+  wait_for_close_command="${wait_for_close_command} '${pane_name}'"
+done
+
+tmux send-keys -t ${control_pane} "${wait_for_close_command}" C-m
+
+# Send the panes their commands
+for (( i=0; i<number_of_panes; ++i ))
+do
+  pane_name="${pane_names[${i}]}"
+  send_command_to_pane ${i} "${dir_prefix}${pane_name}" "${pane_name}"
+done
+
+tmux attach-session -t "${session}"
+

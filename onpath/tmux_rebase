@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  file_path="${0}"
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  file_path="${BASH_SOURCE[0]}"
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+command=rebase_all "${script_dir}/tmux_command" "${@}"
+
