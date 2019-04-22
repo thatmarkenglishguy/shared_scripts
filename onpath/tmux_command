@@ -123,6 +123,18 @@ if [ "${1}" = 'wait_for_close' ]
 then
   startdir="$(pwd)"
 
+  function shutdown_tmux() {
+    local i
+
+    for (( i=number_of_panes; i>=0; --i ))
+    do
+      tmux kill-pane -t $(( i-1 ))
+    done
+
+    tmux kill-window -t "${session}:0"
+    tmux kill-session -C -t "${session}"
+  }
+ 
   function kill_the_panes() {
     local i
     local pane_name
@@ -130,6 +142,7 @@ then
 
     echo
     echo 'Killing processes...'
+
     for (( i=0; i<number_of_panes; ++i ))
     do
       signal_name="${pane_names[${i}]}-${command_name}"
@@ -149,13 +162,7 @@ then
     # Note if you've send-keys anything, it goes to stdin somehow and this read becomes a bit of a pain...
     read -p 'Press Enter to close '
 
-    for (( i=number_of_panes; i>=0; --i ))
-    do
-      tmux kill-pane -t $(( i-1 ))
-    done
-
-    tmux kill-window -t "${session}:0"
-    tmux kill-session -C -t "${session}"
+    shutdown_tmux
   }
 
   # DEPRECATED - use ctrl+c and kill_the_panes instead
@@ -177,104 +184,123 @@ then
     # Note if you've send-keys anything, it goes to stdin somehow and this read becomes a bit of a pain...
     read -p 'Press Enter to close '
 
-    for (( i=number_of_panes; i>=0; --i ))
-    do
-      tmux kill-pane -t $(( i-1 ))
-    done
-
-    tmux kill-window -t "${session}:0"
-    tmux kill-session -C -t "${session}"
+    shutdown_tmux
   }
 
-  trap "kill_the_panes \; cd '${startdir}' \;" SIGINT
+  export -f kill_the_panes
+  export -f shutdown_tmux
+
+  read -d '' trap_command <<EOF
+trap "kill_the_panes \; cd '${startdir}' \;" SIGINT EXIT
+EOF
+  eval "${trap_command}"
+
   echo 'Ctrl-C to end...'
+  # DEPRECATED - the shutdown is now sourced into the control panel shell
+  function sub_shell_shutdown() {
+    local sq
+    local dq
+    export number_of_panes
+    export pane_names
+    export command_name
+    sq="'"
+    dq='"'
+    #bash --init-file <(echo ". ${dq}${HOME}/.bashrc${dq}; echo ${sq}${trap_command}${sq}; ${trap_command}")
+    bash --init-file <(echo ". ${dq}${HOME}/.bashrc${dq}; ${trap_command}")
+    shutdown_tmux
+  }
+
+  # DEPRECATED - the shutdown is not sourced into the control panel shell.
+  function wait_forever() {
+    while true
+    do
+      sleep 10
+    done
+  }
+
   #wait_for_close
-  while true
+  #wait_forever
+  #sub_shell_shutdown
+
+  #exit 0
+else
+  function send_command_to_pane() {
+    local pane_number
+    local target_directory
+    local pane_name
+    local signal_name
+    local run
+    pane_number=${1}
+    target_directory="${2}"
+    pane_name="${3}"
+    signal_name="${pane_name}-${command_name}"
+    if [ ${dry_run} -ne 0 ]
+    then
+      run='echo '
+    fi
+  
+    if [ ! -d "${target_directory}" ]
+    then
+      tmux send-keys -t ${pane_number} "#ERROR - '${target_directory}' is not a directory;
+  tmux wait-for -S '${signal_name}'" C-m
+    else
+      tmux select-pane -t ${pane_number} -T "${pane_name}"
+      #trap 'tmux wait-for -S "project2-sleep" SIGINT'
+      tmux send-keys -t ${pane_number} "pushd '${target_directory}' >/dev/null;
+  trap 'tmux wait-for -S "'"'"${signal_name}"'"'"' SIGINT;
+  ${run}${command};
+  popd >/dev/null;
+  tmux wait-for -S '${signal_name}'" C-m
+    fi
+  }
+
+  # Start a new tmux session.
+  # Specify window width and height because the default is small, which means cannot create panes the correct size.
+  tmux -2 new-session -d -s "${session}" -x ${window_width} -y ${window_height}
+
+  # Create output panes (including initial pane as first pane)
+  for (( i=1; i<number_of_panes; ++i ))
   do
-    sleep 10
+    # Split current window vertically
+    tmux split-window -v -l ${pane_height}
+    # Select the first pane
+    tmux select-pane -t 0
   done
-  exit 0
+
+  # Create control pane
+  tmux select-pane -t $(( number_of_panes-1 ))
+  tmux split-window -t $(( number_of_panes-1 )) -v -l ${control_pane_height}
+
+  # Now that all the panes exist, resize the non-control panes
+  for (( i=0; i<number_of_panes; ++i ))
+  do
+    # Resize the pane to the standard height
+    tmux resize-pane -t ${i} -y ${pane_height}
+  done
+
+  # Rename the control pane
+  tmux select-pane -t ${control_pane} -T "${command_name} control"
+  # Resize the pane
+  tmux resize-pane -t ${control_pane} -y ${control_pane_height}
+
+  # Kick off the wait and close script
+  wait_for_close_command="'${file_path}' wait_for_close '${session}' "
+  for pane_name in "${pane_names[@]}"
+  do
+    wait_for_close_command="${wait_for_close_command} '${pane_name}'"
+  done
+
+  tmux send-keys -t ${control_pane} ". ${wait_for_close_command}" C-m
+
+  # Send the panes their commands
+  for (( i=0; i<number_of_panes; ++i ))
+  do
+    pane_name="${pane_names[${i}]}"
+    send_command_to_pane ${i} "${dir_prefix}${pane_name}" "${pane_name}"
+  done
+
+  # Select the control pane
+  tmux select-pane -t ${control_pane}
+
+  tmux attach-session -t "${session}"
 fi
-
-function send_command_to_pane() {
-  local pane_number
-  local target_directory
-  local pane_name
-  local signal_name
-  local run
-  pane_number=${1}
-  target_directory="${2}"
-  pane_name="${3}"
-  signal_name="${pane_name}-${command_name}"
-  if [ ${dry_run} -ne 0 ]
-  then
-    run='echo '
-  fi
-
-  if [ ! -d "${target_directory}" ]
-  then
-    tmux send-keys -t ${pane_number} "#ERROR - '${target_directory}' is not a directory;
-tmux wait-for -S '${signal_name}'" C-m
-  else
-    tmux select-pane -t ${pane_number} -T "${pane_name}"
-    #trap 'tmux wait-for -S "project2-sleep" SIGINT'
-    tmux send-keys -t ${pane_number} "pushd '${target_directory}' >/dev/null;
-trap 'tmux wait-for -S "'"'"${signal_name}"'"'"' SIGINT;
-${run}${command};
-popd >/dev/null;
-tmux wait-for -S '${signal_name}'" C-m
-  fi
-}
-
-
-# Start a new tmux session.
-# Specify window width and height because the default is small, which means cannot create panes the correct size.
-tmux -2 new-session -d -s "${session}" -x ${window_width} -y ${window_height}
-
-# Create output panes (including initial pane as first pane)
-for (( i=1; i<number_of_panes; ++i ))
-do
-  # Split current window vertically
-  tmux split-window -v -l ${pane_height}
-  # Select the first pane
-  tmux select-pane -t 0
-done
-
-
-# Create control pane
-tmux select-pane -t $(( number_of_panes-1 ))
-tmux split-window -t $(( number_of_panes-1 )) -v -l ${control_pane_height}
-
-# Now that all the panes exist, resize the non-control panes
-for (( i=0; i<number_of_panes; ++i ))
-do
-  # Resize the pane to the standard height
-  tmux resize-pane -t ${i} -y ${pane_height}
-done
-
-# Rename the control pane
-tmux select-pane -t ${control_pane} -T 'Rebase control'
-# Resize the pane
-tmux resize-pane -t ${control_pane} -y ${control_pane_height}
-
-# Kick off the wait and close script
-wait_for_close_command="'${file_path}' wait_for_close '${session}' "
-for pane_name in "${pane_names[@]}"
-do
-  wait_for_close_command="${wait_for_close_command} '${pane_name}'"
-done
-
-tmux send-keys -t ${control_pane} "${wait_for_close_command}" C-m
-
-# Send the panes their commands
-for (( i=0; i<number_of_panes; ++i ))
-do
-  pane_name="${pane_names[${i}]}"
-  send_command_to_pane ${i} "${dir_prefix}${pane_name}" "${pane_name}"
-done
-
-# Select the control pane
-tmux select-pane -t ${control_pane}
-
-tmux attach-session -t "${session}"
-
