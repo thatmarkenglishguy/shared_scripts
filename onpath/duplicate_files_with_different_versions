@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+# Inputs - paths on stdin
+# Outputs - paths where filenames match
+# e.g.
+# ./duplicate_files_with_different_versions < <(echo 'a/b/c-1.2.3.jar
+# x/y/c-2.3.4.jar')
+
+declare -a seen
+declare -a duplicate_paths
+declare -a dupliacates
+declare -a filepaths
+seen=( )
+duplicate_paths=( )
+duplicates=( )
+filepaths=( )
+
+function strip_version() {
+  local next
+  local current
+  current=''
+  next="${1}"
+  while [ -n "${next}" ] && [ "${current}" != "${next}" ]
+  do
+    current="${next}"
+    next="${current%[0-9]}"
+    next="${next%\.*}"
+  done
+
+  while [ "${next:${#next}-1}" = '-' ]
+  do
+    next="${next:0:${#next}-1}"
+  done
+  echo "${next}"
+}
+
+# Find duplicate file names (minus path and version)
+while read filepath
+do
+  filepaths=( "${filepaths[@]}" "${filepath}" )
+  filename="${filepath##*/}"
+  filename_without_ext="${filename%.*}"
+  filename_without_version="$(strip_version ${filename_without_ext})"
+  #echo "filename: '${filename}'"
+  #echo "filename_without_ext: '${filename_without_ext}'"
+  #echo "filepath: '${filepath}'"
+  #echo "filename_without_version: '${filename_without_version}'"
+
+  found=0
+  for ((i=0; i<${#seen[@]}; ++i))
+  do
+    if [ "${filename_without_version}" == "${seen[${i}]}" ]
+    then
+      duplicate_paths=( "${duplicate_paths[@]}" "${filepath}" )
+      duplicates=( "${duplicates[@]}" "${filename_without_version}" )
+      found=1
+    fi
+  done
+
+  if [ ${found} -eq 0 ]
+  then
+    seen=( "${seen[@]}" "${filename_without_version}" )
+  fi
+  
+done </dev/stdin
+
+#duplicates=$( set -x; for d in "${duplicates[@]}"; do echo "${d}"; done | sort | uniq)
+#echo "Duplicates: '${duplicates[*]}'"
+
+if [ ${#duplicates[@]} -ne 0 ]
+then
+  # Slow but sufficient iterate again
+  for duplicate in "${duplicates[@]}"
+  do
+    echo
+    echo "${duplicate}:"
+    for filepath in "${filepaths[@]}"
+    do
+      filename="${filepath##*/}"
+      filename_without_ext="${filename%.*}"
+      filename_without_version="$(strip_version ${filename_without_ext})"
+      if [ "${duplicate}" = "${filename_without_version}" ]
+      then
+        echo "  ${filepath}"
+      fi
+    done
+  done
+fi
