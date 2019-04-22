@@ -1,5 +1,4 @@
 #!/usr/bin/env sh
-
 case $(uname -a) in
   *Darwin*)
     if /usr/libexec/java_home -v 11 1>/dev/null 2>&1 
@@ -18,9 +17,9 @@ case $(uname -a) in
       alias j10='echo java 10 not found.'
     fi
 
-    if /usr/libexec/java_home -v 1.8.0_191 1>/dev/null 2>&1 
+    if /usr/libexec/java_home -v 1.8 1>/dev/null 2>&1
     then
-      alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8.0_191 2>/dev/null`; java -version"
+      alias j8="export JAVA_HOME=`/usr/libexec/java_home -v 1.8 2>/dev/null`; java -version"
     else
       #  echo java 8 is a no
       alias j8='echo java 8 not found.'

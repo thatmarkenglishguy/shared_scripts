@@ -18,9 +18,10 @@ unalias alias 1>/dev/null 2>&1
 #fi
 
 _installed_gradle_counter=4
+
 while ls /opt/gradle/gradle-${_installed_gradle_counter}* 1>/dev/null 2>&1
 do
   unalias gradle${_installed_gradle_counter} 1>/dev/null 2>&1
-  alias gradle${_installed_gradle_counter}='[ -n "${GRADLE_HOME}" ] && pathremove "${GRADLE_HOME}/bin"; unset GRADLE_HOME; GRADLE_HOME=`find /opt/gradle -name "gradle-'"${_installed_gradle_counter}"'*" -type d -maxdepth 1 | tail -n 1`; pathappend "${GRADLE_HOME}/bin"; export PATH; export GRADLE_HOME; which gradle'
+  alias gradle${_installed_gradle_counter}='[ -n "${GRADLE_HOME}" ] && pathremove "${GRADLE_HOME}/bin"; unset GRADLE_HOME; GRADLE_HOME=`find /opt/gradle -name "gradle-'"${_installed_gradle_counter}"'*" -type d -maxdepth 1 | head -n 1`; pathappend "${GRADLE_HOME}/bin"; export PATH; export GRADLE_HOME; which gradle'
   (( _installed_gradle_counter+=1 ))
 done
