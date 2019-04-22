@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+dependency="${1:?dependency parameter required}"
+extras=''
+
+# If in git branch, use the branch name.
+if branch=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+then
+  extras="_${branch##*/}"
+fi
+
+# Include a timestamp
+logtime=$(date -j '+%Y%m%d_%H%M%S')
+
+output="dependencies/${dependency}${extras}_${logtime}_dependencies.log"
+
+#Clear the screen
+clear
+echo; echo; echo; echo; echo
+
+# Get all the gradle projects
+declare -a projects
+projects=( $(gradle --console plain --info -q projects | sed -n 's!^[+\\]--- Project '"'"':\(.*\)'"'"'!\1!gp') )
+rm -f "${output}"
+touch "${output}"
+
+for project in "${projects[@]}"
+do
+  mkdir -p dependencies
+  echo | tee -a "${output}"
+  echo "---${project}---" | tee -a "${output}"
+  echo "---- compileClasspath Configuration ----"
+  gradle -q ":${project}:dependencyInsight" --configuration compileClasspath --dependency "${dependency}" 2>&1 | tee -a "${output}"
+  echo "---- testRuntimeClasspath Configuration ----"
+  gradle -q ":${project}:dependencyInsight" --configuration testRuntimeClasspath --dependency "${dependency}" 2>&1 | tee -a "${output}"
+done
+
+echo "${output}"
+
