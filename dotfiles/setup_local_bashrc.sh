@@ -53,7 +53,7 @@ if [ -f ~/code/mE/shscripts/marke_mac_bash.rc ] && [ ! -f ~/.bashrc ]
 then
   case "$(uname -a)" in 
     *Msys*|*Mingw*)
-      source_line='source ${HOME}/code//shscripts/marke_mac_bash.rc'
+      source_line='source ${HOME}/code/shscripts/marke_mac_bash.rc'
       if ! grep "${source_line}" ~/.bashrc 2>&1 1>/dev/null
       then
         echo "${source_line}" >> ~/.bashrc
