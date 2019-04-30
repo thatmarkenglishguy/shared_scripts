@@ -1,0 +1,42 @@
+# This is Git's per-user configuration file.
+
+# Include this file with an entry like
+#[include]
+#  path = ~/code/shared/shared_scripts.git/dotfiles/.gitconfig
+
+#[user]
+# Please adapt and uncomment the following lines:
+#  name = First Sur
+#  email = some.email@someserver.com
+
+[filter "lfs"]
+  required = true
+  clean = git-lfs clean -- %f
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+
+[alias]
+  lol = log --graph --decorate --pretty=oneline --abbrev-commit
+  lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+  last = log HEAD^..HEAD --name-status
+  firstremote = "!git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1"
+  url = "!git config --get remote.$(git firstremote).url"
+  httpsurl = !git url | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!'  -e 's!\\.git$!!'
+
+[color]
+  diff = auto
+[color "branch"]
+  upstream = bold cyan
+[core]
+  autocrlf = false
+
+[merge]
+  tool = kdiff3
+[mergetool]
+  keepBackup = false
+
+# Add a path for kdiff3 or whichever tool you use
+#[mergetool "kdiff3"]
+#  path=/Applications/kdiff3.app/Contents/MacOS/kdiff3
+
+
