@@ -18,6 +18,9 @@
 [alias]
   lol = log --graph --decorate --pretty=oneline --abbrev-commit
   lola = log --graph --decorate --pretty=oneline --abbrev-commit --all
+  #09 in format is ascii character for tab
+  lols = log --graph --decorate --abbrev-commit --all --pretty=\"%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s\"
+  los = log --pretty=\"%C(Yellow)%h  %C(reset)%ad (%C(Green)%cr%C(reset))%x09 %C(Cyan)%an: %C(reset)%s\"
   last = log HEAD^..HEAD --name-status
   firstremote = "!git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1"
   url = "!git config --get remote.$(git firstremote).url"
@@ -32,6 +35,7 @@
 
 [merge]
   tool = kdiff3
+
 [mergetool]
   keepBackup = false
 
