@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+if [ ! -d "${HOME}/.fzf" ]
+then
+  git clone --depth 1 https://github.com/junegunn/fzf.git "${HOME}/.fzf"
+else
+  pushd "${HOME}/.fzf" >/dev/null
+  git fetch
+  git rebase
+  popd >/dev/null
+fi
+
+echo 'y
+y
+n' |
+"${HOME}/.fzf/install"
+

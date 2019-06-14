@@ -1,0 +1,87 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+java_8_path="$(ls -1 ${HOME}/Downloads/apps/java/jdk-8*.dmg | tail -n 1)"
+java_12_url='https://download.java.net/java/GA/jdk12.0.1/69cfe15208a647278a19ef0990eea691/12/GPL/openjdk-12.0.1_osx-x64_bin.tar.gz'
+download_java_dir="${HOME}/Downloads/apps/java"
+
+trap cleanup 0
+
+function cleanup() {
+  :
+}
+
+function download_and_install() {
+  local url
+  local java_filename
+  local java_path
+  url="${1}"
+  java_filename="${url##*/}"
+  java_path="${download_java_dir}/${java_filename}"
+  shift
+
+  if [ ! -f "${java_path}" ]
+  then
+    curl -L "${url}" -o "${java_path}"
+  fi
+
+  if [ -f "${java_path}" ]
+  then
+    sudo tar zxvf "${java_path}" -C /Library/Java/JavaVirtualMachines/
+    cleanup
+  fi
+}
+
+function set_installed_java8_version_from_current_java_installation() {
+  local java_version_prefix
+  java_version_prefix='java version "1.8.0_'
+  if ! which java 2>&1
+  then
+    installed_java8_version=0
+  else
+    installed_java8_version=$(java -version 2>&1 | head -n 1 | grep "${java_version_prefix}" | cut -c ${#java_version_prefix}- | tr -d '"')
+    if [ ${?} -ne 0 ] || [ -z "${installed_java8_version}" ]
+    then
+      installed_java8_version=0
+    fi
+  fi
+  return 0
+}
+
+sudo mkdir -p /Library/Java/JavaVirtualMachines/
+mkdir -p "${download_java_dir}"
+
+jdk_8_path=$(ls -1 ${HOME}/Downloads/apps/java/jdk-8u*-macosx-x64.dmg | tail -n 1)
+if [ -n "${jdk_8_path}" ]
+then
+  java8_available_version=$(echo "${jdk_8_path}" | sed -n 's!.*jdk-8u\([0-9]*\).*!\1!p')
+  set_installed_java8_version_from_current_java_installation
+  found_java8_exit_code=${?}
+  if [ ${found_java8_exit_code} -ne 0 ]
+  then
+    if type j8 2>/dev/null
+    then
+      j8
+      set_installed_java8_version_from_current_java_installation
+      found_java8_exit_code=${?}
+    fi
+  fi
+
+  if [ ${found_java8_exit_code} -eq 0 ] && [ ${installed_java8_version} -lt ${java8_available_version} ]
+  then
+    echo 'Install Java 8 from this place here...'
+    Open "${jdk_8_path}"
+  fi 
+else
+  echo "No java8 installation found. Please download one from 'https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html' to ${download_java_dir}"
+  Open https://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html
+fi
+
+download_and_install "${java_12_url}"
+

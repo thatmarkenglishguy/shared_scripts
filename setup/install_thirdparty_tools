@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+"${script_dir}/install_brewlist"
+"${script_dir}/install_git_tools"
+"${script_dir}/install_gradle_tools"
+"${script_dir}/install_java"
+"${script_dir}/install_gradle"
+"${script_dir}/install_android_tools"
+"${script_dir}/install_fzf"
+
