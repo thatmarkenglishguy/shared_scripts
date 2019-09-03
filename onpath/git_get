@@ -1,0 +1,165 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+function usage() {
+  cat <<EOF >&2
+$(basename "${0}") [-u|--user] GITHUB_USER [-s|--server] GITHUB_SERVER [-t|--token[-file]] GITHUB_TOKENFILE [-o|--org] GITHUB_ORG
+
+  -u|--user         GITHUB_USER       - Use to communicate with Github with. Defaults to environment variable GITHUB_USER (which is set to '${GITHUB_USER}').
+  -s|--server       GITHUB_SERVER     - Server to communicate with. Defaults to http://github.com.
+  -t|--token[-file] GITHUB_TOKENFILE  - File containing github token. Defaults to ~/.tokens/githubread.
+  -o|--org          GITHUB_ORG        - Org to get repos of. Defaults to current directory name (here '$(basename $(pwd))').
+EOF
+}
+
+ok_to_continue=0
+declare -a args
+args=( "${@}" )
+args_length="${#args[@]}"
+
+function take_an_argument() {
+  local var_name
+  local param_name
+  var_name="${1}"
+  param_name="${2}"
+
+  if [ -n "${current_value}" ]
+  then
+    echo "${param_name} already set to '${current_value}'" >&2
+    (( ok_to_continue++ ))
+  else
+    (( i++ ))
+    if (( i < args_length ))
+    then
+      eval ${var_name}=${args[${i}]}
+    else
+      echo "${param_name} parameter expects an argument." >&2
+      (( ok_to_continue++ ))
+    fi
+  fi
+}
+
+for (( i=0; i<args_length; i++ ))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    -u|--user)
+      take_an_argument github_user "${arg}" "${github_user}"
+      ;;
+    -s|--server)
+      take_an_argument github_server "${arg}" "${github_server}"
+      ;;
+    -t|--token|--tokenfile)
+      take_an_argument github_token_file "${arg}" "${github_token_file}"
+      ;;
+    -o|--org)
+      take_an_argument github_org "${arg}" "${github_org}"
+      ;;
+    --help|-h|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      if [ -z "${github_user}" ]
+      then
+        github_user="${arg}"
+      elif [ -z "${github_server}" ]
+      then
+        github_server="${arg}"
+      elif [ -z "${github_token_file}" ]
+      then
+        github_token_file="${arg}"
+      elif [ -z "${github_org}" ]
+      then
+        github_org="${arg}"
+      else
+        echo "Unexpected argument '${arg}'" >&2
+        (( ok_to_continue++ ))
+      fi
+  esac
+done
+
+if [ -z "${github_user}" ]
+then
+  github_user="${1:-${GITHUB_USER}}"
+  if [ -z "${github_user}" ]
+  then
+    echo 'No github user specified. Should be first parameter.' >&2
+    usage
+    (( ok_to_continue++ ))
+  fi
+fi
+
+if [ -z "${github_server}" ]
+then
+  github_server="${2:-http://github.com}"
+  if [ -z "${github_server}" ]
+  then
+    echo 'Empty github server specified.' >&2
+    usage
+    (( ok_to_continue++ ))
+  fi
+fi
+
+if [ ! -f "${github_token_file}" ]
+then
+  github_token_file="${3:-${HOME}/.tokens/githubread}"
+  if [ ! -f "${github_token_file}" ]
+  then
+    echo "'${github_token_file}' Github token file does not exist." >&2
+    usage
+    (( ok_to_continue++ )) 
+  fi
+fi
+
+if [ -z "${github_org}" ]
+then
+  github_org=${4:-$(basename $(pwd))}
+fi
+
+if [ ${ok_to_continue} -ne 0 ]
+then
+  exit ${ok_to_continue}
+fi
+
+if [[ ! "${github_server}" =~ ^https?:// ]]
+then
+  github_server="https://${github_server}"
+fi
+
+first_link=''
+first_link="$(curl -u "${github_user}":$(cat "${github_token_file}") "https://github.anaplan.com/api/v3/orgs/${github_org}/repos" -sS -I | grep '^Link: ')"
+
+curl -sS -u "${github_user}":$(cat "${github_token_file}") "https://github.anaplan.com/api/v3/orgs/${github_org}/repos" -o >(jq -r '.[].name')
+
+if [ -n "${first_link}" ]
+then
+  read -d '' sed_url_next_link_pattern <<-END_OF_SED
+    s!.*<\\\\(${github_server}[^>]*\\\\)>; rel="next".*!\\\\1!p
+END_OF_SED
+#echo "first link....'${first_link}'"
+#echo "sed pattern...'${sed_url_next_link_pattern}'"
+next_link=$(echo "${first_link}" | sed -n "${sed_url_next_link_pattern}")
+if [ -z "${next_link}" ]
+then
+  echo "Unable to parse next link url: '${first_link}'" >&2
+  exit 1
+fi
+
+while [ -n "${next_link}" ]
+do
+  curl -sS -u "${github_user}":$(cat "${github_token_file}") "${next_link}" | jq -r '.[].name'
+  next_link="$(curl -sS -u "${github_user}":$(cat "${github_token_file}") "${next_link}" -I | grep '^Link: ')"
+  #echo "next_link updated to: '${next_link}'"
+  next_link="$(echo ${next_link} | sed -n "${sed_url_next_link_pattern}")"
+  #echo "next_link further updated to: '${next_link}'"
+done
+fi
+
+
