@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+
+branch=$(git rev-parse --abbrev-ref HEAD)
+
+if [ -t 0 ]
+then
+  git commit -m "${branch##*/} ""${@}"
+else
+  git commit -m "${branch##*/} ""$(</dev/stdin)" "${@}"
+fi
+

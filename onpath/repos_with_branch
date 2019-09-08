@@ -1,22 +1,22 @@
 #!/usr/bin/env sh
 exit_code=0
 
-if [ -z "${1}" ]
-then
-  echo 'No branch specified.' >&2
-  exit_code=1
-else
-  . read_repos
+. read_repos "${@}"
 
-  if [ $? -eq 0 ]
+if [ ${?} -eq 0 ]
+then
+  if [ "${#remaining_args[@]}" -eq 0 ]
   then
+    echo 'No branch specified.' >&2
+    exit_code=1
+  else
     for repo in "${repo_directories[@]}"
     do
       pushd "${repo}" >/dev/null
-      if git show-ref --quiet --verify -- "refs/remotes/origin/${1}"
+      if git show-ref --quiet --verify -- "refs/remotes/origin/${remaining_args[0]}"
       then
         echo "${repo}"
-        #echo "${repo} origin/${1}"
+        #echo "${repo} origin/${remaining_args[@]}"
       fi
       popd >/dev/null
     done

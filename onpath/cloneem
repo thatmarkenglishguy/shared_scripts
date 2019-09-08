@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-. read_repos
+. read_repos "${@}"
 
 for repo in "${repo_directories[@]}"
 do

@@ -2,20 +2,20 @@
 
 exit_code=0
 
-if [ -z "${1}" ]
-then
-  echo 'No branch specified.' >&2
-  exit_code=1
-else
-  . read_repos
+. read_repos "${@}"
 
-  if [ $? -eq 0 ]
+if [ ${?} -eq 0 ]
+then
+  if [ "${#remaining_args[@]}" -eq 0 ]
   then
+    echo 'No branch specified.' >&2
+    exit_code=1
+  else
     for repo in "${repo_directories[@]}"
     do
       pushd "${repo}" >/dev/null
       branch=$(git rev-parse --abbrev-ref HEAD)
-      if [ "${branch}" != "${1}" ]
+      if [ "${branch}" != "${remaining_args[0]}" ]
       then
         echo "${repo}":"${branch}" 
       fi

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-. read_repos
+. read_repos "${@}"
 
 if [ $? -eq 0 ]
 then
