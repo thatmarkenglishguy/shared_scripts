@@ -1,14 +1,21 @@
-#!/usr/bin/env bash
+#!/usr/bin/env sh
+
 result=1
 if [ -f ~/temp/ssh-agent.sh ]
 then  
   . ~/temp/ssh-agent.sh >/dev/null
   if [ -n ${SSH_AGENT_PID} ]
   then
-    if ps ${SSH_AGENT_PID} >/dev/null
-    then
-      result=0
-    fi
+    case $(uname) in
+      MINGW*|mingw*|MSYS*|msys*)
+        ps -p ${SSH_AGENT_PID} >/dev/null
+        result=${?}
+        ;;
+      *)
+        ps -p ${SSH_AGENT_PID} >/dev/null
+        result=${?}
+        ;;
+    esac
   fi 
 fi
 
