@@ -1,0 +1,4 @@
+#!/usr/bin/env sh
+target_dir="${1:-.}"
+
+find "${target_dir}" \( -path ./.git -o -path ./dotfiles/fish \) -prune -o \( ! -perm -u+x -type f \) -print | xargs grep -l '#!/usr/bin/env' | xargs chmod 755
