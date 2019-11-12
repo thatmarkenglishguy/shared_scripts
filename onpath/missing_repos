@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+for repo in $(gitget)
+do
+  if [ ! -d "${repo}" ]
+  then
+    echo "${repo}"
+  fi
+done
+
