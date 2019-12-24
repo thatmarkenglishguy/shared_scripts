@@ -10,7 +10,7 @@ then
     echo
     echo "${d}:${branch}"
     git stash
-    git fetch
+    git fetch --prune
     git rebase
     git stash pop
     popd >/dev/null
