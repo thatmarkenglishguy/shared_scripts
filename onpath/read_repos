@@ -1,9 +1,21 @@
 #!/usr/bin/env bash
-if [ -f repos ]
+repos_file="${1}"
+
+declare -a remaining_args
+
+if [ -n "${repos_file}" ] && [ -f "${repos_file}" ] && [[ "${repos_file}" =~ .*repos$ ]]
 then
-  . repos
+  remaining_args=( "${@:2}" )
 else
-  echo 'No repos file found in '$(pwd)'.'
+  repos_file='repos'
+  remaining_args=( "${@}" )
+fi
+
+if [ -f "${repos_file}" ]
+then
+  . "${repos_file}"
+else
+  echo "No ${repos_file} file found in $(pwd)."
 fi
 
 if [ -z ${repo_directories} ]
