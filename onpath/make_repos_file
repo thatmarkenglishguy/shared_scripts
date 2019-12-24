@@ -16,8 +16,14 @@ else
 
 declare -a repo_directories
 declare -a other_repo_directories
-repo_directories=( '$(gitsubdirs | tr '\n' ' ')' )
+repo_directories=( ' >"${target_file}"
+
+  while read gitsubdir
+  do
+    echo "  ${gitsubdir}" >>"${target_file}"
+  done < <(gitsubdirs | sort)
+  echo ')
 other_repo_directories=( )
 repo_base=git@github.com:'"${org}"'
-' > "${target_file}"
+' >>"${target_file}"
 fi
