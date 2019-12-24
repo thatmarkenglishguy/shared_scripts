@@ -19,15 +19,15 @@ function kill_panes() {
   # Select the la pane
   tmux select-pane -t 0
   # Kill the la process
-  tmux send-keys -t 0 'C-c' C-m
+  tmux send-keys 'C-c' C-m
   # Wait for la process to end
-  tmux send-keys -t 0 'tmux wait-for -S la-dead' C-m \; wait-for la-dead
+  tmux send-keys 'tmux wait-for -S la-dead' C-m \; wait-for la-dead
   # Select the ba pane
   tmux select-pane -t 1
   # Kill the ba process
-  tmux send-keys -t 1 'C-c' C-m
+  tmux send-keys 'C-c' C-m
   # Wait for the ba process to end
-  tmux send-keys -t 1 'tmux wait-for -S ba-dead' C-m \; wait-for ba-dead
+  tmux send-keys 'tmux wait-for -S ba-dead' C-m \; wait-for ba-dead
   # Kill the la ba window
   tmux kill-window -t "${session}:1"
 
@@ -36,15 +36,15 @@ function kill_panes() {
   # Select the fish pane
   tmux select-pane -t 0
   # Kill the fish process
-  tmux send-keys -t 0 'C-c' C-m
+  tmux send-keys 'C-c' C-m
   # Wait for the fish process to end
-  tmux send-keys -t 0 'tmux wait-for -S fish-dead' C-m \; wait-for fish-dead
+  tmux send-keys 'tmux wait-for -S fish-dead' C-m \; wait-for fish-dead
   # Select the soup process
   tmux select-pane -t 1
   # Kill the soup process
-  tmux send-keys -t 1 'C-c' C-m
+  tmux send-keys 'C-c' C-m
   # Wait for the soup process to end
-  tmux send-keys -t 1 'tmux wait-for -S soup-dead' C-m \; wait-for soup-dead
+  tmux send-keys 'tmux wait-for -S soup-dead' C-m \; wait-for soup-dead
   # Select the control pane
   tmux select-pane -t 2
   # Wait for user input
