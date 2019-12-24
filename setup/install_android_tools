@@ -5,6 +5,7 @@ function cleanup() {
   :
 }
 
+#https://dl.google.com/android/repository/sdk-tools-darwin-4333796.zip
 SDK_TOOLS_ZIP=sdk-tools-darwin-4333796.zip
 SCRIPTS_PATH=~/code/mE/onpath/shscripts
 
