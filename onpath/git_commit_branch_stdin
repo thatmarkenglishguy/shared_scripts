@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
+# Type EOF to close out message
 
 branch=$(git rev-parse --abbrev-ref HEAD)
 
