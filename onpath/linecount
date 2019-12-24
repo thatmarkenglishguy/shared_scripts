@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+i=0
+while read line
+do
+  out_i=${i}
+  if [ ${out_i} -lt 10 ] && [ ${out_i} -ge 0 ]
+  then
+    out_i="0${out_i}"
+  fi
+  echo "${out_i}: ${line}"
+  (( ++i ))
+done
+
