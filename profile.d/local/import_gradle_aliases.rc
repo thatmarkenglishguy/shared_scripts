@@ -34,7 +34,7 @@ do
   alias gradle${_gradle_major_version}${_gradle_minor_version}="${_gradle_alias}"
   unalias gradle${_gradle_major_version} &>/dev/null
   alias gradle${_gradle_major_version}="${_gradle_alias}"
-done < <(find /opt/gradle -name "gradle-5*" -type d -maxdepth 1 | sort)
+done < <(find /opt/gradle -name "gradle-[5-9]*" -type d -maxdepth 1 | sort)
 
 unset _gradle_major_version
 unset _gradle_minor_version
