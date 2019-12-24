@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+#set -x
+#source <(./i_write_scripts)
+#declare -a yuck
+#yuck=( "$(./i_write_scripts)" )
+#${yuck[@]}
+# THIS DOES NOT WORK BUT I THINK IT SHOULD
+source <(./i_write_scripts)
+alias
+#source <($(${script_dir}/i_write_scripts))
+#source <($(echo 'function f() {
+#  echo I R F
+#}'
+#))
+#set +x
+type f
+type a
+echo 'source_a_generated_script is going to call f'
+f 'yes'
+echo
+echo 'source_a_generated_script is going to call alias a'
+a
+echo 'DONE'

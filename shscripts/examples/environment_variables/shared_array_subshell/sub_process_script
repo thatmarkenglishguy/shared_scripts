@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+x_counter=0
+echo "sub process runme_array: ${runme_array[@]}"
+
+echo 'Starting array loop'
+for x in "${runme_array[@]}"
+do
+  echo "${x_counter}: '${x}'"
+  (( x_counter++ ))
+done
+echo 'Ending array loop'

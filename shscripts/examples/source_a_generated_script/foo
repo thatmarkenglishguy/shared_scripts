@@ -1,0 +1,5 @@
+f()
+{
+  echo "When you say f, I say ${1}"
+}
+alias a='echo I is an alias'

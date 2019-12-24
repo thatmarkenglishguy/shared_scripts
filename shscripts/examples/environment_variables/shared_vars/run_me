@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  runme_script_dir=$(readlink -f $(dirname "${0}"))
+else
+  runme_script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+source "${runme_script_dir}/dump_functions"
+
+echo "Sourcing source_me"
+source "${runme_script_dir}/source_me"
+echo "Sourced source_me"
+runme_one=1
+runme_subone="${runme_one}.sub"
+runme_presource_sub_defined_one="${defined_one}.runme.pre.sub"
+runme_postsource_sub_defined_one="${defined_one}.runme.post.sub"
+declare -a runme_array
+runme_array=( foo bar )
+dump_all_variables "runme edition Sourced source_me"
+
+echo '=== Sourcing source_me again==='
+source "${runme_script_dir}/source_me"
+dump_all_variables "runme edition Sourced source_me again"
+
+

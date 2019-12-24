@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  defined_variables_script_dir=$(readlink -f $(dirname "${0}"))
+else
+  defined_variables_script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+source "${defined_variables_script_dir}/dump_functions"
+
+defined_one=1
+sub_defined_one="${defined_one}.sub"
+
+runme_one_defined_subone="${runme_one}.defined.sub"
+
+dump_all_variables 'defines_variables edition'
+

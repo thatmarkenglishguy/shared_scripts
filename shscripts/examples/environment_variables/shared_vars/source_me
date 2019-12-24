@@ -1,0 +1,20 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  source_script_dir=$(readlink -f $(dirname "${0}"))
+else
+  source_script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+source "${source_script_dir}/dump_functions"
+
+sourced_one=1
+sourced_sub_one="${sourced_one}.sub"
+sourced_predefined_sub_defined_one="${defined_one}.pre.sourced.sub"
+source "${source_script_dir}/defines_variables"
+sourced_postdefined_sub_defined_one="${defined_one}.post.sourced.sub"
+
+runme_one_sourced_subone="${runme_one}.sourced.sub"
+
+dump_all_variables 'sourcme edition'

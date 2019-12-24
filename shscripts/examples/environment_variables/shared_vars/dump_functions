@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+function dump_runme_variables() {
+  echo 'Variables defined in run_me'
+  echo "runme_one: '${runme_one}'"
+  echo "runme_subone: '${runme_subone}'"
+  echo "runme_presource_sub_defined_one: '${runme_presource_sub_defined_one}'"
+  echo "runme_postsource_sub_defined_one: '${runme_postsource_sub_defined_one}'"
+}
+
+function dump_sourceme_variables() {
+  echo "sourced_one: '${sourced_one}'"
+  echo "sourced_sub_one: '${sourced_sub_one}'"
+  echo "sourced_predefined_sub_defined_one: '${sourced_predefined_sub_defined_one}'"
+  echo "sourced_postdefined_sub_defined_one: '${sourced_postdefined_sub_defined_one}'"
+  echo "runme_one_sourced_subone: '${runme_one_sourced_subone}'"
+}
+
+function dump_defines_variables() {
+  echo "defined_one: '${defined_one}'"
+  echo "sub_defined_one: '${sub_defined_one}'"
+  echo "runme_one_defined_subone: '${runme_one_defined_subone}'"
+}
+
+function dump_all_variables() {
+  echo "---${1}---"
+  dump_sourceme_variables
+  dump_defines_variables
+  dump_runme_variables
+  echo
+}
+

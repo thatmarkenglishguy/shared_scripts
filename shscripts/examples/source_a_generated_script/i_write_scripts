@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+cat <<-"EOF"
+f()
+{
+  echo "When you say f, I say ${1}"
+}
+alias a='echo I is an alias'
+EOF
