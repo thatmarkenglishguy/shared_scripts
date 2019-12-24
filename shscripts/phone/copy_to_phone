@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+adb shell -e mkdir -p /storage/self/primary/stuff/transfer/mac
+adb push ~/fish/ /storage/self/primary/stuff/transfer/mac
+
+

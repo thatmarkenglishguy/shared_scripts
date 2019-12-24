@@ -1,0 +1,1274 @@
+#!/usr/bin/env sh
+mkdir -p ~/code/work/anaplan
+pushd ~/code/work/anaplan
+
+echo "Checking out 'git@github.anaplan.com:tshackell/p4-persistence-demo.git' in './peeps/tshackell'"
+mkdir -p './peeps/tshackell'
+pushd './peeps/tshackell'
+git clone 'git@github.anaplan.com:tshackell/p4-persistence-demo.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:tshackell/numbers-demo.git' in './peeps/tshackell'"
+mkdir -p './peeps/tshackell'
+pushd './peeps/tshackell'
+git clone 'git@github.anaplan.com:tshackell/numbers-demo.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:menglish/data-registry.git' in './peeps/menglish'"
+mkdir -p './peeps/menglish'
+pushd './peeps/menglish'
+git clone 'git@github.anaplan.com:menglish/data-registry.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:menglish/generic_java_factory.git' in './peeps/menglish'"
+mkdir -p './peeps/menglish'
+pushd './peeps/menglish'
+git clone 'git@github.anaplan.com:menglish/generic_java_factory.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:menglish/python_example.git' in './peeps/menglish'"
+mkdir -p './peeps/menglish'
+pushd './peeps/menglish'
+git clone 'git@github.anaplan.com:menglish/python_example.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:menglish/infrastructure.git' in './peeps/menglish'"
+mkdir -p './peeps/menglish'
+pushd './peeps/menglish'
+git clone 'git@github.anaplan.com:menglish/infrastructure.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:menglish/fish.git' in './peeps/menglish'"
+mkdir -p './peeps/menglish'
+pushd './peeps/menglish'
+git clone 'git@github.anaplan.com:menglish/fish.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:msollecito/multidimensional-datastructure' in './peeps/michele'"
+mkdir -p './peeps/michele'
+pushd './peeps/michele'
+git clone 'git@github.anaplan.com:msollecito/multidimensional-datastructure'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:msollecito/transformation-engine-poc' in './peeps/michele'"
+mkdir -p './peeps/michele'
+pushd './peeps/michele'
+git clone 'git@github.anaplan.com:msollecito/transformation-engine-poc'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:msollecito/poc-models-structure' in './peeps/michele'"
+mkdir -p './peeps/michele'
+pushd './peeps/michele'
+git clone 'git@github.anaplan.com:msollecito/poc-models-structure'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:sgreen/scripts.git' in './peeps/sgreen'"
+mkdir -p './peeps/sgreen'
+pushd './peeps/sgreen'
+git clone 'git@github.anaplan.com:sgreen/scripts.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:ngiles/terraform-ansible-demo.git' in './peeps/ngiles'"
+mkdir -p './peeps/ngiles'
+pushd './peeps/ngiles'
+git clone 'git@github.anaplan.com:ngiles/terraform-ansible-demo.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:bmorris/numbers-testbench.git' in './peeps/bmorris'"
+mkdir -p './peeps/bmorris'
+pushd './peeps/bmorris'
+git clone 'git@github.anaplan.com:bmorris/numbers-testbench.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:ewalmisley/investment-management-functions.git' in './peeps/ewalmisley'"
+mkdir -p './peeps/ewalmisley'
+pushd './peeps/ewalmisley'
+git clone 'git@github.anaplan.com:ewalmisley/investment-management-functions.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:ewalmisley/basic-terraform-with-aws' in './peeps/ewalmisley'"
+mkdir -p './peeps/ewalmisley'
+pushd './peeps/ewalmisley'
+git clone 'git@github.anaplan.com:ewalmisley/basic-terraform-with-aws'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:ddumitrache/zen.git' in './peeps/ddumitrache'"
+mkdir -p './peeps/ddumitrache'
+pushd './peeps/ddumitrache'
+git clone 'git@github.anaplan.com:ddumitrache/zen.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:cwebster/sprint-report.git' in './peeps/cwebster'"
+mkdir -p './peeps/cwebster'
+pushd './peeps/cwebster'
+git clone 'git@github.anaplan.com:cwebster/sprint-report.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pmccabe/ExposedFloat.git' in './peeps/pmccabe'"
+mkdir -p './peeps/pmccabe'
+pushd './peeps/pmccabe'
+git clone 'git@github.anaplan.com:pmccabe/ExposedFloat.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:training/gradle-training.git' in './training'"
+mkdir -p './training'
+pushd './training'
+git clone 'git@github.anaplan.com:training/gradle-training.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:engineering-productivity/anaplan-version.git' in './orgs/engineering-productivity'"
+mkdir -p './orgs/engineering-productivity'
+pushd './orgs/engineering-productivity'
+git clone 'git@github.anaplan.com:engineering-productivity/anaplan-version.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:devops/fml-repo.git' in './orgs/devops'"
+mkdir -p './orgs/devops'
+pushd './orgs/devops'
+git clone 'git@github.anaplan.com:devops/fml-repo.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:tools/coretainer.git' in './orgs/tools'"
+mkdir -p './orgs/tools'
+pushd './orgs/tools'
+git clone 'git@github.anaplan.com:tools/coretainer.git'
+popd
+echo
+#echo "Checking out 'git@github.anaplan.com:tools/local-tomcat.git' in './orgs/tools/graveyard'"
+#mkdir -p './orgs/tools/graveyard'
+#pushd './orgs/tools/graveyard'
+#git clone 'git@github.anaplan.com:tools/local-tomcat.git'
+#popd
+#echo
+echo "Checking out 'git@github.anaplan.com:tools/local-tomcat.git' in './orgs/tools'"
+mkdir -p './orgs/tools'
+pushd './orgs/tools'
+git clone 'git@github.anaplan.com:tools/local-tomcat.git'
+popd
+echo
+echo 'Skipping docker stack because it is massive...'
+echo
+#echo "Checking out 'git@github.anaplan.com:tools/docker-stack.git' in './orgs/tools'"
+#mkdir -p './orgs/tools'
+#pushd './orgs/tools'
+#git clone 'git@github.anaplan.com:tools/docker-stack.git'
+#popd
+#echo
+echo "Checking out 'git@github.anaplan.com:tools/large-array-tracking-agent.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:tools/large-array-tracking-agent.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/store-xml-analyser.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/store-xml-analyser.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/block-checksum-verifier.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/block-checksum-verifier.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/fml-runner.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/fml-runner.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/model-file-manipulation-scripts.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/model-file-manipulation-scripts.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/structure-analysis-tool.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/structure-analysis-tool.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/analyser.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/analyser.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/model-analysis-service.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/model-analysis-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/checksum-delta-analysis.git' in './orgs/model-analysis'"
+mkdir -p './orgs/model-analysis'
+pushd './orgs/model-analysis'
+git clone 'git@github.anaplan.com:model-analysis/checksum-delta-analysis.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-platform/anaplan-array-native.git' in './orgs/core-platform'"
+mkdir -p './orgs/core-platform'
+pushd './orgs/core-platform'
+git clone 'git@github.anaplan.com:core-platform/anaplan-array-native.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-client/core-client.git' in './orgs/core-client'"
+mkdir -p './orgs/core-client'
+pushd './orgs/core-client'
+git clone 'git@github.anaplan.com:core-client/core-client.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/data-registry-api-test-lib.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/data-registry-api-test-lib.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/data-registry.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/data-registry.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/identity.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/identity.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/data-schema.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/data-schema.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/proto-type.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/proto-type.git'
+popd
+echo
+#echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/javacode-transform-tool.git' in './orgs/pfour-dataregistry'"
+#mkdir -p './orgs/pfour-dataregistry'
+#pushd './orgs/pfour-dataregistry'
+#git clone 'git@github.anaplan.com:pfour-dataregistry/javacode-transform-tool.git'
+#popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/data-format.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/data-format.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/events-test-lib.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/events-test-lib.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/transactions.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/transactions.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/events.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/events.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-dataregistry/data-registry-api.git' in './orgs/pfour-dataregistry'"
+mkdir -p './orgs/pfour-dataregistry'
+pushd './orgs/pfour-dataregistry'
+git clone 'git@github.anaplan.com:pfour-dataregistry/data-registry-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-subscription-service/notification-system.git' in './orgs/pfour-subscription-service'"
+mkdir -p './orgs/pfour-subscription-service'
+pushd './orgs/pfour-subscription-service'
+git clone 'git@github.anaplan.com:pfour-subscription-service/notification-system.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-subscription-service/read-side-tests.git' in './orgs/pfour-subscription-service'"
+mkdir -p './orgs/pfour-subscription-service'
+pushd './orgs/pfour-subscription-service'
+git clone 'git@github.anaplan.com:pfour-subscription-service/read-side-tests.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-subscription-service/subscription-service.git' in './orgs/pfour-subscription-service'"
+mkdir -p './orgs/pfour-subscription-service'
+pushd './orgs/pfour-subscription-service'
+git clone 'git@github.anaplan.com:pfour-subscription-service/subscription-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-subscription-service/subscription-service-client.git' in './orgs/pfour-subscription-service'"
+mkdir -p './orgs/pfour-subscription-service'
+pushd './orgs/pfour-subscription-service'
+git clone 'git@github.anaplan.com:pfour-subscription-service/subscription-service-client.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-subscription-service/subscription-service-api.git' in './orgs/pfour-subscription-service'"
+mkdir -p './orgs/pfour-subscription-service'
+pushd './orgs/pfour-subscription-service'
+git clone 'git@github.anaplan.com:pfour-subscription-service/subscription-service-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:arcus/anaplan-microservice.git' in './orgs/arcus'"
+mkdir -p './orgs/arcus'
+pushd './orgs/arcus'
+git clone 'git@github.anaplan.com:arcus/anaplan-microservice.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:arcus/jenkins_pipeline.git' in './orgs/arcus'"
+mkdir -p './orgs/arcus'
+pushd './orgs/arcus'
+git clone 'git@github.anaplan.com:arcus/jenkins_pipeline.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:arcus/temp_kubecfg.git' in './orgs/arcus'"
+mkdir -p './orgs/arcus'
+pushd './orgs/arcus'
+git clone 'git@github.anaplan.com:arcus/temp_kubecfg.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:extensions/cda-core.git' in './orgs/extensions'"
+mkdir -p './orgs/extensions'
+pushd './orgs/extensions'
+git clone 'git@github.anaplan.com:extensions/cda-core.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:extensions/anaplan-addins-excel.git' in './orgs/extensions'"
+mkdir -p './orgs/extensions'
+pushd './orgs/extensions'
+git clone 'git@github.anaplan.com:extensions/anaplan-addins-excel.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:extensions/cda-commons.git' in './orgs/extensions'"
+mkdir -p './orgs/extensions'
+pushd './orgs/extensions'
+git clone 'git@github.anaplan.com:extensions/cda-commons.git'
+popd
+echo
+echo "Checking out 'git@fmlgitlab:fml/fml-infrastructure.git' in './orgs/fmlgitlab'"
+mkdir -p './orgs/fmlgitlab'
+pushd './orgs/fmlgitlab'
+git clone 'git@fmlgitlab:fml/fml-infrastructure.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-integration-testing/anaplan-functional-tests.git' in './orgs/core-integration-testing'"
+mkdir -p './orgs/core-integration-testing'
+pushd './orgs/core-integration-testing'
+git clone 'git@github.anaplan.com:core-integration-testing/anaplan-functional-tests.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-data-service/data-service-api.git' in './orgs/pfour-data-service'"
+mkdir -p './orgs/pfour-data-service'
+pushd './orgs/pfour-data-service'
+git clone 'git@github.anaplan.com:pfour-data-service/data-service-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-data-service/data-service-test.git' in './orgs/pfour-data-service'"
+mkdir -p './orgs/pfour-data-service'
+pushd './orgs/pfour-data-service'
+git clone 'git@github.anaplan.com:pfour-data-service/data-service-test.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-data-service/data-service-client.git' in './orgs/pfour-data-service'"
+mkdir -p './orgs/pfour-data-service'
+pushd './orgs/pfour-data-service'
+git clone 'git@github.anaplan.com:pfour-data-service/data-service-client.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-data-service/data-service.git' in './orgs/pfour-data-service'"
+mkdir -p './orgs/pfour-data-service'
+pushd './orgs/pfour-data-service'
+git clone 'git@github.anaplan.com:pfour-data-service/data-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-data-service/data-service-bootstrap.git' in './orgs/pfour-data-service'"
+mkdir -p './orgs/pfour-data-service'
+pushd './orgs/pfour-data-service'
+git clone 'git@github.anaplan.com:pfour-data-service/data-service-bootstrap.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/querysvc-np.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/querysvc-np.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/spike-contract-testing-intellij.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/spike-contract-testing-intellij.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/calculator.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/calculator.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/darwin-calc-events-defunct.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/darwin-calc-events-defunct.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/data-registry-adaptor.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/data-registry-adaptor.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/ide-autoformatting-config.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/ide-autoformatting-config.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/p3formula.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/p3formula.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/spike-contract-testing-compostest.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/spike-contract-testing-compostest.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/calculator-api.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/calculator-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/gridui-np.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/gridui-np.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/calculator-impl.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/calculator-impl.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/spike-contract-testing-junit5.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/spike-contract-testing-junit5.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-calc/spike-contract-testing-test-helpers.git' in './orgs/pfour-calc'"
+mkdir -p './orgs/pfour-calc'
+pushd './orgs/pfour-calc'
+git clone 'git@github.anaplan.com:pfour-calc/spike-contract-testing-test-helpers.git'
+popd
+echo
+echo 'Skipping ./orgs/persistence because it is old and massive.'
+echo
+#echo "Checking out 'git@github.anaplan.com:persistence/cassandra-vagrant.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/cassandra-vagrant.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/citrus-example-kafka.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/citrus-example-kafka.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/event-storage-writer.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/event-storage-writer.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/datastax-docker.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/datastax-docker.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/test-event-generator.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/test-event-generator.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/event-storage-common.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/event-storage-common.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/locator-cli.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/locator-cli.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/cassandra-demo.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/cassandra-demo.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/openvpn-installer.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/openvpn-installer.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/persistence-service-cookbook.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/persistence-service-cookbook.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/example-store-mysql.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/example-store-mysql.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/registrar.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/registrar.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/store-provisioner.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/store-provisioner.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/infra-node-vagrant.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/infra-node-vagrant.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/example-service-sql-springboot.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/example-service-sql-springboot.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/datastax-helm.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/datastax-helm.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/jenkins-installer.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/jenkins-installer.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/nfs-installer.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/nfs-installer.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/datastax-opscenter-docker.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/datastax-opscenter-docker.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/event-storage-query-service.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/event-storage-query-service.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/persistence-service.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/persistence-service.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/example-store-managing-service.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/example-store-managing-service.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/tf_k8s.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/tf_k8s.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/compute-node-vagrant.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/compute-node-vagrant.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/event-bus-client.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/event-bus-client.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/dashboard-config-service-fork.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/dashboard-config-service-fork.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/persistence-service-maven-wrapper.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/persistence-service-maven-wrapper.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/locator.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/locator.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:persistence/file-store-mount-tool.git' in './orgs/persistence'"
+#mkdir -p './orgs/persistence'
+#pushd './orgs/persistence'
+#git clone 'git@github.anaplan.com:persistence/file-store-mount-tool.git'
+#popd
+#echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-nexus.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-nexus.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-job-runner.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-job-runner.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-queue-client.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-queue-client.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/environment-setup.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/environment-setup.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-orchestrator.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-orchestrator.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/poc-fml-common.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/poc-fml-common.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-runner.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-runner.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-security-resources.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-security-resources.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-mock-fml-runner.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-mock-fml-runner.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-create-models-csv.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-create-models-csv.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/job-runner.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/job-runner.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-infrastructure.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-infrastructure.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/python-example-library.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/python-example-library.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/poc-fml-parent.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/poc-fml-parent.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/aws-scripts.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/aws-scripts.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/copy-model-store.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/copy-model-store.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/poc-fml-specific.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/poc-fml-specific.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/python-maven-plugin.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/python-maven-plugin.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:fml/fml-output-storage.git' in './orgs/fml'"
+mkdir -p './orgs/fml'
+pushd './orgs/fml'
+git clone 'git@github.anaplan.com:fml/fml-output-storage.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-server/store-api.git' in './orgs/core-server'"
+mkdir -p './orgs/core-server'
+pushd './orgs/core-server'
+git clone 'git@github.anaplan.com:core-server/store-api.git'
+popd
+echo
+echo 'OK THIS ONE IS GOING TO BE LARRRRRRGE.'
+echo "Checking out 'git@github.anaplan.com:core-server/anaplan.git' in './orgs/core-server'"
+mkdir -p './orgs/core-server'
+pushd './orgs/core-server'
+git clone 'git@github.anaplan.com:core-server/anaplan.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-server/resources.git' in './orgs/core-server'"
+mkdir -p './orgs/core-server'
+pushd './orgs/core-server'
+git clone 'git@github.anaplan.com:core-server/resources.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-server/mock-sdp-client.git' in './orgs/core-server'"
+mkdir -p './orgs/core-server'
+pushd './orgs/core-server'
+git clone 'git@github.anaplan.com:core-server/mock-sdp-client.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-server/mock-sdp-service.git' in './orgs/core-server'"
+mkdir -p './orgs/core-server'
+pushd './orgs/core-server'
+git clone 'git@github.anaplan.com:core-server/mock-sdp-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:core-server/anaplan-webapp.git' in './orgs/core-server'"
+mkdir -p './orgs/core-server'
+pushd './orgs/core-server'
+git clone 'git@github.anaplan.com:core-server/anaplan-webapp.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-reactive-messaging/reactive-messaging-perf-testing.git' in './orgs/pfour-reactive-messaging'"
+mkdir -p './orgs/pfour-reactive-messaging'
+pushd './orgs/pfour-reactive-messaging'
+git clone 'git@github.anaplan.com:pfour-reactive-messaging/reactive-messaging-perf-testing.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-reactive-messaging/codec-api.git' in './orgs/pfour-reactive-messaging'"
+mkdir -p './orgs/pfour-reactive-messaging'
+pushd './orgs/pfour-reactive-messaging'
+git clone 'git@github.anaplan.com:pfour-reactive-messaging/codec-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-reactive-messaging/proto-codec.git' in './orgs/pfour-reactive-messaging'"
+mkdir -p './orgs/pfour-reactive-messaging'
+pushd './orgs/pfour-reactive-messaging'
+git clone 'git@github.anaplan.com:pfour-reactive-messaging/proto-codec.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-reactive-messaging/reactive-messaging-example.git' in './orgs/pfour-reactive-messaging'"
+mkdir -p './orgs/pfour-reactive-messaging'
+pushd './orgs/pfour-reactive-messaging'
+git clone 'git@github.anaplan.com:pfour-reactive-messaging/reactive-messaging-example.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-reactive-messaging/reactive-messaging.git' in './orgs/pfour-reactive-messaging'"
+mkdir -p './orgs/pfour-reactive-messaging'
+pushd './orgs/pfour-reactive-messaging'
+git clone 'git@github.anaplan.com:pfour-reactive-messaging/reactive-messaging.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-gradle-example/grpc-client.git' in './orgs/pfour-gradle-example'"
+mkdir -p './orgs/pfour-gradle-example'
+pushd './orgs/pfour-gradle-example'
+git clone 'git@github.anaplan.com:pfour-gradle-example/grpc-client.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-gradle-example/grpc-api.git' in './orgs/pfour-gradle-example'"
+mkdir -p './orgs/pfour-gradle-example'
+pushd './orgs/pfour-gradle-example'
+git clone 'git@github.anaplan.com:pfour-gradle-example/grpc-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-gradle-example/library.git' in './orgs/pfour-gradle-example'"
+mkdir -p './orgs/pfour-gradle-example'
+pushd './orgs/pfour-gradle-example'
+git clone 'git@github.anaplan.com:pfour-gradle-example/library.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-gradle-example/grpc-server.git' in './orgs/pfour-gradle-example'"
+mkdir -p './orgs/pfour-gradle-example'
+pushd './orgs/pfour-gradle-example'
+git clone 'git@github.anaplan.com:pfour-gradle-example/grpc-server.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-logback-example' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-logback-example'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-log4j2-example' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-log4j2-example'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-slf4j-example.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-slf4j-example.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/fluentd-aggregator.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/fluentd-aggregator.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-logback.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-logback.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-perf-tests.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-perf-tests.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/slf4j-analog-example.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/slf4j-analog-example.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/fluentd-daemonset.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/fluentd-daemonset.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-log4j2.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-log4j2.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/slf4j-analog.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/slf4j-analog.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-fluentd.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-fluentd.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-slf4j.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-slf4j.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-fluentd-example.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-fluentd-example.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-test-util.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-test-util.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:logging/analog-grpc-logger.git' in './orgs/logging'"
+mkdir -p './orgs/logging'
+pushd './orgs/logging'
+git clone 'git@github.anaplan.com:logging/analog-grpc-logger.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/command-action-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/command-action-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/omnibus.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/omnibus.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/revision-tagging-service.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/revision-tagging-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/command-handler-service.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/command-handler-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/calculator.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/calculator.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/data-registry.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/data-registry.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/event-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/event-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/data-action-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/data-action-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/web-ui.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/web-ui.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/core-data-actions.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/core-data-actions.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/dataspace-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/dataspace-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/web-endpoint.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/web-endpoint.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/darwin-naming-service-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/darwin-naming-service-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/subscription-service.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/subscription-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/command-events.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/command-events.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/dataspace.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/dataspace.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/data-bus-listener.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/data-bus-listener.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/core-data-events.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/core-data-events.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/command-actions.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/command-actions.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/darwin-naming-service.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/darwin-naming-service.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/darwin-identity.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/darwin-identity.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/command-definition-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/command-definition-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/revision-tagging-service-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/revision-tagging-service-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/data-registry-api.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/data-registry-api.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:darwin-demonstrator/darwin-naming-service-events.git' in './orgs/darwin-demonstrator'"
+mkdir -p './orgs/darwin-demonstrator'
+pushd './orgs/darwin-demonstrator'
+git clone 'git@github.anaplan.com:darwin-demonstrator/darwin-naming-service-events.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-pipeline/platform-smoke-test.git' in './orgs/pfour-pipeline'"
+mkdir -p './orgs/pfour-pipeline'
+pushd './orgs/pfour-pipeline'
+git clone 'git@github.anaplan.com:pfour-pipeline/platform-smoke-test.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-pipeline/platform-deploy.git' in './orgs/pfour-pipeline'"
+mkdir -p './orgs/pfour-pipeline'
+pushd './orgs/pfour-pipeline'
+git clone 'git@github.anaplan.com:pfour-pipeline/platform-deploy.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-pipeline/platform-full-test.git' in './orgs/pfour-pipeline'"
+mkdir -p './orgs/pfour-pipeline'
+pushd './orgs/pfour-pipeline'
+git clone 'git@github.anaplan.com:pfour-pipeline/platform-full-test.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-pipeline/platform-installer.git' in './orgs/pfour-pipeline'"
+mkdir -p './orgs/pfour-pipeline'
+pushd './orgs/pfour-pipeline'
+git clone 'git@github.anaplan.com:pfour-pipeline/platform-installer.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-pipeline/platform-installer-updater.git' in './orgs/pfour-pipeline'"
+mkdir -p './orgs/pfour-pipeline'
+pushd './orgs/pfour-pipeline'
+git clone 'git@github.anaplan.com:pfour-pipeline/platform-installer-updater.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:pfour-pipeline/gradle-helm-plugin.git' in './orgs/pfour-pipeline'"
+mkdir -p './orgs/pfour-pipeline'
+pushd './orgs/pfour-pipeline'
+git clone 'git@github.anaplan.com:pfour-pipeline/gradle-helm-plugin.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:london-hackathon/spasm.git' in './hackathon/2017'"
+mkdir -p './hackathon/2017'
+pushd './hackathon/2017'
+git clone 'git@github.anaplan.com:london-hackathon/spasm.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:global-eng-day-18/jiraplan.git' in './hackathon/2018'"
+mkdir -p './hackathon/2018'
+pushd './hackathon/2018'
+git clone 'git@github.anaplan.com:global-eng-day-18/jiraplan.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:global-eng-day-18/python3.git' in './hackathon/2018/zen'"
+mkdir -p './hackathon/2018/zen'
+pushd './hackathon/2018/zen'
+git clone 'git@github.anaplan.com:global-eng-day-18/python3.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:global-eng-day-18/zen.git' in './hackathon/2018/zen'"
+mkdir -p './hackathon/2018/zen'
+pushd './hackathon/2018/zen'
+git clone 'git@github.anaplan.com:global-eng-day-18/zen.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:global-eng-day-18/pfour-zen-configuration.git' in './hackathon/2018/zen'"
+mkdir -p './hackathon/2018/zen'
+pushd './hackathon/2018/zen'
+git clone 'git@github.anaplan.com:global-eng-day-18/pfour-zen-configuration.git'
+popd
+echo
+echo 'Skipping zen_hacked because it probably does not have a git counterpart yet...'
+echo
+#echo "Checking out 'git@github.anaplan.com:global-eng-day-18/zen.git' in './hackathon/2018/zen_hacked'"
+#mkdir -p './hackathon/2018/zen_hacked'
+#pushd './hackathon/2018/zen_hacked'
+#git clone 'git@github.anaplan.com:global-eng-day-18/zen.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:global-eng-day-18/python3.git' in './hackathon/2018/zen_hacked'"
+#mkdir -p './hackathon/2018/zen_hacked'
+#pushd './hackathon/2018/zen_hacked'
+#git clone 'git@github.anaplan.com:global-eng-day-18/python3.git'
+#popd
+#echo
+#echo "Checking out 'git@github.anaplan.com:global-eng-day-18/pfour-zen-configuration.git' in './hackathon/2018/zen_hacked'"
+#mkdir -p './hackathon/2018/zen_hacked'
+#pushd './hackathon/2018/zen_hacked'
+#git clone 'git@github.anaplan.com:global-eng-day-18/pfour-zen-configuration.git'
+#popd
+#echo
+echo "Checking out 'git@github.anaplan.com:global-eng-day-18/jiraplan.git' in './hackathon/2018'"
+mkdir -p './hackathon/2018'
+pushd './hackathon/2018'
+git clone 'git@github.anaplan.com:global-eng-day-18/jiraplan.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:london-recruitment/arrays-pairing-documentation.git' in './interview'"
+mkdir -p './interview'
+pushd './interview'
+git clone 'git@github.anaplan.com:london-recruitment/arrays-pairing-documentation.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:london-recruitment/interview-pre-test-csharp.git' in './interview'"
+mkdir -p './interview'
+pushd './interview'
+git clone 'git@github.anaplan.com:london-recruitment/interview-pre-test-csharp.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:london-recruitment/arrays-pairing-csharp.git' in './interview'"
+mkdir -p './interview'
+pushd './interview'
+git clone 'git@github.anaplan.com:london-recruitment/arrays-pairing-csharp.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:london-recruitment/arrays-pairing.git' in './interview'"
+mkdir -p './interview'
+pushd './interview'
+git clone 'git@github.anaplan.com:london-recruitment/arrays-pairing.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/analysis-analyser.git' in './fml'"
+mkdir -p './fml'
+pushd './fml'
+git clone 'git@github.anaplan.com:model-analysis/analysis-analyser.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:model-analysis/calc-196-function-analyser.git' in './fml'"
+mkdir -p './fml'
+pushd './fml'
+git clone 'git@github.anaplan.com:model-analysis/calc-196-function-analyser.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:training/kubernetes-fundamentals.git' in './kubernetes/adam_course_20180725'"
+mkdir -p './kubernetes/adam_course_20180725'
+pushd './kubernetes/adam_course_20180725'
+git clone 'git@github.anaplan.com:training/kubernetes-fundamentals.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:london-guilds/gpu-parallel-kernels.git' in './guilds/gpu'"
+mkdir -p './guilds/gpu'
+pushd './guilds/gpu'
+git clone 'git@github.anaplan.com:london-guilds/gpu-parallel-kernels.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:coding-challenges/micro' in './guilds/jvm'"
+mkdir -p './guilds/jvm'
+pushd './guilds/jvm'
+git clone 'git@github.anaplan.com:coding-challenges/micro'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:menglish/antlrplay.git' in './guilds/jvm'"
+mkdir -p './guilds/jvm'
+pushd './guilds/jvm'
+git clone 'git@github.anaplan.com:menglish/antlrplay.git'
+popd
+echo
+echo "Checking out 'git@github.com:antlr/grammars-v4.git' in './guilds/jvm/thirdparty'"
+mkdir -p './guilds/jvm/thirdparty'
+pushd './guilds/jvm/thirdparty'
+git clone 'git@github.com:antlr/grammars-v4.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:menglish/remote_graph.git' in './guilds/concurrency/02_Futures'"
+mkdir -p './guilds/concurrency/02_Futures'
+pushd './guilds/concurrency/02_Futures'
+git clone 'git@github.anaplan.com:menglish/remote_graph.git'
+popd
+echo
+echo "Checking out 'git@github.anaplan.com:bjaderberg/futures-homework.git' in './guilds/concurrency/01_Futures/paired_with_ben'"
+mkdir -p './guilds/concurrency/01_Futures/paired_with_ben'
+pushd './guilds/concurrency/01_Futures/paired_with_ben'
+git clone 'git@github.anaplan.com:bjaderberg/futures-homework.git'
+popd
+echo
+
+popd
+
