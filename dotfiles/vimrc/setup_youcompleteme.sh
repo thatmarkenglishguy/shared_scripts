@@ -34,7 +34,7 @@ function install_llvm() {
       else
         brew upgrade llvm
       fi
-    
+
       llvm_location=$(brew --prefix llvm)
       if [ -z "${llvm_location}" ]
       then
@@ -74,6 +74,7 @@ function install_python() {
     case "${platform}" in
       darwin)
         brew install python3
+        brew link python
         ;;
       msys)
         pacman -Su --noconfirm python3
@@ -86,11 +87,13 @@ function install_python() {
 
     if ! which python3 2>&1 1>/dev/null
     then
-      echo 'Failed to install python3 !.'
+      echo 'Failed to install python3 !'
       exit 1
     fi
   fi
+}
 
+function detect_python() {
   case "${platform}" in
     darwin)
       # Todo - I don't think we need python3_location.
@@ -142,13 +145,34 @@ function install_cmake() {
 YCM_DIR="${HOME}/.vim/bundle/YouCompleteMe"
 YCM_THIRDPARTY_DIR="${YCM_DIR}/third_party/ycmd"
 
+function mend_ycm() {
+  if [ -d "${YCM_THIRDPARTY_DIR}" ]
+  then
+    pushd "${YCM_THIRDPARTY_DIR}" >/dev/null
+    git submodule sync --recursive
+    git submodule update --init --recursive
+    popd >/dev/null
+  else
+    echo "YCM_THIRDPARTY_DIR '${YCM_THIRDPARTY_DIR}' not found" >&2
+  fi
+}
+
 function build_ycm_core() {
+  local system_clang_path
   echo 'Setting up build directories.'
   rm -rf ~/stuff/builds/ycm/ycm_build
   mkdir -p ~/stuff/builds/ycm/ycm_build
   pushd ~/stuff/builds/ycm/ycm_build
 
-  cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+  case "${platform}" in
+    msys)
+      system_clang_path=$(pacman -Ql mingw-w64-x86_64-clang | grep 'libclang.dll$' | cut -d' ' -f2)
+      cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" -DEXTERNAL_LIBCLANG_PATH="${system_clang_path}" "${YCM_THIRDPARTY_DIR}/cpp"
+      ;;
+    *)
+      cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+      ;;
+  esac
 
   echo 'Building the ycm core...'
   cmake --build . --target ycm_core --config Release
@@ -240,10 +264,13 @@ function install_rust() {
     echo 'Installing rust...'
     case "${platform}" in
       darwin)
-        echo 'TODO - work out how to automate rust installation on Mac...'
+        curl https://sh.rustup.rs -sSf | sh
         ;;
       msys)
         npm -Su mingw64/mingw-w64-x86_64-rust
+        ;;
+      *)
+        echo "Don't know how to install rust on platform '${platform}'"
         ;;
     esac
   fi
@@ -294,8 +321,12 @@ function install_intercept_build() {
 install_llvm
 install_python
 install_cmake
+#set -x
+detect_python
+mend_ycm
 build_ycm_core
 build_ycm_regex
+#set +x
 install_node
 verify_java
 install_rust
