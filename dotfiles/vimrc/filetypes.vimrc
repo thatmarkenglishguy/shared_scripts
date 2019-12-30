@@ -14,6 +14,7 @@ Plug 'dylon/vim-antlr'
 au BufRead,BufNewFile *.g set filetype=antlr3
 au BufRead,BufNewFile *.g4 set filetype=antlr4
 
+" Elixir
 augroup elixir
   autocmd!
   autocmd FileType elixir noremap <F5> :!clear & mix test<CR>
@@ -21,16 +22,19 @@ augroup elixir
 augroup END
 
 
+" Python
 augroup python
   autocmd!
   autocmd FileType python noremap <F5> :!clear & python3 %<cr>
 augroup END
 
+" Java
 augroup java
   autocmd!
   autocmd FileType java noremap <F5> :!clear & gradle test %<cr>
 augroup END
 
+" Generic functions
 :function! SurroundLineWithDelimiter(delimiter)
 :  call setline('.', a:delimiter . getline('.') . a:delimiter)
 :endfunction
@@ -46,6 +50,7 @@ augroup END
 : endif
 :endfunction
 
+" Markdown
 augroup markdown
   autocmd!
   " Surround from current location
@@ -58,3 +63,8 @@ augroup markdown
   autocmd FileType markdown nnoremap <leader><leader>** :call SurroundLineWithDelimiter('**')<cr>
 augroup END
 
+" Rust
+augroup Rust
+  autocmd!
+  autocmd FileType Rust noremap <F5> :!clear & cargo run<cr>
+augroup END
