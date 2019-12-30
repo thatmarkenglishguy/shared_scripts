@@ -39,7 +39,13 @@ set rtp+=~/.fzf
 " endif
 set hidden
 
-let g:LanguageClient_serverCommands = {
-    \ 'rust': ['~/.cargo/bin/rustup', 'run', 'stable', 'rls'],
-    \ }
+if executable('rls')
+  let g:LanguageClient_serverCommands = {
+      \ 'rust': ['rls'],
+      \ }
+else
+  let g:LanguageClient_serverCommands = {
+      \ 'rust': ['~/.cargo/bin/rustup', 'run', 'stable', 'rls'],
+      \ }
+endif
 
