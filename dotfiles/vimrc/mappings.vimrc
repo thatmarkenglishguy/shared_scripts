@@ -26,6 +26,21 @@ cabbr <expr> %% expand('%:p:h')
 :nnoremap <leader>v :YcmCompleter GoToDefinition<cr>
 :nnoremap <leader>f :YcmCompleter FixIt<cr>
 :nnoremap <leader>i :YcmCompleter GoToInclude<cr>
+:nnoremap <F2> :YcmCompleter RefactorRename<Space>
+" This seems to get Alt-Enter working on Mac
+set <a-cr>=
+:nnoremap <a-cr> :YcmCompleter FixIt<cr>
+
+:command! -nargs=* RunCurrentWithPreviousVarArgs call ClearScreenRunExternalCommandWithPreviousVarArgs(expand('%:p'), <f-args>)
+:command! -nargs=* RunCurrentClearPreviousVarArgs call ClearPreviousClearScreenRunExternalCommandWithVarArgs(expand('%:p'), <f-args>)
+:nnoremap <C-F5> :RunCurrentWithPreviousVarArgs<cr>
+:nnoremap <C-F5><Space> :RunCurrentClearPreviousVarArgs<Space>
+
+" :command! Yay  echom 'Yay ' . <f-args>
+" :command! -nargs=* Yay call RunCommandWithPreviousArgs('!' . expand('%:p'), <f-args>)
+
+
+"nnoremap <C-X> :echom "hi"<cr>
 
 " Identify the syntax highlighting group used at the cursor
 " http://vim.wikia.com/wiki/Identify_the_syntax_highlighting_group_used_at_the_cursor

@@ -66,5 +66,23 @@ augroup END
 " Rust
 augroup Rust
   autocmd!
-  autocmd FileType Rust noremap <F5> :!clear & cargo run<cr>
+  " This overrides the YouCompleteMe defaults in mappings.vimrc which are
+  " based on IntelliJ.
+  " These mappings are based on Visual Studio Code.
+  " On Mac, Ctrl+Function key not supported in iterm2 by default in older
+  " versions.
+  " Preferences -> <Your Profile> -> Keys -> Presets click 'xterm Defaults'
+  " https://apple.stackexchange.com/questions/281033/sending-ctrlfunction-key-on-iterm2
+  " autocmd FileType Rust noremap <C-F5> :!clear & cargo run<cr>
+  " autocmd FileType Rust noremap <C-F5><Space> :!clear & cargo run<Space>
+  autocmd FileType Rust command! -nargs=* RunCargoWithPreviousArgs call ClearScreenRunExternalCommandWithPreviousVarArgs('cargo run', <f-args>)
+  autocmd FileType Rust command! -nargs=* RunCargoClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandWithVarArgs('cargo run', <f-args>)
+  autocmd FileType Rust noremap <C-F5> :RunCargoWithPreviousArgs<cr>
+  autocmd FileType Rust noremap <C-F5><Space> :RunCargoClearPreviousArgs<Space>
+
+
+"  autocmd FileType Rust noremap <C-S-F5> :!clear & cargo run<Space>
+  autocmd FileType Rust noremap <leader>b :!clear & cargo check<cr>
+  autocmd FileType Rust noremap <F12> :YcmCompleter GoToDefinition<cr>
 augroup END
+
