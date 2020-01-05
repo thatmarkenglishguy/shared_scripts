@@ -16,10 +16,10 @@ Plug 'rust-lang/rust.vim'
 "Plug 'prabirshrestha/vim-lsp'
 
 " This looks like the real deal.
-Plug 'autozimu/LanguageClient-neovim', {
-    \ 'branch': 'next',
-    \ 'do': 'bash install.sh',
-    \ }
+" Plug 'autozimu/LanguageClient-neovim', {
+"     \ 'branch': 'next',
+"     \ 'do': 'bash install.sh',
+"     \ }
 Plug 'junegunn/fzf.vim'
 
 call plug#end()
@@ -39,13 +39,13 @@ set rtp+=~/.fzf
 " endif
 set hidden
 
-if executable('rls')
-  let g:LanguageClient_serverCommands = {
-      \ 'rust': ['rls'],
-      \ }
-else
-  let g:LanguageClient_serverCommands = {
-      \ 'rust': ['~/.cargo/bin/rustup', 'run', 'stable', 'rls'],
-      \ }
-endif
+" if executable('rls')
+"   let g:LanguageClient_serverCommands = {
+"       \ 'rust': ['rls'],
+"       \ }
+" else
+"   let g:LanguageClient_serverCommands = {
+"       \ 'rust': ['~/.cargo/bin/rustup', 'run', 'stable', 'rls'],
+"       \ }
+" endif
 
