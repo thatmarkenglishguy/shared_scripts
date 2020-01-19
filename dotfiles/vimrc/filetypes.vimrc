@@ -63,26 +63,36 @@ augroup markdown
   autocmd FileType markdown nnoremap <leader><leader>** :call SurroundLineWithDelimiter('**')<cr>
 augroup END
 
+"" Example command and mapping
+":command! -nargs=* ExecuteEchoPwd call ClearScreenRunExternalCommandHereWithPreviousVarArgs('pwd')
+":nnoremap <C-X> :ExecuteEchoPwd<cr>
+
 " Rust
 augroup Rust
   autocmd!
   " This overrides the YouCompleteMe defaults in mappings.vimrc which are
   " based on IntelliJ.
-  " These mappings are based on Visual Studio Code.
+  " These mappings are mostly based on Visual Studio Code (increasingly
+  " prefering Windows/Linux layout over Mac)..
   " On Mac, Ctrl+Function key not supported in iterm2 by default in older
   " versions.
   " Preferences -> <Your Profile> -> Keys -> Presets click 'xterm Defaults'
   " https://apple.stackexchange.com/questions/281033/sending-ctrlfunction-key-on-iterm2
-  " autocmd FileType Rust noremap <C-F5> :!clear & cargo run<cr>
-  " autocmd FileType Rust noremap <C-F5><Space> :!clear & cargo run<Space>
-  autocmd FileType Rust command! -nargs=* RunCargoWithPreviousArgs call ClearScreenRunExternalCommandWithPreviousVarArgs('cargo run', <f-args>)
-  autocmd FileType Rust command! -nargs=* RunCargoClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandWithVarArgs('cargo run', <f-args>)
-  autocmd FileType Rust noremap <C-F5> :RunCargoWithPreviousArgs<cr>
-  autocmd FileType Rust noremap <C-F5><Space> :RunCargoClearPreviousArgs<Space>
+  autocmd FileType Rust command! -nargs=* CargoRunWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo run', <f-args>)
+  autocmd FileType Rust command! -nargs=* CargoRunClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo run', <f-args>)
+  autocmd FileType Rust noremap <C-F5> :CargoRunWithPreviousArgs<cr>
+  autocmd FileType Rust noremap <C-F5><Space> :CargoRunClearPreviousArgs<Space>
 
+  autocmd FileType Rust command! -nargs=* CargoCheckWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo check', <f-args>)
+  autocmd FileType Rust command! -nargs=* CargoCheckClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo check', <f-args>)
+  autocmd FileType Rust noremap <leader>b :CargoCheckWithPreviousArgs<cr>
+  autocmd FileType Rust noremap <leader>b<Space> :CargoCheckClearPreviousArgs<Space>
 
-"  autocmd FileType Rust noremap <C-S-F5> :!clear & cargo run<Space>
-  autocmd FileType Rust noremap <leader>b :!clear & cargo check<cr>
+  autocmd FileType Rust command! -nargs=* CargoTestWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo test', <f-args>)
+  autocmd FileType Rust command! -nargs=* CargoTestClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo test', <f-args>)
+  autocmd FileType Rust noremap <leader>t :CargoTestWithPreviousArgs<cr>
+  autocmd FileType Rust noremap <leader>t<Space> :CargoTestClearPreviousArgs<Space>
+
   autocmd FileType Rust noremap <F12> :YcmCompleter GoToDefinition<cr>
 augroup END
 
