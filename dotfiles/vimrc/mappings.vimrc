@@ -27,9 +27,23 @@ cabbr <expr> %% expand('%:p:h')
 :nnoremap <leader>f :YcmCompleter FixIt<cr>
 :nnoremap <leader>i :YcmCompleter GoToInclude<cr>
 :nnoremap <F2> :YcmCompleter RefactorRename<Space>
+" Note, C-k in Insert mode will let you see the key code.
+set <S-F6>=[1;2Q
+" On Mac, open Keyboard/Shortcuts/Keyboard and turn off all the F key
+" shortcuts, *especially* F8, and F5
+
+" F8 because that's what VSCode uses on Windows and Linux and the Mac mappings
+" are too difficult to emulate.
+nnoremap <C-F8> :call ToggleLocationList()<cr>
+nnoremap <F8> :lne<cr>
+nnoremap <S-F8> :lN<cr>
+" In VSCode show problems is Shift-Cmd-M
+"
 " This seems to get Alt-Enter working on Mac
-set <a-cr>=
-:nnoremap <a-cr> :YcmCompleter FixIt<cr>
+"  However, subsequently changing left-Alt in Iterm2 disables Alt in general, and totally breaks the
+"  escape key, so we've turned it off.
+" set <a-cr>=
+" :nnoremap <a-cr> :YcmCompleter FixIt<cr>
 
 :command! -nargs=* RunCurrentWithPreviousVarArgs call ClearScreenRunExternalCommandWithPreviousVarArgs(expand('%:p'), <f-args>)
 :command! -nargs=* RunCurrentClearPreviousVarArgs call ClearPreviousClearScreenRunExternalCommandWithVarArgs(expand('%:p'), <f-args>)
@@ -52,4 +66,3 @@ map <F10> :echo "hi<"
 \ . "> lo<"
 \ . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name")
 \. ">"<CR>
-
