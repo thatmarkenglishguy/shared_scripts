@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 
-on_mac=0
-os_name=$(uname -s)
-if [ "${os_name}" == 'Darwin' ]
-then
-  on_mac=1
-fi
+os_name='unknown'
+case $(uname -a | tr '[:upper:]' '[:lower:]') in
+  *mingw64*)
+    os_name='msys'
+    ;;
+  *cygwin*)
+    os_name='cygwin'
+    ;;
+  *darwin*)
+    os_name='darwin'
+    ;;
+esac
 
 _got_readlink=0
 which readlink >/dev/null
@@ -15,12 +21,14 @@ then
 fi
 
 _do_readlink() {
-  if [ ${on_mac} -eq 1 ]
-  then
-    readlink "${1}"
-  else
-    readlink -f "${1}"
-  fi
+  case "{os_name}" in
+    darwin)
+      readlink "${1}"
+      ;;
+    *)
+      readlink -f "${1}"
+      ;;
+  esac
 }
 
 if [ ${_got_readlink} -eq 1 ] && [ -z ${BASH_SOURCE} ]
@@ -29,6 +37,7 @@ then
 else
   script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
+
 #set -x
 if [ -f "${script_dir}/dotfiles/setup_local_bashrc.sh" ]
 then
