@@ -26,6 +26,20 @@ unalias alias 1>/dev/null 2>&1
 #  (( _installed_gradle_major_counter+=1 ))
 #done
 
+__() {
+  if [ -d /opt/gradle ]
+  then
+    case $(uname -a | tr '[:upper:]' '[:lower:]') in
+      *mingw64*|*cygwin*)
+        find /opt/gradle -maxdepth 1 -name "gradle-[5-9]*" -type d 
+        ;;
+      *darwin*|*)
+        find /opt/gradle -name "gradle-[5-9]*" -type d -maxdepth 1
+        ;;
+    esac
+  fi
+}
+
 while read _gradle_installation_path
 do
   read _gradle_major_version _gradle_minor_version < <(basename ${_gradle_installation_path} | sed 's/gradle-\([0-9]\)*\.\([0-9]*\).*/\1 \2/g')
@@ -34,7 +48,8 @@ do
   alias gradle${_gradle_major_version}${_gradle_minor_version}="${_gradle_alias}"
   unalias gradle${_gradle_major_version} &>/dev/null
   alias gradle${_gradle_major_version}="${_gradle_alias}"
-done < <(find /opt/gradle -name "gradle-[5-9]*" -type d -maxdepth 1 | sort)
+done < <(__ | sort)
+#done < <(find /opt/gradle -name "gradle-[5-9]*" -type d -maxdepth 1 | sort)
 
 unset _gradle_major_version
 unset _gradle_minor_version
