@@ -1,0 +1,192 @@
+# 10 Apr 2020 Not currently used
+# but a starting point
+
+marke_local_bash_script_dir="$(dirname $(dirname ${BASH_SOURCE}))"
+echo "marke_local_bash_script_dir: '${marke_local_bash_script_dir}'"
+os_name='unknown'
+case $(uname -a | tr '[:upper:]' '[:lower:]') in
+  *mingw64*)
+    os_name='msys'
+    ;;
+  *cygwin*)
+    os_name='cygwin'
+    ;;
+  *darwin*)
+    os_name='darwin'
+    ;;
+esac
+
+
+# What we have now based on mac...
+
+# source the stuff in profile.d
+#  needs shared_scripts
+for f in "${marke_local_bash_script_dir}/profile.d/local"/*
+do
+  . "${f}"
+done
+
+
+# Run check_ssh_agent/run-sshagent/~/temp/ssh-agent.sh
+if [ -f "${marke_local_bash_script_dir}/onpath/check_ssh_agent" ]
+then
+  if ! "${marke_local_bash_script_dir}/onpath/check_ssh_agent"
+  then
+    if [ -f "${marke_local_bash_script_dir}/onpath/run_ssh_agent" ]
+    then
+      "${marke_local_bash_script_dir}/onpath/run_ssh_agent" 1>/dev/null
+    fi
+  fi
+
+  if "${marke_local_bash_script_dir}/onpath/check_ssh_agent"
+  then
+    . ~/temp/ssh-agent.sh >/dev/null
+  fi
+fi
+
+
+
+# Setup LS_COLORS
+#prompt colours
+LS_COLORS=${LS_COLORS}:'di=0;35:ln=0;36'
+export LS_COLORS
+if [ -z ${LSCOLORS} ]; then
+  #LSCOLORS=fa
+  #LSCOLORS=fagacadabaegedabagacad
+  LSCOLORS=fagacadaDaegedabagacad
+  export LSCOLORS
+fi
+
+# Setup git-completion.bash (which should be there)
+source ~/.git-completion.bash
+
+# Setup GITAWAREPROMPT
+GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
+#export GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
+source "${GITAWAREPROMPT}/main.sh"
+
+# Setup PS1
+export PS1='\h:\W \u\$ '
+##Off the web
+#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+##Still lots of info
+#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[0;32m\]\h\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+##Paired back
+export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+
+
+# Source gradle completion (?)
+source ~/code/thirdparty/shscripts/gradle-completion.git/gradle-completion.bash
+
+# Setup LESSPIPE
+LESSPIPE=`which src-hilite-lesspipe.sh`
+export LESSOPEN="| ${LESSPIPE} %s"
+export LESS="-R -X -F ${LESS}"
+
+
+#Extra python script functions
+# Create function wrappers for the python scripts
+if [ -d ~/code/python/lib/work/anaplan/scripts ]
+then
+  for f in `ls ~/code/python/lib/work/anaplan/scripts/*.py | rev | cut -d/ -f 1 | rev | cut -d. -f 1`
+  do
+    #echo Creating ${f}
+    scripty="
+${f} () {
+  ~/code/python/lib/work/anaplan/scripts/${f}.py \"\${@}\"
+}
+"
+    eval "${scripty}"
+  done
+fi
+
+for f in `ls "${marke_local_bash_script_dir}/scripts"/*.py | rev | cut -d/ -f 1 | rev | cut -d. -f 1`
+do
+  #echo Creating ${f}
+  scripty="
+  ${f} () {
+  ~/code/mE/shared/shared_scripts/scripts/${f}.py \"\${@}\"
+}
+"
+#  echo "${scripty}"
+#    read -r -d '' scripty << EOF
+#  function ${f} () {
+#    ${f}.py "\${@}"
+#  }
+#EOF
+
+  eval "${scripty}"
+done
+
+# Source the stuff in ~/.profile.d
+# External .profile.d sourcing
+if [ -d ~/.profile.d ]
+then
+  for f in ~/.profile.d/*
+  do
+    source "${f}"
+  done
+fi
+
+# Extra additions/alterations
+# Set up functions for title/dirtitle
+function title {
+  echo -ne "\033]0;"$*"\007"
+}
+
+function dirtitle {
+  title $(basename $(pwd)) "${@}"
+}
+
+# Some grep prettiness
+alias grep='grep --color'
+
+
+# GITHUB_USER setup
+export GITHUB_USER=wafflesouffle@github.com
+function gitget() { curl -u "${GITHUB_USER}":$(cat ~/.tokens/githubread) https://github.com/api/v3/"${@}" ; }
+
+export -f gitget
+
+# checkout_org_repos function
+#  Is this still needed ?
+function checkout_org_repos() {
+  org=${1:-$(basename $(pwd))}
+  while read -r repo
+  do
+    echo "${repo}"
+    if [ -d "${repo}" ] || [ -d "${repo}.git" ]
+    then
+      echo 'Already present.'
+    else
+      git clone git@github.anaplan.com:"${org}"/${repo}.git
+    fi
+  done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
+}
+
+# Choose a gradle
+if type gradle5 &>/dev/null
+then
+  if ! which gradle 1>/dev/null 2>&1
+  then
+    gradle5 1>/dev/null 2>&1
+  fi
+fi
+
+# Aliases for java_sys_properties, tempstore, and gdl
+case "${os_name}" in
+  darwin)
+    alias java_sys_properties='/Users/markenglish/code/mE/java/JavaSysProperties/run_sysproperty'
+    alias tempstore='pushd /var/folders/qw/q1wt_3td5hlf0hlck6q_m__40000gn/T/store'
+    alias gdl='gradle --console plain --info'
+    
+    # Source fzf (not a good idea on msys)
+    [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+    ;;
+esac
+#
+#
+## Anaplan gradle aliases
+#
+## Teamlead stuffs
+
