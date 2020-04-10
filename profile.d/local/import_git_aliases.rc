@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-for __ in "${HOME}/code/shared/shared_scripts.git/onpath" "${HOME}/code/mE/shared/shared_scripts/onpath"
+for __ in $([ -d "${HOME}/code/shared/shared_scripts.git/onpath" ] && echo "${HOME}/code/shared/shared_scripts.git/onpath" || [ -d "${HOME}/code/mE/shared/shared_scripts/onpath" ] && echo "${HOME}/code/mE/shared/shared_scripts/onpath")
 do
   if [ -f "${__}/git_commit_branch" ]
   then
@@ -11,5 +11,19 @@ do
   then
     alias gcbs="${__}/git_commit_branch_stdin <<-EOF"
   fi
-done
+done 
+
+
+#for __ in "${HOME}/code/shared/shared_scripts.git/onpath" "${HOME}/code/mE/shared/shared_scripts/onpath"
+#do
+#  if [ -f "${__}/git_commit_branch" ]
+#  then
+#    alias gcb="${__}/git_commit_branch"
+#  fi
+#
+#  if [ -f "${__}/git_commit_branch_stdin" ]
+#  then
+#    alias gcbs="${__}/git_commit_branch_stdin <<-EOF"
+#  fi
+#done
 

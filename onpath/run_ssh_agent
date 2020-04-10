@@ -1,12 +1,33 @@
 #!/usr/bin/env sh
-
-ps | grep ssh-agent | grep -v grep
-if [ $? != 0 ]
-then
-  [ ! -d ~/temp ] && mkdir ~/temp
-  ssh-agent 1>~/temp/ssh-agent.sh
-  . ~/temp/ssh-agent.sh
-  #This will ask for a password.
-  ssh-add ~/.ssh/id_rsa_anaplan
-  ssh-add ~/.ssh/id_rsa_wafflesouffle
+if [ ! -d ~/temp ]; then
+  mkdir ~/temp
 fi
+
+if [ -z "$(ps -ef | grep ssh-agent | grep -v grep)" ]
+then
+  echo 'ssh_agent not running. Launching it.'
+  ssh-agent 1>~/temp/ssh-agent.sh
+else
+  echo 'ssh-agent already running.'
+fi
+
+. ~/temp/ssh-agent.sh
+
+add_to_ssh() {
+  local identity
+  identity="${1}"
+  if ! ssh-add -l | grep "${identity}"
+  then
+    ssh-add "${identity}"
+  fi
+}
+
+check_and_add_to_ssh() {
+  [ -f "${1}" ] && add_to_ssh "${1}"
+}
+
+#This will ask for a password.
+check_and_add_to_ssh ~/.ssh/id_rsa_anaplan
+check_and_add_to_ssh ~/.ssh/id_rsa_wafflesouffle
+check_and_add_to_ssh ~/.ssh/id_rsa_marke
+#check_and_andd_to_ssh ~/.ssh/id_rsa_cloudhouse

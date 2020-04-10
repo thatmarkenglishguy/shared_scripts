@@ -1,2 +1,4 @@
-alias alias='. ~/code/mE/shscripts/aliasfu'
+#alias alias='. ~/code/mE/shscripts/aliasfu'
+#alias alias='[ -d ~/code/mE/shscripts ] && . ~/code/mE/shscripts/aliasfu || [ -d ~/code/shscripts ] && . ~/code/shscripts/aliasfu'
+alias alias=". $(dirname $(dirname $(dirname ${BASH_SOURCE})))/onpath/aliasfu"
 

@@ -1,0 +1,36 @@
+# 10 Apr 2020 Not currently used
+# but a starting point
+# What we have now...
+
+ok_msys_to_continue=0
+if [ ! -h /etc/markebash.rc ]
+then
+  echo 'No symlink for /etc/markebash.rc.'
+  echo 'Run setup_msys_bashrc_links.bat as Administrator.'
+  (( ok_msys_to_continue++ ))
+fi
+
+if [ ! -h /etc/pathfunctions ]
+then
+  echo 'No symlink for /etc/pathfunctions.'
+  echo 'Run setup_msys_bashrc_links.bat as Administrator.'
+  (( ok_msys_to_continue++ ))
+fi
+
+# -- /etc/ --
+#lrwxrwxrwx 1 mark None    30 Feb 15  2017 markebash.rc -> /c/code/shscripts/markebash.rc
+#rwxrwxrwx 1 mark None    31 Feb 15  2017 pathfunctions -> /c/code/shscripts/pathfunctions
+# If you're going to stick with this, going to have to run a batch file from windows prompt as admin.
+
+# -- /etc/bash.bashrc --
+#. /etc/markebash.rc
+##This seems to be included twice on msys
+#case ${system} in
+#  Msys|Mingw*)
+#    ;;
+#  *)
+#    . /etc/profile.d/extrapaths.sh
+#    . /etc/profile.d/markebash.sh
+#    ;;
+#esac
+#

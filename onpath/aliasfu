@@ -13,7 +13,7 @@ script_file="${script_path##*/}"
 absolute_script_path="${script_dir}/${script_file}"
 
 args="${*}"
-real_alias_path=$(which alias)
+#real_alias_path=$(which alias)
 falias=alias
 
 #echo "args: '${args[@]}'"

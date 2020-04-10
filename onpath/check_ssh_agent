@@ -6,8 +6,8 @@ then
   source ${HOME}/temp/ssh-agent.sh >/dev/null
   if [ -n ${SSH_AGENT_PID} ]
   then
-    case $(uname) in
-      MINGW*|mingw*|MSYS*|msys*)
+    case $(uname -a | tr '[:upper:]' '[:lower:]') in
+      *mingw*|*msys*|*cygwin*)
         if ps_output=$(ps ${SSH_AGENT_PID})
         then
           if [[ "${ps_output}" == *ssh* ]]
