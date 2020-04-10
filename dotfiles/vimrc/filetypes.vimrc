@@ -9,6 +9,13 @@ augroup vagrant
   au BufRead,BufNewFile Vagrantfile set filetype=ruby
 augroup END
 
+" Edit .rc file as shell file
+augroup rc_file
+  autocmd!
+  au BufRead,BufNewFile *.rc set filetype=sh
+  au BufRead,BufNewFile *.bashrc set filetype=sh
+augroup END
+
 " Antlr plugin fork for Antlr4 support
 Plug 'dylon/vim-antlr'
 au BufRead,BufNewFile *.g set filetype=antlr3
