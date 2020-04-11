@@ -7,16 +7,42 @@ else
   script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+ok_to_continue=0
+uname_result=$(uname -a | tr '[:upper:]' '[:lower:]') 
 platform=unknown
-case $(uname -a | tr '[:upper:]' '[:lower:]') in
+
+case "${uname_result}" in 
   *darwin*)
     platform=darwin
     ;;
+
   *cygwin*)
     platform=cygwin
+    echo 'Cygwin not currently supported. Please install Msys2, launch an Msys2/Mingw64 terminal, and run this script from there.'
     ;;
-  *msys*|*mingw*)
-    platform=msys
+
+  *msys*)
+    case "${uname_result}" in
+      *mingw*)
+        platform=msys
+        ;;
+      *)
+        (( ++ok_to_continue ))
+        cat <<-EOF >&2
+Platform result suggests msys2 terminal, not msys2/Mingw64 terminal as required.
+Presuming Msys2 is installed to standard location, please try launching from Windows Console as
+> c:\msys64\msys2_shell.cmd -mingw64 -full-path
+Then cd $(pwd) and re-run this script.
+
+Note platform result: '${uname_result}'.
+EOF
+        ;;
+    esac
+    ;;
+  *mingw*)
+    (( ++ok_to_continue ))
+    echo "Platform result suggests Mingw64 without Msys2/Mingw64 terminal as required. Please install Msys2 and launch a Mingw64 console from there."
+    echo "Platform result: '${uname_result}'"
     ;;
   *)
     echo 'Unrecognised platform ' >&2
@@ -43,8 +69,7 @@ function install_llvm() {
       fi
       ;;
 
-    msys)
-      #if ! which llvm &>/dev/null
+    msys-with-local-clang) #Never set, just here for posterity
       if ! which clang &>/dev/null
       then
         echo 'Installing llvm via clang'
@@ -55,7 +80,6 @@ function install_llvm() {
         :
       fi
 
-      #llvm_location=$(dirname $(which llvm))
       llvm_location=$(dirname $(which clang))
 
       if [ ! -d "${llvm_location}" ]
@@ -64,10 +88,16 @@ function install_llvm() {
         exit 1
       fi
       ;;
+
+    msys)
+      echo 'Rather then trying to install llvm and clang, going to rely on YCM to do it itself via --clangd-completer' >&2
+      ;;
   esac
 }
 
 function install_python() {
+  if [ ${1:-1} -ne 1 ]; then return; fi
+
   if ! which python3 2>&1 1>/dev/null
   then
     echo 'Installing python3'
@@ -146,6 +176,8 @@ YCM_DIR="${HOME}/.vim/bundle/YouCompleteMe"
 YCM_THIRDPARTY_DIR="${YCM_DIR}/third_party/ycmd"
 
 function mend_ycm() {
+  if [ ${1:-1} -ne 1 ]; then return; fi
+
   if [ -d "${YCM_THIRDPARTY_DIR}" ]
   then
     pushd "${YCM_THIRDPARTY_DIR}" >/dev/null
@@ -158,6 +190,8 @@ function mend_ycm() {
 }
 
 function build_ycm_core() {
+  if [ ${1:-1} -ne 1 ]; then return; fi
+
   local system_clang_path
   echo 'Setting up build directories.'
   rm -rf ~/stuff/builds/ycm/ycm_build
@@ -165,9 +199,14 @@ function build_ycm_core() {
   pushd ~/stuff/builds/ycm/ycm_build
 
   case "${platform}" in
-    msys)
+    msys-with-local-clang) #Never set, just here for posterity
+      #This builds, but we're moving away from installing clang to relying on --clangd-completer
       system_clang_path=$(pacman -Ql mingw-w64-x86_64-clang | grep 'libclang.dll$' | cut -d' ' -f2)
       cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" -DEXTERNAL_LIBCLANG_PATH="${system_clang_path}" "${YCM_THIRDPARTY_DIR}/cpp"
+      ;;
+
+    msys)
+     cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
       ;;
     *)
       cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
@@ -181,11 +220,14 @@ function build_ycm_core() {
 }
 
 function build_ycm_regex() {
+  if [ ${1:-1} -ne 1 ]; then return; fi
+
   echo 'Setting up regex build directories.'
   rm -rf ~/stuff/builds/ycm/regex_build
   mkdir -p ~/stuff/builds/ycm/regex_build
   pushd ~/stuff/builds/ycm/regex_build
-  cmake -G "Unix Makefiles" . ~ -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/third_party/cregex"
+  #cmake -G "Unix Makefiles" . ~ -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/third_party/cregex"
+  cmake -G "Unix Makefiles" . ~ -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/third_party/cregex"
 
   echo 'Building the ycm regex engine...'
   cmake --build . --target _regex --config Release
@@ -228,8 +270,18 @@ function install_node() {
 # popd
 
 function verify_java() {
+  if [ ${1:-1} -ne 1 ]; then return; fi
+
+  if which java &>/dev/null
+  then
+    if java -version 2>&1 | grep 1.8 &>/dev/null
+    then
+      return
+    fi
+  fi
+
   # Java
-  echo 'Installing the Java engine...'
+  echo 'Locating Java 8 engine...'
 
   case "${platform}" in
     darwin)
@@ -252,13 +304,16 @@ function verify_java() {
       ;;
     msys)
       # Just have a look in the well known location
-      export JAVA_HOME=$(ls -1 /c/java/openjdk/jdk-* | tail -n 1)
+      #export JAVA_HOME=$(ls -1 /c/java/openjdk/jdk-* | tail -n 1)
+      export JAVA_HOME=$(ls -1 -d /c/java/jdk-1.8* | tail -n 1)
       export PATH="${JAVA_HOME}/bin:${PATH}"
       ;;
   esac
 }
 
 function install_rust() {
+  if [ ${1:-1} -ne 1 ]; then return; fi
+
   if ! which cargo &>/dev/null
   then
     echo 'Installing rust...'
@@ -267,7 +322,11 @@ function install_rust() {
         curl https://sh.rustup.rs -sSf | sh
         ;;
       msys)
-        npm -Su mingw64/mingw-w64-x86_64-rust
+        echo 'Should be using rustup for this too, but there are issues...' >&2
+        #https://gitter.im/Valloric/YouCompleteMe?at=5e24a4be7148837898a2a874
+        #Does the plugin install it's own rustup or rust toolchain ?
+        #Yes, but there's a problem with that. rls can't find the standard library when installed to a custom directory for some reason. The workaround is to rustup component add rust-src.
+        #pacman -Su mingw64/mingw-w64-x86_64-rust
         ;;
       *)
         echo "Don't know how to install rust on platform '${platform}'"
@@ -282,10 +341,59 @@ function install_rust() {
 }
 
 function build_extra_components() {
-  echo 'Running installer for extra components.'
-  pushd "${YCM_DIR}"
-  python3 ./install.py --skip-build --no-regex --ts-completer --java-completer --rust-completer
-  pushd
+  local do_java
+  local do_node
+  local do_rust
+  local install_args
+
+  do_java=${1:-1}
+  do_node=${2:-1}
+  do_rust=${3:-1}
+  declare -a install_args
+  install_args=()
+
+  if [ ${do_java} -ne 0 ]
+  then
+    install_args+=( '--java-completer' )
+  fi
+
+  if [ ${do_node} -ne 0 ]
+  then
+    install_args+=( '--ts-completer' )
+  fi
+
+  if [ ${do_rust} -ne 0 ]
+  then
+    install_args+=( '--rust-completer' )
+  fi
+
+  #python3 ./install.py --skip-build --no-regex --ts-completer --java-completer --rust-completer
+  if [ ${#install_args[@]} -gt 0 ]
+  then
+    pushd "${YCM_DIR}"
+    echo 'Running installer for extra components.'
+    case "${platform}" in
+      msys)
+        install_args+=( '--clangd-completer' )
+        ;;
+      *)
+        :
+        ;;
+    esac
+    echo "python3 ./install.py --skip-build --no-regex ${install_args[@]}" >&2
+    python3 ./install.py --skip-build --no-regex "${install_args[@]}"
+    popd
+  fi
+#  case "${platform}" in
+#    msys)
+#      #python3 ./install.py --skip-build --no-regex --ts-completer --java-completer --rust-completer
+#      python3 ./install.py --skip-build --no-regex --clangd-completer
+#      python3 ./install.py --skip-build --no-regex --rust-completer
+#      ;;
+#    *)
+#      python3 ./install.py --skip-build --no-regex --ts-completer --java-completer --rust-completer
+#      ;;
+#  esac
 }
 
 function install_bear() {
@@ -318,20 +426,159 @@ function install_intercept_build() {
   fi
 }
 
-install_llvm
-install_python
+do_python=1
+do_java=1
+do_node=1
+do_rust=1
+do_ycm=1
+do_ycm_regex=1
+
+case "${platform}" in
+  msys)
+    do_java=0
+    do_node=0
+    do_rust=0
+    ;;
+  *)
+    :
+    ;;
+esac
+
+function boolstring() {
+  if [ ${1} -eq 0 ]
+  then
+    echo 'off'
+  else
+    echo 'on'
+  fi
+}
+
+function inverseboolstring() {
+  if [ ${1} -ne 0 ]
+  then
+    echo 'off'
+  else
+    echo 'on'
+  fi
+}
+
+function usage() {
+  cat <<EOF >&2
+$(basename "${0}") [--[no-]python] [--[no-]java] [--[no-]node] [--[no-]rust] [--no-ycm] [--no-ycm-regex]
+
+
+  --python        If specified, install Python3 if necessary. Defaults to $(boolstring ${do_python}).
+  --java          If specified, install the java support in YouCompleteMe. Defaults to $(boolstring ${do_java}).
+  --node          If specified, install Node, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_node}).
+  --rust          If specified, install rust, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_rust}).
+
+  --no-python     Don't try to install Python3. Defaults to $(inverseboolstring ${do_python}).
+  --no-java       Don't install the java support in YouCompleteMe. Defaults to $(inverseboolstring ${do_java}).
+  --no-node       Don't install Node, and the plugin for YouCompleteMe. Defaults to $(inverseboolstring ${do_node}).
+  --no-rust       Don't install rust, and the plugin for YouCompleteMe. Defaults to $(inverseboolstring ${do_rust}).
+  --no-ycm        Don't build YouCompleteMe. Defaults to $(inverseboolstring ${do_ycm}).
+  --no-ycm-regex  Don't build YouCompleteMe regex. Defaults to $(inverseboolstring ${do_ycm_regex}).
+
+Notes:
+Java, node and rust all work on Mac, but are in progress for Msys/Mingw64.
+Java8 is merely detected, not installed.
+EOF
+
+  case "${platform}" in
+    darwin)
+      echo 'On Mac, will search for Java 8 in /Library/Java/JavaVirtualMachines' >&2
+      ;;
+    msys)
+      echo 'On Windows using Msys/Mingw64, will search for Java 8 in /c/java for a directory starting "jdk-1.8".' >&2
+      ;;
+    *)
+      echo "Unrecognised platform '${platform}'. Please ensure Java 8 is on the path, and JAVA_HOME points to its location." >&2
+      ;;
+  esac
+}
+
+declare -a args
+args=( "${@}" )
+args_length="${#args[@]}"
+
+for (( i=0; i<args_length; i++ ))
+do
+  arg="${args[${i}]}"
+
+  case "${arg}" in
+    --python)
+      do_python=1
+      ;;
+    --java)
+      do_java=1
+      ;;
+    --node)
+      do_node=1
+      ;;
+    --rust)
+      do_rust=1
+      ;;
+    --no-python)
+      do_python=0
+      ;;
+    --no-java)
+      do_java=0
+      ;;
+    --no-node)
+      do_node=0
+      ;;
+    --no-rust)
+      do_rust=0
+      ;;
+    --no-ycm)
+      do_ycm=0
+      ;;
+    --no-ycm-regex)
+      do_ycm_regex=0
+      ;;
+    --help|-h|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      echo "Unexpected argument '${arg}'" >&2
+      (( ok_to_continue++ ))
+      ;;
+  esac
+done
+
+if [ ${ok_to_continue} -ne 0 ]
+then
+  exit ${ok_to_continue}
+fi
+
+case "${platform}" in
+  msys)
+    :
+    ;;
+  *)
+    install_llvm
+    ;;
+esac
+
+install_python ${do_python}
 install_cmake
-#set -x
 detect_python
-mend_ycm
-build_ycm_core
-build_ycm_regex
-#set +x
-install_node
-verify_java
-install_rust
-build_extra_components
-install_bear
+mend_ycm ${do_ycm}
+build_ycm_core ${do_ycm}
+build_ycm_regex ${do_ycm_regex}
+install_node ${do_node}
+verify_java ${do_java}
+install_rust ${do_rust}
+build_extra_components ${do_java} ${do_node} ${do_rust}
+case "${platform}" in
+  msys)
+    :
+    ;;
+  *)
+    install_bear
+    ;;
+esac
 install_intercept_build
 echo 'Done'
 
