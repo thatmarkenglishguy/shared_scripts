@@ -72,7 +72,7 @@ chmod 755 somedir/someprefix-project2/somescript
 command='./somescript' dir_prefix='somedir/someprefix-' tmux_command project1 project2
 
 # Same as above but just show command in pane rather than executing it
-dry_run=1 command='./somescript' dir_prefix='somedir/myprefix-' tmux_command project1 project2
+dry_run=1 command='./somescript' dir_prefix='somedir/someprefix-' tmux_command project1 project2
 ```
 
 ## [testing](testing)
