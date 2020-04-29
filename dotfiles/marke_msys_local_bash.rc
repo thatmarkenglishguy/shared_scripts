@@ -1,8 +1,8 @@
-# 10 Apr 2020 Not currently used
-# but a starting point
+# 10 Apr 2020 Not currently used, but a starting point.
+# 29 Apr 2020 Ready for usage, Darwin and msys.
 
 marke_local_bash_script_dir="$(dirname $(dirname ${BASH_SOURCE}))"
-echo "marke_local_bash_script_dir: '${marke_local_bash_script_dir}'"
+#echo "marke_local_bash_script_dir: '${marke_local_bash_script_dir}'"
 os_name='unknown'
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *mingw64*)
@@ -16,8 +16,24 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
     ;;
 esac
 
+# New things (we're going to add pathfunctions here, even though we might need it system wide too).
+if [ ! -f "${marke_local_bash_script_dir}/shscripts/pathfunctions" ]
+then
+  echo "${marke_local_bash_script_dir}/shscripts/pathfunctions not found" >&2
+else
+  source "${marke_local_bash_script_dir}/shscripts/pathfunctions"
+fi
 
 # What we have now based on mac...
+
+# Default to Java 11
+if [ -z "${JAVA_HOME}" ]
+then
+  if type j11 &>/dev/null
+  then
+    j11 2>/dev/null
+  fi
+fi
 
 # source the stuff in profile.d
 #  needs shared_scripts
@@ -58,6 +74,7 @@ if [ -z ${LSCOLORS} ]; then
 fi
 
 # Setup git-completion.bash (which should be there)
+#https://git-scm.com/book/en/v1/Git-Basics-Tips-and-Tricks
 source ~/.git-completion.bash
 
 # Setup GITAWAREPROMPT
@@ -86,20 +103,6 @@ export LESS="-R -X -F ${LESS}"
 
 #Extra python script functions
 # Create function wrappers for the python scripts
-if [ -d ~/code/python/lib/work/anaplan/scripts ]
-then
-  for f in `ls ~/code/python/lib/work/anaplan/scripts/*.py | rev | cut -d/ -f 1 | rev | cut -d. -f 1`
-  do
-    #echo Creating ${f}
-    scripty="
-${f} () {
-  ~/code/python/lib/work/anaplan/scripts/${f}.py \"\${@}\"
-}
-"
-    eval "${scripty}"
-  done
-fi
-
 for f in `ls "${marke_local_bash_script_dir}/scripts"/*.py | rev | cut -d/ -f 1 | rev | cut -d. -f 1`
 do
   #echo Creating ${f}
@@ -159,34 +162,72 @@ function checkout_org_repos() {
     then
       echo 'Already present.'
     else
-      git clone git@github.anaplan.com:"${org}"/${repo}.git
+      git clone "git@${GITHUB_HOST:-github.com}:${org}/${repo}.git"
     fi
   done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
 }
 
 # Choose a gradle
-if type gradle5 &>/dev/null
+if type gradle6 &>/dev/null
 then
   if ! which gradle 1>/dev/null 2>&1
   then
-    gradle5 1>/dev/null 2>&1
+    gradle6 1>/dev/null 2>&1
   fi
 fi
 
 # Aliases for java_sys_properties, tempstore, and gdl
 case "${os_name}" in
   darwin)
-    alias java_sys_properties='/Users/markenglish/code/mE/java/JavaSysProperties/run_sysproperty'
-    alias tempstore='pushd /var/folders/qw/q1wt_3td5hlf0hlck6q_m__40000gn/T/store'
-    alias gdl='gradle --console plain --info'
-    
     # Source fzf (not a good idea on msys)
     [ -f ~/.fzf.bash ] && source ~/.fzf.bash
-    ;;
+
+     __=$(brew --prefix)
+    # docker completion copied from https://docs.docker.com/docker-for-mac#install-shell-completion
+    [ ! -L ${__}/etc/bash_completion.d/docker ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker.bash-completion ${__}/etc/bash_completion.d/docker
+    [ ! -L ${__}/etc/bash_completion.d/docker-machine ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker-machine.bash-completion ${__}/etc/bash_completion.d/docker-machine
+    [ ! -L ${__}/etc/bash_completion.d/docker-compose ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker-compose.bash-completion ${__}/etc/bash_completion.d/docker-compose
+    
+    
+    if [ -f ${__}/etc/bash_completion ]
+    then
+      . ${__}/etc/bash_completion
+    fi
+
+   ;;
 esac
-#
-#
-## Anaplan gradle aliases
-#
-## Teamlead stuffs
+
+## Gradle Dependencies
+alias gdl='gradle --console plain --info'
+alias gdeps='gradle --console plain --info dependencyInsight --configuration compileClasspath --dependency'
+alias grefdeps='gradle --console plain --info --write-locks resolveAllProjects --refresh-dependencies'
+alias gprojects='gradle -q projects'
+alias gconfigs="gradle --console plain dependencies | fgrep ' - '"
+
+# Development stuffs
+alias gcb=git_commit_branch
+
+# Jquery magic
+function jqit() {
+  jq --raw-input --raw-output '. as $raw | try fromjson catch $raw | .? '"${@}"
+}
+
+# Kubectl completion
+if which kubectl &>/dev/null
+then
+  source /dev/stdin <<<"$(kubectl completion bash)"
+  # $( #vim syntax higlighter is having a bit of a conniption
+  complete -f __start_kubectl k
+  alias k='kubectl'
+fi
+
+alias gop='open $(git httpsurl)'
+alias gopr='open $(git httpsurl)/pulls'
+
+# The next line updates PATH for the Google Cloud SDK.
+if [ -f "${HOME}/google-cloud-sdk/path.bash.inc" ]; then . "${HOME}/google-cloud-sdk/path.bash.inc"; fi
+
+# The next line enables shell command completion for gcloud.
+if [ -f "${HOME}/google-cloud-sdk/completion.bash.inc" ]; then . "${HOME}/google-cloud-sdk/completion.bash.inc"; fi
+
 
