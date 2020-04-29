@@ -1,10 +1,10 @@
 #!/usr/bin/env bash
-on_mac=0
-os_name=$(uname -s)
-if [ "${os_name}" == 'Darwin' ]
-then
-  on_mac=1
-fi
+#on_mac=0
+#os_name=$(uname -s)
+#if [ "${os_name}" == 'Darwin' ]
+#then
+#  on_mac=1
+#fi
 
 os_name='unknown'
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
@@ -43,15 +43,16 @@ then
 else
   setup_script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
-set -x
+
+#set -x
 # Do the basic minimum to get .bashrc loaded
 add_to_profile=0
 
-if [ ! -f ~/.bash_profile ]; then
+if [ ! -f "${HOME}/.bash_profile" ]; then
   add_to_profile=1
 else
   #TODO Switch ~ to ${HOME} ?
-  grep '. ~/.bashrc' ~/.bash_profile >/dev/null
+  grep '. ~/.bashrc' "${HOME}/.bash_profile" >/dev/null
   if [ ${?} -ne 0 ]; then
     add_to_profile=1
   fi
@@ -61,27 +62,42 @@ if [ ${add_to_profile} -eq 1 ]; then
   echo '# Get the aliases and functions
 if [ -f ~/.bashrc ]; then
     . ~/.bashrc
-fi' >>~/.bash_profile
+fi' >>"${HOME}/.bash_profile"
 fi
 
 case "${os_name}" in
   msys|cygwin)
-    _setup_shscripts_dir='${HOME}/code/shscripts'
-    source_line='source "${HOME}/code/shscripts/marke_mac_bash.rc"'
+    _setup_shscripts_dir="${HOME}/code/shscripts"
+#    source_line='source "${HOME}/code/shscripts/marke_mac_bash.rc"'
     ;;
   darwin)
-    _setup_shscripts_dir='${HOME}/code/mE/shscripts'
-    source_line='source "${HOME}/code/mE/shscripts/marke_mac_bash.rc"'
+    _setup_shscripts_dir="${HOME}/code/mE/shscripts"
+#    source_line='source "${HOME}/code/mE/shscripts/marke_mac_bash.rc"'
     ;;
 #  *)
 #    :
 #    ;;
 esac
-source_line="source \"${_setup_shscripts_dir}/marke_mac_bash.rc\""
-if ! grep "${source_line}" ~/.bashrc 2>&1 1>/dev/null
-then
-  echo "${source_line}" >> ~/.bashrc
-fi
+function _add_to_file() {
+  local source_line
+  local target
+  source_line="${1}"
+  target="${2:-${HOME}/.bashrc}"
+
+  if ! grep "${source_line}" "${target}" 2>&1 1>/dev/null
+  then
+    echo "${source_line}" | cat - "${target}" | dd conv=notrunc of="${target}" &>/dev/null
+#    echo "${source_line}" >> "${target}"
+  fi
+}
+
+_add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
+_add_to_file "source \"${_setup_shscripts_dir}/marke_mac_bash.rc\"" "${HOME}/.bashrc"
+#source_line="source \"${_setup_shscripts_dir}/marke_mac_bash.rc\""
+#if ! grep "${source_line}" ~/.bashrc 2>&1 1>/dev/null
+#then
+#  echo "${source_line}" >> ~/.bashrc
+#fi
 
 ## Setup the core .bashrc (with a symlink)
 #if [ -f ~/code/mE/shscripts/marke_mac_bash.rc ] && [ ! -f ~/.bashrc ]
@@ -104,50 +120,50 @@ fi
 #fi
 
 # Sort out git completion
-if [ ! -f ~/.git-completion.bash ]
+if [ ! -f "${HOME}/.git-completion.bash" ]
 then
   if which wget 1>/dev/null
   then
-    wget -O ~/.git-completion.bash https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
+    wget -O "${HOME}/.git-completion.bash" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
   elif which curl 1>/dev/null
   then
-    curl -o ~/.git-completion.bash https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
+    curl -o "${HOME}/.git-completion.bash" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
   else
     echo 'Unable to find wget or curl. Going to be hard to install git completion...' >&2
   fi
 fi
 
-add_git=0
+#add_git=0
+#
+#if [ -f ~/.git-completion.bash ]
+#then
+#  if [ ! -f ~/.bashrc ]
+#  then
+#    add_git=1
+#  else
+#    if [ ! grep '.git-completion.bash' ~/.bashrc >/dev/null ]
+#    then
+#      add_git=1
+#    fi
+#  fi
+#fi
+#
+#if [ ${add_git} -eq 1 ]
+#then
+#  echo '#https://git-scm.com/book/en/v1/Git-Basics-Tips-and-Tricks
+#source ~/.git-completion.bash' >>~/.bashrc
+#fi
 
-if [ -f ~/.git-completion.bash ]
+if [ ! -d "${HOME}/code/thirdparty/shscripts/git-aware-prompt.git" ]
 then
-  if [ ! -f ~/.bashrc ]
-  then
-    add_git=1
-  else
-    if [ ! grep '.git-completion.bash' ~/.bashrc >/dev/null ]
-    then
-      add_git=1
-    fi
-  fi
+  mkdir -p "${HOME}/code/thirdparty/shscripts"
+  git clone git@github.com:jimeh/git-aware-prompt.git "${HOME}/code/thirdparty/shscripts/git-aware-prompt.git"
 fi
 
-if [ ${add_git} -eq 1 ]
+if [ ! -d "${HOME}/code/thirdparty/shscripts/gradle-completion.git" ]
 then
-  echo '#https://git-scm.com/book/en/v1/Git-Basics-Tips-and-Tricks
-source ~/.git-completion.bash' >>~/.bashrc
-fi
-
-if [ ! -d "~/code/thirdparty/shscripts/git-aware-prompt.git" ]
-then
-  mkdir -p ~/code/thirdparty/shscripts
-  git clone git@github.com:jimeh/git-aware-prompt.git ~/code/thirdparty/shscripts/git-aware-prompt.git
-fi
-
-if [ ! -d "~/code/thirdparty/shscripts/gradle-completion.git" ]
-then
-  mkdir -p ~/code/thirdparty/shscripts
-  git clone git@github.com:gradle/gradle-completion.git ~/code/thirdparty/shscripts/gradle-completion.git
+  mkdir -p "${HOME}/code/thirdparty/shscripts"
+  git clone git@github.com:gradle/gradle-completion.git "${HOME}/code/thirdparty/shscripts/gradle-completion.git"
 fi
 
 if [ -f "${setup_script_dir}/setup_dotfiles.sh" ]

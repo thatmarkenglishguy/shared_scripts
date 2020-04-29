@@ -85,43 +85,43 @@ do
   esac
 done
 
-if [ -z "${github_user}" ]
-then
-  github_user="${1:-${GITHUB_USER}}"
-  if [ -z "${github_user}" ]
-  then
-    echo 'No github user specified. Should be first parameter.' >&2
-    usage
-    (( ok_to_continue++ ))
-  fi
-fi
-
-if [ -z "${github_server}" ]
-then
-  github_server="${2:-http://github.com}"
-  if [ -z "${github_server}" ]
-  then
-    echo 'Empty github server specified.' >&2
-    usage
-    (( ok_to_continue++ ))
-  fi
-fi
-
-if [ ! -f "${github_token_file}" ]
-then
-  github_token_file="${3:-${HOME}/.tokens/githubread}"
-  if [ ! -f "${github_token_file}" ]
-  then
-    echo "'${github_token_file}' Github token file does not exist." >&2
-    usage
-    (( ok_to_continue++ )) 
-  fi
-fi
-
-if [ -z "${github_org}" ]
-then
-  github_org=${4:-$(basename $(pwd))}
-fi
+#if [ -z "${github_user}" ]
+#then
+#  github_user="${1:-${GITHUB_USER}}"
+#  if [ -z "${github_user}" ]
+#  then
+#    echo 'No github user specified. Should be first parameter.' >&2
+#    usage
+#    (( ok_to_continue++ ))
+#  fi
+#fi
+#
+#if [ -z "${github_server}" ]
+#then
+#  github_server="${2:-http://github.com}"
+#  if [ -z "${github_server}" ]
+#  then
+#    echo 'Empty github server specified.' >&2
+#    usage
+#    (( ok_to_continue++ ))
+#  fi
+#fi
+#
+#if [ ! -f "${github_token_file}" ]
+#then
+#  github_token_file="${3:-${HOME}/.tokens/githubread}"
+#  if [ ! -f "${github_token_file}" ]
+#  then
+#    echo "'${github_token_file}' Github token file does not exist." >&2
+#    usage
+#    (( ok_to_continue++ )) 
+#  fi
+#fi
+#
+#if [ -z "${github_org}" ]
+#then
+#  github_org=${4:-$(basename $(pwd))}
+#fi
 
 if [ ${ok_to_continue} -ne 0 ]
 then
@@ -134,9 +134,9 @@ then
 fi
 
 first_link=''
-first_link="$(curl -u "${github_user}":$(cat "${github_token_file}") "https://github.anaplan.com/api/v3/orgs/${github_org}/repos" -sS -I | grep '^Link: ')"
+first_link="$(curl -u "${github_user}":$(cat "${github_token_file}") "${github_server}/api/v3/orgs/${github_org}/repos" -sS -I | grep '^Link: ')"
 
-curl -sS -u "${github_user}":$(cat "${github_token_file}") "https://github.anaplan.com/api/v3/orgs/${github_org}/repos" -o >(jq -r '.[].name')
+curl -sS -u "${github_user}":$(cat "${github_token_file}") "${github_server}/api/v3/orgs/${github_org}/repos" -o >(jq -r '.[].name')
 
 if [ -n "${first_link}" ]
 then
