@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Quotifies lines for python usage.
+# Expects EITHER command line args OR stdin. Not both.
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+function quotify_line() {
+  local line
+  line="${1}"
+
+  if [[ "${line}" =~ .*\'.* ]]
+  then
+    if [[ "${line}" =~ .*\".* ]]
+    then
+      echo "${line}" | sed -e 's/"/\\"/g' -e 's/^/"/' -e 's/$/"/'
+    else
+      echo "\"${line}\""
+    fi
+  else
+    echo "'${line}'"
+  fi
+}
+
+if [ ${#} -ne 0 ]
+then
+  for arg in "${@}"
+  do
+    quotify_line "${arg}"
+  done
+else
+  while read -r
+  do
+    quotify_line "${REPLY}"
+  done </dev/stdin
+fi
+

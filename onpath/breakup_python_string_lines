@@ -1,0 +1,98 @@
+#!/usr/bin/env bash
+# Expects string lines wrapped in ' or ".
+# If first argument is a number, that is treated as max line length.
+# Can either process remaining command line arguments, or read from stdin (not both).
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+function show() {
+  echo "${@}"
+  #echo "${@}" | wc -c
+  #echo
+}
+
+function breakup_line() {
+  local max_length
+  local padded_line
+  local line
+  local quote
+  local fragment
+  local padding
+  local line_length
+  local fragment_length
+
+  #set -x
+  max_length=${1}
+  padded_line="${2}"
+  #echo "Padded line: >>>${padded_line}<<<"
+
+  [[ "${padded_line}" =~ ^(\ +)(.*) ]]
+  if [ ${#BASH_REMATCH[@]} -eq 0 ]
+  then
+    padding=''
+    line="${padded_line}"
+  else
+    padding="${BASH_REMATCH[1]}"
+    line="${BASH_REMATCH[2]}"
+  fi
+
+  (( line_length=max_length - (${#padding} + 2) )) # 2 for the quotes
+  (( fragment_length = line_length - 1 )) # For the way string offsets work
+  if (( (${#line}) > line_length )) 
+  then
+    quote="${line:0:1}"
+    fragment="${line:0:${line_length}}"
+    line="${line:${line_length}}"
+    show "${padding}${fragment}${quote}"
+
+    while (( (${#line} + ${#padding} + 2) > max_length ))
+    do
+      fragment="${line:0:${fragment_length}}"
+      line="${line:${fragment_length}}"
+      show "${padding}${quote}${fragment}${quote}"
+    done
+
+    if [ -n "${line}" ]
+    then 
+      show "${padding}${quote}${line}"
+    fi
+  else
+    show "${padded_line}"
+  fi
+}
+#set -x
+max_length=100
+do_stdin=1
+if [ ${#} -gt 0 ]
+then
+  declare -a args
+  args=( "${@}" )
+  if [[ "${1}" =~ ^[0-9]+$ ]]
+  then
+    max_length=${1}
+    args=( "${@:2}" )
+  fi
+
+  if [ ${#args} -gt 0 ]
+  then
+    do_stdin=0
+    for line in "${args[@]}"
+    do
+      breakup_line ${max_length} "${line}"
+    done
+  fi
+fi
+
+if [ ${do_stdin} -ne 0 ]
+then
+  while read -r 
+  do
+    breakup_line ${max_length} "${REPLY}"
+  done
+fi
+set +x

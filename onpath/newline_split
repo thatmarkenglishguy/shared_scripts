@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+# E.g. echo 'foo|bar| | newline_split '|'
+# foo
+# |bar
+# Works on Mac
+
+sed -e 's/'"${1}"'/'$'\\\n'"${1}"'/g' | sed -e '/^$/d'
