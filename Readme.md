@@ -69,7 +69,7 @@ chmod 755 somedir/someprefix-project2/somescript
 
 # Run './somescript' in somedir/someprefix-project1 and somedir/someprefix-project2 in separate tmux panes.
 # Ctrl+C <wait for processes to end>, Enter to exit...
-command='./somescript' dir_prefix='somedir/myprefix-' tmux_command project1 project2
+command='./somescript' dir_prefix='somedir/someprefix-' tmux_command project1 project2
 
 # Same as above but just show command in pane rather than executing it
 dry_run=1 command='./somescript' dir_prefix='somedir/myprefix-' tmux_command project1 project2
