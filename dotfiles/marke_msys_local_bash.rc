@@ -182,27 +182,32 @@ case "${os_name}" in
     # Source fzf (not a good idea on msys)
     [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
-     __=$(brew --prefix)
+    __=$(brew --prefix)
     # docker completion copied from https://docs.docker.com/docker-for-mac#install-shell-completion
     [ ! -L ${__}/etc/bash_completion.d/docker ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker.bash-completion ${__}/etc/bash_completion.d/docker
     [ ! -L ${__}/etc/bash_completion.d/docker-machine ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker-machine.bash-completion ${__}/etc/bash_completion.d/docker-machine
     [ ! -L ${__}/etc/bash_completion.d/docker-compose ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker-compose.bash-completion ${__}/etc/bash_completion.d/docker-compose
-    
-    
+
     if [ -f ${__}/etc/bash_completion ]
     then
       . ${__}/etc/bash_completion
     fi
+
 
    ;;
 esac
 
 ## Gradle Dependencies
 alias gdl='gradle --console plain --info'
+
 alias gdeps='gradle --console plain --info dependencyInsight --configuration compileClasspath --dependency'
 alias grefdeps='gradle --console plain --info --write-locks resolveAllProjects --refresh-dependencies'
 alias gprojects='gradle -q projects'
 alias gconfigs="gradle --console plain dependencies | fgrep ' - '"
+function grepjs() {
+  grep --color -ri "${1}" "${2:-.}" --exclude-dir 'node_modules' --exclude-dir '.git' --exclude 'gradlew' --exclude 'yarn.lock'
+}
+alias gjs=grepjs
 
 # Development stuffs
 alias gcb=git_commit_branch
@@ -229,5 +234,4 @@ if [ -f "${HOME}/google-cloud-sdk/path.bash.inc" ]; then . "${HOME}/google-cloud
 
 # The next line enables shell command completion for gcloud.
 if [ -f "${HOME}/google-cloud-sdk/completion.bash.inc" ]; then . "${HOME}/google-cloud-sdk/completion.bash.inc"; fi
-
 
