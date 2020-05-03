@@ -147,6 +147,10 @@ function detect_python() {
       ;;
   esac
   python3_executable=$(python3 -c "import sys; print(sys.executable)")
+
+  echo "python3_include_location: '${python3_include_location}'"
+  echo "python3_lib_dir         : '${python3_lib_dir}'"
+  echo "python3_lib_location    : '${python3_lib_location}'"
   #python3_home_location=$(find "${python3_location}/Frameworks/Python.framework/Versions" -maxdepth 1 -type d | tail -n 1)
   #python_include_location=$(find "${python3_home_location}/include" -name 'python*' -maxdepth 1 -type d | tail -n 1)
   #python_lib_location=$(find "${python3_home_location}/lib" -name 'libpython*m.dylib' -maxdepth 1 | tail -n 1)
@@ -202,11 +206,13 @@ function build_ycm_core() {
     msys-with-local-clang) #Never set, just here for posterity
       #This builds, but we're moving away from installing clang to relying on --clangd-completer
       system_clang_path=$(pacman -Ql mingw-w64-x86_64-clang | grep 'libclang.dll$' | cut -d' ' -f2)
-      cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" -DEXTERNAL_LIBCLANG_PATH="${system_clang_path}" "${YCM_THIRDPARTY_DIR}/cpp"
+      cmake -G 'Unix Makefiles' . -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" -DEXTERNAL_LIBCLANG_PATH="${system_clang_path}" "${YCM_THIRDPARTY_DIR}/cpp"
+#      cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" -DEXTERNAL_LIBCLANG_PATH="${system_clang_path}" "${YCM_THIRDPARTY_DIR}/cpp"
       ;;
 
     msys)
-     cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+     cmake -G 'Unix Makefiles' . "${YCM_THIRDPARTY_DIR}/cpp"
+#     cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
       ;;
     *)
       cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
@@ -431,6 +437,7 @@ do_java=1
 do_node=1
 do_rust=1
 do_ycm=1
+do_mend_ycm=1
 do_ycm_regex=1
 
 case "${platform}" in
@@ -438,6 +445,7 @@ case "${platform}" in
     do_java=0
     do_node=0
     do_rust=0
+    do_mend_ycm=0
     ;;
   *)
     :
@@ -471,16 +479,19 @@ $(basename "${0}") [--[no-]python] [--[no-]java] [--[no-]node] [--[no-]rust] [--
   --java          If specified, install the java support in YouCompleteMe. Defaults to $(boolstring ${do_java}).
   --node          If specified, install Node, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_node}).
   --rust          If specified, install rust, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_rust}).
+  --mend-ycm      If specified, run 'git submodule update --init --recursive' after installing YouCompleteMe. Defaults to $(boolstring ${do_mend_ycm}).
 
   --no-python     Don't try to install Python3. Defaults to $(inverseboolstring ${do_python}).
   --no-java       Don't install the java support in YouCompleteMe. Defaults to $(inverseboolstring ${do_java}).
   --no-node       Don't install Node, and the plugin for YouCompleteMe. Defaults to $(inverseboolstring ${do_node}).
   --no-rust       Don't install rust, and the plugin for YouCompleteMe. Defaults to $(inverseboolstring ${do_rust}).
+  --no mend-ycm   Don't run 'git submodule update --init --recursive' after installing YouCompleteMe. Defaults to $(inverseboolstring ${do_mend_ycm}).
   --no-ycm        Don't build YouCompleteMe. Defaults to $(inverseboolstring ${do_ycm}).
   --no-ycm-regex  Don't build YouCompleteMe regex. Defaults to $(inverseboolstring ${do_ycm_regex}).
 
 Notes:
 Java, node and rust all work on Mac, but are in progress for Msys/Mingw64.
+Sometimes msys seems to need --mend-ycm. Sometimes it doesn't.
 Java8 is merely detected, not installed.
 EOF
 
@@ -518,6 +529,9 @@ do
     --rust)
       do_rust=1
       ;;
+    --mend-ycm)
+      do_mend_ycm=1
+      ;;
     --no-python)
       do_python=0
       ;;
@@ -529,6 +543,9 @@ do
       ;;
     --no-rust)
       do_rust=0
+      ;;
+    --no-mend-ycm)
+      do_mend_ycm=0
       ;;
     --no-ycm)
       do_ycm=0
@@ -564,7 +581,7 @@ esac
 install_python ${do_python}
 install_cmake
 detect_python
-mend_ycm ${do_ycm}
+mend_ycm ${do_mend_ycm}
 build_ycm_core ${do_ycm}
 build_ycm_regex ${do_ycm_regex}
 install_node ${do_node}
