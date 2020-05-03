@@ -24,6 +24,31 @@ function download_and_install() {
   set +x
 }
 
+function version_from_url_exists() {
+  local url
+  local version
+  url="${1}"
+  version=$(echo "${url}" | sed -n 's!.*gradle-\([0-9\.]*\)-[:alpha:]*\.zip$!\1!p')
+
+  if [ -d "/opt/gradle/gradle-${version}" ]
+  then
+    echo "${version} already installed"
+    return 0
+  else
+    return 1
+  fi
+}
+
+function check_download_and_install() {
+  local url
+  url="${1}"
+
+  if ! version_from_url_exists "${url}"
+  then
+    download_and_install "${url}"
+  fi
+}
+
 sudo mkdir -p /opt/gradle
 release_page=$(curl -S https://gradle.org/releases/)
 if [ -n "${release_page}" ]
@@ -35,7 +60,6 @@ then
   echo "latest_gradle_url: '${latest_gradle_url}'"
   echo "latest_gradle4_url: '${latest_gradle4_url}'"
 
-  download_and_install "${latest_gradle_url}"
-  download_and_install "${latest_gradle4_url}"
-
+  check_download_and_install "${latest_gradle_url}"
+  check_download_and_install "${latest_gradle4_url}"
 fi
