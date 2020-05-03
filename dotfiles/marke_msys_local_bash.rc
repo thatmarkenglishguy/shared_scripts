@@ -35,6 +35,20 @@ then
   fi
 fi
 
+# Aliases defined before we protect alias...
+__opencmd='No open command'
+case "${os_name}" in
+  darwin)
+    __open_cmd='open'
+    ;;
+  msys|cygwin)
+    __open_cmd='chrome'
+    ;;
+esac
+
+alias gop='(url=$(git httpsurl); ${__open_cmd} "${url/publicgithub/github}")'
+alias gopr='(url=$(git httpsurl); ${__open_cmd} "${url/publicgithub/github}/pulls")'
+
 # source the stuff in profile.d
 #  needs shared_scripts
 for f in "${marke_local_bash_script_dir}/profile.d/local"/*
@@ -217,21 +231,19 @@ function jqit() {
   jq --raw-input --raw-output '. as $raw | try fromjson catch $raw | .? '"${@}"
 }
 
-# Kubectl completion
-if which kubectl &>/dev/null
-then
-  source /dev/stdin <<<"$(kubectl completion bash)"
-  # $( #vim syntax higlighter is having a bit of a conniption
-  complete -f __start_kubectl k
-  alias k='kubectl'
-fi
-
-alias gop='open $(git httpsurl)'
-alias gopr='open $(git httpsurl)/pulls'
-
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f "${HOME}/google-cloud-sdk/path.bash.inc" ]; then . "${HOME}/google-cloud-sdk/path.bash.inc"; fi
 
 # The next line enables shell command completion for gcloud.
 if [ -f "${HOME}/google-cloud-sdk/completion.bash.inc" ]; then . "${HOME}/google-cloud-sdk/completion.bash.inc"; fi
+
+# Kubectl completion
+if which kubectl &>/dev/null
+then
+  source /dev/stdin <<<"$(kubectl completion bash)"
+  # $((( #vim syntax higlighter is having a bit of a conniption which is why this is at the bottom of the file...
+  complete -f __start_kubectl k
+  alias k='kubectl'
+fi
+
 
