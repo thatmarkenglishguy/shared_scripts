@@ -117,4 +117,20 @@ function! ShowCommand(full_command)
 : call ClearPreviousClearScreenRunExternalCommandWithArgs(CreateCdHereAndRunCommand(a:command), a:000)
 :endfunction
 
-
+" C++ functions
+:function! InsertCppHeaderGuardBlockVarArgs(...)
+: if a:0 > 0
+:   let l:header_name = a:1
+: else
+:   let l:header_name = '_' . substitute(expand("%:t"), "\\.", "_", "g")
+: endif
+: let l:guard_block_name = toupper(l:header_name)
+: let l:saveview = winsaveview()
+:
+: call append(0, '#ifndef ' . l:guard_block_name)
+: call append(1, '#define ' . l:guard_block_name)
+: call append('$', '#endif // ' . l:guard_block_name)
+:
+: call winrestview(l:saveview)
+  
+:endfunction
