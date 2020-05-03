@@ -13,16 +13,16 @@ function quotify_line() {
   local line
   line="${1}"
 
-  if [[ "${line}" =~ .*\'.* ]]
+  if [[ "${line}" =~ .*\".* ]]
   then
-    if [[ "${line}" =~ .*\".* ]]
+    if [[ "${line}" =~ .*\'.* ]]
     then
       echo "${line}" | sed -e 's/"/\\"/g' -e 's/^/"/' -e 's/$/"/'
     else
-      echo "\"${line}\""
+      echo "'${line}'"
     fi
   else
-    echo "'${line}'"
+    echo "\"${line}\""
   fi
 }
 
