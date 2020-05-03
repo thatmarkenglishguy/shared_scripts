@@ -1,0 +1,29 @@
+#!/usr/bin/env sh
+os_name='unknown'
+case $(uname -a | tr '[:upper:]' '[:lower:]') in
+  *mingw64*)
+    os_name='msys'
+    ;;
+  *cygwin*)
+    os_name='cygwin'
+    ;;
+  *darwin*)
+    os_name='darwin'
+    ;;
+esac
+
+case "${os_name}" in 
+  msys)
+    /c/Program\ Files\ \(x86\)/Google/Chrome/Application/chrome.exe "${@}"
+    ;;
+  cygwin)
+    /cygdrive/c/Program\ Files\ \(x86\)/Google/Chrome/Application/chrome.exe "${@}"
+    ;;
+  darwin)
+    Open "${@}"
+    ;;
+  *)
+    echo "Can't open '${@}' on '${os_name}'"
+    ;;
+esac
+
