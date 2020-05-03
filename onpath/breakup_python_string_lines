@@ -12,9 +12,13 @@ fi
 
 function show() {
   echo "${@}"
-  #echo "${@}" | wc -c
-  #echo
+  # wc -m or -c is 1 larger than number of characters.
+#  echo "${@}" | echo $(( $(wc -m) - 1 ))
+#  echo
 }
+
+# +2 for the quotes, -1 for 0 based indexing.
+LENGTH_OFFSET=1
 
 function breakup_line() {
   local max_length
@@ -41,8 +45,8 @@ function breakup_line() {
     line="${BASH_REMATCH[2]}"
   fi
 
-  (( line_length=max_length - (${#padding} + 2) )) # 2 for the quotes
-  (( fragment_length = line_length - 1 )) # For the way string offsets work
+  (( line_length=max_length - (${#padding} + LENGTH_OFFSET) )) 
+  (( fragment_length = line_length )) # For the way string offsets work
   if (( (${#line}) > line_length )) 
   then
     quote="${line:0:1}"
@@ -50,7 +54,7 @@ function breakup_line() {
     line="${line:${line_length}}"
     show "${padding}${fragment}${quote}"
 
-    while (( (${#line} + ${#padding} + 2) > max_length ))
+    while (( (${#line} + ${#padding} + LENGTH_OFFSET) > max_length ))
     do
       fragment="${line:0:${fragment_length}}"
       line="${line:${fragment_length}}"
