@@ -103,3 +103,10 @@ augroup Rust
   autocmd FileType Rust noremap <F12> :YcmCompleter GoToDefinition<cr>
 augroup END
 
+" C++
+augroup cpp
+  autocmd FileType cpp command! -nargs=* InsertHeaderGuardBlock call InsertCppHeaderGuardBlockVarArgs(<f-args>)
+  autocmd FileType cpp noremap <leader>h :InsertHeaderGuardBlock<cr>
+  autocmd FileType cpp noremap <leader>h<Space> :InsertHeaderGuardBlock<Space>
+augroup END
+
