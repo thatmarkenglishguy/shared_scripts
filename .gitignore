@@ -3,3 +3,8 @@ __pycache__/
 .DS_Store
 compile_commands.json
 vimrctemp*
+*.exe
+*.dll
+*.so
+*.dynlib
+*.lib
