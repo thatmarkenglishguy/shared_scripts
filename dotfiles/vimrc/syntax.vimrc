@@ -91,7 +91,7 @@ set omnifunc=syntaxcomplete#Complete
 
 " Make whitespace visible
 :set listchars=eol:¶,tab:»·,trail:~,extends:>,precedes:<,space:·
-:set list
+:set nolist
 
 " Enormous list of colours:
 " See http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
