@@ -7,6 +7,24 @@ function cleanup() {
   rm -f "${download_file}"
 }
 
+do_sudo=''
+if command -v sudo >/dev/null
+then
+  do_sudo='sudo'
+fi
+
+case "$(uname -a | tr '[:upper:]' '[:lower:]')" in
+  *darwin*)
+    os_name='darwin'
+    ;;
+  *msys*|*mingw*)
+    os_name='msys'
+    ;;
+  *)
+    os_name='unknown_os'
+    ;;
+esac
+
 function download_and_install() {
   local url
   local gradle_filename
@@ -18,7 +36,7 @@ function download_and_install() {
   curl -L "${url}" -o "${download_file}"
   if [ ${?} -eq 0 ]
   then
-    sudo unzip "${download_file}" -d "/opt/gradle"
+    ${do_sudo} unzip "${download_file}" -d "/opt/gradle"
     cleanup
   fi
   set +x
@@ -28,7 +46,14 @@ function version_from_url_exists() {
   local url
   local version
   url="${1}"
-  version=$(echo "${url}" | sed -n 's!.*gradle-\([0-9\.]*\)-[:alpha:]*\.zip$!\1!p')
+  case "${os_name}" in
+    darwin)
+      version=$(echo "${url}" | sed -n 's!.*gradle-\([0-9\.]*\)-[:alpha:]*\.zip$!\1!p')
+      ;;
+    *)
+      version=$(echo "${url}" | sed -n 's!.*gradle-\([0-9\.]*\)-[[:alpha:]]*\.zip$!\1!p')
+      ;;
+  esac
 
   if [ -d "/opt/gradle/gradle-${version}" ]
   then
@@ -49,7 +74,8 @@ function check_download_and_install() {
   fi
 }
 
-sudo mkdir -p /opt/gradle
+${do_sudo} mkdir -p /opt/gradle
+
 release_page=$(curl -S https://gradle.org/releases/)
 if [ -n "${release_page}" ]
 then
@@ -63,3 +89,4 @@ then
   check_download_and_install "${latest_gradle_url}"
   check_download_and_install "${latest_gradle4_url}"
 fi
+
