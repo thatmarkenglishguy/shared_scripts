@@ -155,6 +155,11 @@ function dirtitle {
   title $(basename $(pwd)) "${@}"
 }
 
+# Function to get back here
+function shared {
+  pushd "${marke_local_bash_script_dir}"
+}
+
 # Some grep prettiness
 alias grep='grep --color'
 
