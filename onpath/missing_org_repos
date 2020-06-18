@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+verbose=0
+
+declare -a unused_args
+unused_args=()
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    -v|--verbose)
+      verbose=1
+      ;;
+    -h|--help|/?)
+      cat <<-EOF >&2
+missing_org_repos [ORGNAME]
+
+Parameters:
+  ORGNAME - Name of org to check for missing repos in. Defaults to current directory ($(basename $(pwd)).
+
+EOF
+
+      cat <<-EOF
+# Example usage to generate a script:
+touch checkout_missing_orgs; chmod 755 ./checkout_missing_orgs
+missing_org_repos | tee -a checkout_missing_orgs
+./checkout_missing_orgs
+EOF
+      exit 1
+      ;;
+    *)
+      unused_args+=( "${arg}" )
+  esac
+done
+
+if [ ${#unused_args[@]} -gt 0 ]
+then
+  org="${unused_args[0]}"
+  unused_args=( "${unused_args[@]:1}" )
+else
+  org=$(basename $(pwd))
+fi
+
+while read -r repo
+do
+  if [ -d "${repo}" ] || [ -d "${repo}.git" ]
+  then
+    if [ ${verbose} -ne 0 ]
+    then
+      echo "${repo}" >&2
+      echo '  Already present.' >&2
+    fi
+  else
+    cat <<-EOF
+git clone "git@${GITHUB_HOST:-github.com}:${org}/${repo}.git"
+EOF
+  fi
+done < <("${script_dir}/git_get" --org "${org}")
+  #done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
+

@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+. read_repos "${@}"
+
+previous_repo=
+
+if [ $? -eq 0 ]
+then
+  for repo in "${repo_directories[@]}"
+  do
+    pushd "${repo}" >/dev/null
+    prompt=''
+    if [ -n "${previous_repo}" ]
+    then
+      prompt="...${previous_repo}"'
+'
+    fi
+    previous_repo="${repo}"
+    prompt+="${repo}"
+    read -p "${prompt}"... 
+    echo "${repo}" >&2
+    eval "${remaining_args[@]}"
+    popd >/dev/null
+  done
+
+  if [ -n "${previous_repo}" ]
+  then
+    echo "...$previous_repo}" >&2
+  fi
+fi
+
