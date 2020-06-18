@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+
+# Parameters:
+# 1- Search string
+# 2- Search directory (defaults to .)
+# 3- Search include pattern (defaults to all)
+# All other parameters passed to grep
+
+# Examples:
+# Search for 'containerBuildPub' in current directory including all files giving context of 5 lines.
+# srcgrep containerBuildPub . '*' -C5
+
+# --binary-file=without-match means ignore binary files
+declare -a args
+args=( "${@:4}" )
+
+grep --recursive \
+  --ignore-case \
+  "${1:?Must specific search string}" \
+  "${2:-.}" \
+  --binary-file=without-match \
+  --color=always \
+  --line-number \
+  --include "${3:-*}" \
+  --exclude-dir '.git' \
+  --exclude-dir 'build' \
+  --exclude-dir 'output' \
+  --exclude-dir 'out' \
+  --exclude-dir 'bin' \
+  --exclude-dir 'node_modules' \
+  --exclude-dir '.env' \
+  --exclude-dir '.idea' \
+  --exclude-dir '.gradle' \
+  --exclude-dir '.metadata' \
+  --exclude-dir '.plugins' \
+  --exclude 'gradlew.bat' \
+  --exclude 'gradle' \
+  "${args[@]}"
