@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+function usage() {
+  local program_name
+  program_name=$(basename {0})
+  cat <<-EOF
+${program_name} FILE1 [FILE2 [FileN...]] TARGETDIR
+
+Copy the specified files using their full paths rooted to in ${HOME} to a directory,
+preserving the directory structure.
+
+Parameters:
+  FILEN...  - File to copy.
+  TARGETDIR - Directory to copy to.
+
+Example:
+# Copy current some_file1 and some_file2 to ~/somewhere maintaining directory structure.
+${program_name} some_file1 some_file2 ~/somewhere
+EOF
+}
+
+function hacked_realpath() {
+  local directory
+  local filename
+  if false #which realpath >/dev/null
+  then
+    realpath "${@}"
+  else
+    directory="${1%/*}"
+    filename="${1##*/}"
+    if [ "${directory}" == "${1}" ]
+    then
+      directory='.'
+    fi
+
+    directory="$(cd "${directory}" && pwd)"
+    if [ -z "${directory}" ]
+    then
+      return 1
+    fi
+
+    echo "${directory}/${filename}"
+  fi
+}
+declare -a args
+args=( )
+declare -a file_args
+file_args=( )
+dry_run=0
+
+home_length=${#HOME}
+((home_offset=home_length + 1))
+ok_exit_code=0
+
+for (( i=1; i<${#}+1; ++i ))
+do
+  arg="${!i}"
+
+  case "${arg}" in
+    --help)
+      usage
+      exit 1
+      ;;
+    --dry-run|--dryrun)
+      dry_run=1
+      ;;
+    *)
+      if [ -n "${target_root_directory}" ]
+      then
+        if [ ! -e "${target_root_directory}" ]
+        then
+          echo "Unable to locate file: ${target_root_directory}" >&2
+          (( ++ok_exit_code ))
+        else
+          file_args+=( "${target_root_directory}" )
+        fi
+      fi
+      target_root_directory="${arg}"
+      ;;
+  esac
+done
+unset arg
+
+if [ -n "${target_root_directory}" ] && [ ! -e "${target_root_directory}" ]
+then
+  mkdir -p "${target_root_directory}"
+fi
+
+if [ -z "${target_root_directory}" ] || [ ! -d "${target_root_directory}" ]
+then
+  echo "Target directory not a directory: '${target_root_directory}'" >&2
+  (( ++ok_exit_code ))
+fi
+
+if [ ${#file_args[@]} -eq 0 ]
+then
+  echo "No files to copy to ${target_root_directory}"
+  (( ++ok_exit_code ))
+fi
+
+if [ ${ok_exit_code} -ne 0 ]
+then
+  exit ${ok_exit_code}
+fi
+
+for file_arg in "${file_args[@]}"
+do
+  abs_arg=$(hacked_realpath "${file_arg}")
+  homeless_arg="${abs_arg:${home_offset}}"
+  directory="${homeless_arg%/*}"
+
+  target_directory="${target_root_directory}/${directory}"
+  target_path="${target_root_directory}/${homeless_arg}"
+  if [ ${dry_run} -ne 0 ]
+  then
+    echo "mkdir -p '${target_directory}'"
+    echo cp "'${abs_arg}'" "'${target_path}'"
+  else
+    if [ ! -d "${target_directory}" ]
+    then
+      mkdir -p "${target_directory}"
+    fi
+
+    cp "${abs_arg}" "${target_path}"
+  fi
+done 
+
