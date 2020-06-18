@@ -10,9 +10,9 @@ fi
 
 while read gitdir
 do
-  d=$(dirname "${gitdir}")
-  pushd ${d} >/dev/null
-  echo "---${d}---"
+  repo=$(dirname "${gitdir}")
+  pushd ${repo} >/dev/null
+  echo "---${repo}---" >&2
   eval "${@}" 
   popd >/dev/null
   echo

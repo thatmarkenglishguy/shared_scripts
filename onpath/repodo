@@ -7,7 +7,7 @@ then
   for repo in "${repo_directories[@]}"
   do
     pushd "${repo}" >/dev/null
-    echo "${repo}"
+    echo "${repo}" >&2
     eval "${remaining_args[@]}"
     popd >/dev/null
   done
