@@ -1,12 +1,28 @@
 #!/usr/bin/env sh
 
-for x in $(gitsubdirs); do
-  cd "${x}" >/dev/null
-  branch=$(git rev-parse --abbrev-ref HEAD)
-  echo ---"${x}" "${branch}"---
-  git fetch
-  git status
-  cd - >/dev/null
-  echo
-done
+. read_repos "${@}"
+
+if [ $? -eq 0 ]
+then
+  for d in "${repo_directories[@]}"
+  do
+    pushd "${d}" >/dev/null
+    branch=$(git rev-parse --abbrev-ref HEAD)
+    echo ---"${d}" "${branch}"---
+    git fetch
+    git status
+    popd >/dev/null
+  done
+fi
+
+#
+#for x in $(gitsubdirs); do
+#  cd "${x}" >/dev/null
+#  branch=$(git rev-parse --abbrev-ref HEAD)
+#  echo ---"${x}" "${branch}"---
+#  git fetch
+#  git status
+#  cd - >/dev/null
+#  echo
+#done
 
