@@ -69,8 +69,6 @@ set shiftwidth=2
 set expandtab
 " source .vimrc file if it's present in working directory
 set exrc
-" This is for setting Makefiles with tabs not spaces
-autocmd FileType make setlocal noexpandtab
 
 " Settings moved from forked vimrc
 set softtabstop=2
@@ -92,6 +90,7 @@ set omnifunc=syntaxcomplete#Complete
 " Make whitespace visible
 :set listchars=eol:¶,tab:»·,trail:~,extends:>,precedes:<,space:·
 :set nolist
+" :set list
 
 " Enormous list of colours:
 " See http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim

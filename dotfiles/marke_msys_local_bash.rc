@@ -24,6 +24,22 @@ else
   source "${marke_local_bash_script_dir}/shscripts/pathfunctions"
 fi
 
+# Go to the shared directory
+function shared() {
+  pushd "${marke_local_bash_script_dir}"
+}
+
+# Go to directory on path containing file
+function pushfiled() {
+  if [ -z "${1}" ]
+  then
+    echo 'No filename specified' >&2
+  else
+    pushd $(dirname $(which "${1}"))
+  fi
+}
+alias pfd=pushfiled
+
 # What we have now based on mac...
 
 # Default to Java 11
@@ -155,36 +171,33 @@ function dirtitle {
   title $(basename $(pwd)) "${@}"
 }
 
-# Function to get back here
-function shared {
-  pushd "${marke_local_bash_script_dir}"
-}
-
 # Some grep prettiness
 alias grep='grep --color'
 
 
 # GITHUB_USER setup
 export GITHUB_USER=wafflesouffle@github.com
-function gitget() { curl -u "${GITHUB_USER}":$(cat ~/.tokens/githubread) https://github.com/api/v3/"${@}" ; }
-
+#function gitget() { curl -u "${GITHUB_USER}":$(cat ~/.tokens/githubread) "https://${GITHUB_HOST:-github.com}/api/v3/${@}" ; }
+function gitget() { git_get ; }
 export -f gitget
 
 # checkout_org_repos function
 #  Is this still needed ?
-function checkout_org_repos() {
-  org=${1:-$(basename $(pwd))}
-  while read -r repo
-  do
-    echo "${repo}"
-    if [ -d "${repo}" ] || [ -d "${repo}.git" ]
-    then
-      echo 'Already present.'
-    else
-      git clone "git@${GITHUB_HOST:-github.com}:${org}/${repo}.git"
-    fi
-  done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
-}
+# Nope - moved to a script
+#function checkout_org_repos() {
+#  org=${1:-$(basename $(pwd))}
+#  while read -r repo
+#  do
+#    echo "${repo}"
+#    if [ -d "${repo}" ] || [ -d "${repo}.git" ]
+#    then
+#      echo 'Already present.'
+#    else
+#      git clone "git@${GITHUB_HOST:-github.com}:${org}/${repo}.git"
+#    fi
+#  done < <(git_get --org "${org}")
+#  #done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
+#}
 
 # Choose a gradle
 if type gradle6 &>/dev/null
@@ -211,8 +224,6 @@ case "${os_name}" in
     then
       . ${__}/etc/bash_completion
     fi
-
-
    ;;
 esac
 

@@ -103,6 +103,10 @@ augroup Rust
   autocmd FileType Rust noremap <F12> :YcmCompleter GoToDefinition<cr>
 augroup END
 
+" Makefile
+" This is for setting Makefiles with tabs not spaces
+autocmd FileType make setlocal noexpandtab
+
 " C++
 augroup cpp
   autocmd FileType cpp command! -nargs=* InsertHeaderGuardBlock call InsertCppHeaderGuardBlockVarArgs(<f-args>)
