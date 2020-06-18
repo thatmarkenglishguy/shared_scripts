@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+org=${1:-$(basename $(pwd))}
+while read -r repo
+do
+  echo "${repo}" >&2
+  if [ -d "${repo}" ] || [ -d "${repo}.git" ]
+  then
+    echo 'Already present.' >&2
+  else
+    git clone "git@${GITHUB_HOST:-github.com}:${org}/${repo}.git"
+  fi
+done < <("${script_dir}/git_get" --org "${org}")
+#done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
+
+
