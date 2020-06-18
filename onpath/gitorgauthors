@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+
+function usage() {
+  local program_name
+  program_name=$(basename "${0}")
+  cat <<-EOF >&2
+${program_name} [--verbose] [--no-sort] [--help]
+Get the authors for a repo and output their names sorted by name.
+
+Parameters:
+  --verbose  : Verbose output.
+  --no-sort  : Do not sort or uniqify the output.
+  --no-count : Do not count the output entries. Just show each authors first entry.
+  --help     : Show this usage.
+EOF
+
+  cat <<-EOF
+# List the author frequency in the repos listed in repos file.
+${program_name} repos --no-sort | sort -k1,1 | uniq -c | sort -k1,1rn
+EOF
+}
+
+function lower_alphanumeric() {
+  # Upper -> Lower | Delete complement of non-alnum characters
+  tr '[:upper:]' '[:lower:]' | tr -cd '[:alnum:]'
+}
+
+export -f lower_alphanumeric
+
+function amend_line() {
+  local regex
+  local verbose
+  local commit_hash
+  local time_period
+  local email_prefix
+  local name
+  local email_id
+  local first_initial
+  local surname
+
+  #      (REF)                (N times) ago (FIRSTNAME.SURNAME)@REMAINDER (NAME)
+  regex='([[:alnum:]][[:alnum:]]*) (.*\ ago) ([^@]*)@[^ ]* (.*)'
+  verbose=${1:-0}
+
+  while read -r
+  do
+    if [[ "${REPLY}" =~ ${regex} ]]
+    then
+      commit_hash="${BASH_REMATCH[1]}"
+      time_period="${BASH_REMATCH[2]}"
+      email_prefix="${BASH_REMATCH[3]}"
+      name="${BASH_REMATCH[4]}"
+
+      if [ -n "${name}" ]
+      then
+        first_initial="${name:0:1}"
+      else
+        first_initial="${email_prefix:0:1}"
+      fi
+
+      if [[ "${email_prefix}" =~ .*\..* ]]
+      then
+        surname="${email_prefix##*.}"
+      else
+        # Take string after last space | lower_alphanumeric
+        surname=$(echo "${name##*\ }" | lower_alphanumeric)
+      fi
+
+      email_id="${first_initial}${surname}"
+      email_id=$(echo "${email_id}" | lower_alphanumeric)
+
+      if [[ "${email_id}" =~ .*root.* ]] || [ ${verbose} -eq 1 ]
+      then
+        echo "${email_id} ${commit_hash} ${time_period} (${email_prefix}) ${name}"
+      else
+        echo "${email_id}" "${name}"
+      fi
+    else
+      echo "No matches for line: '${REPLY}'"
+    fi
+  done
+}
+
+declare -a args
+args=( "${@}" )
+declare -a passthrough_args
+passthrough_args=( )
+
+verbose=0
+sorted=1
+counted=1
+for (( i=0; i<${#args[@]}; i++ ))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    -v|--verbose)
+      verbose=1
+      ;;
+    --no-sort)
+      sorted=0
+      ;;
+    --no-count)
+      counted=0
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      passthrough_args+="${arg}"
+      ;;
+  esac
+done
+
+function run_command() {
+  eval "${command}"
+  #"${command}"
+}
+
+export -f amend_line
+export -f run_command
+export command
+
+#git log --pretty="%h %cr %ae %an" | amend_line | sort -u -k1,1; echo
+#git log --pretty="%h %cr %ae %an" | amend_line ${verbose} | sort -u -k1,1; echo
+read -r command <<-EOCOMMAND
+git log --pretty="%h %cr %ae %an" | amend_line ${verbose}
+EOCOMMAND
+
+if [ ${counted} -ne 0 ]
+then
+  command="${command} | sort -k1,1 | uniq -c | sort -k1,1rn"
+  sorted=0
+fi
+
+if [ ${sorted} -ne 0 ]
+then
+  command="${command} | sort -u -k1,1"
+fi
+
+command="${command}; echo >&2"
+
+PAGER=cat repodo "${passthrough_args[@]}" "${command}"
+
