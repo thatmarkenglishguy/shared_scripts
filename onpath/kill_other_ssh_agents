@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+while IFS='' read -r line
+do
+  pid=$(echo "${line}" | tr -s ' ')
+  pid="${pid#*\ }"
+  pid=$(echo "${pid}" | cut -d' ' -f2)
+
+  if [ "${pid}" != "${SSH_AGENT_PID}" ]
+  then
+    kill ${pid}
+  fi
+done < <(psfind ssh-agent)
+
+if [ -n "${SSH_AGENT_PID}" ]
+then
+  echo "SSH_AGENT_PID: ${SSH_AGENT_PID}"
+fi
+
