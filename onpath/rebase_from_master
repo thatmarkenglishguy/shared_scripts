@@ -9,7 +9,7 @@ then
     pushd "${d}" >/dev/null
     branch=$(git rev-parse --abbrev-ref HEAD)
     git stash
-    git checkouti "${target_branch}@
+    git checkout "${target_branch}"
     git fetch
     git rebase
     git checkout "${branch}"
