@@ -1,6 +1,79 @@
 #!/usr/bin/env sh
 
-adb shell -e mkdir -p /storage/self/primary/stuff/transfer/mac
-adb push ~/fish/ /storage/self/primary/stuff/transfer/mac
+# Examples
+# From this directory copy default source directory to default target directory
+# copy_to_phone
 
+# From this directory copy this source directory to default target directory
+# copy_to_phone .
+
+# From this directory copy this source directory to target directory
+# copy_to_phone . phone
+
+dry_run=0
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    --dry-run|--dryrrun)
+      dry_run=1
+      ;;
+    *)
+      if [ -z "${copy_source}" ]
+      then
+        copy_source="${arg}"
+      elif [ -z "${copy_target_suffix}" ]
+      then
+        copy_target_suffix="/${arg}"
+      fi
+      ;;
+  esac
+done
+
+if [ -z "${copy_source}" ]
+then
+  copy_source="${HOME}/fish"
+fi
+
+target_root_directory="/storage/self/primary/stuff/transfer/mac${copy_target_suffix}"
+target_subdirectory="${copy_source}"
+
+case "${target_subdirectory}" in
+  \~/*)
+   target_subdirectory=$(echo "${target_subdirectory}" | cut -c 3-)
+    ;;
+  ${HOME}/*)
+    home_length=$(echo "${HOME}/" | wc -c | tr -d '[:space:]')
+    target_subdirectory=$(echo "${target_subdirectory}" | cut -c ${home_length}-)
+    ;;
+    *)
+      if [ -z "${copy_source}" ]
+      then
+        copy_source="${arg}"
+      elif [ -z "${copy_target_suffix}" ]
+      then
+        copy_target_suffix="/${arg}"
+      fi
+      ;;
+esac
+
+target_directory="${target_root_directory}/${target_subdirectory}"
+
+if [ ! -e ${copy_source} ]
+then
+  echo "Source does not exist: '${copy_source}'"
+  exit 1
+fi
+
+echo "Copying from: '${copy_source}'" >&2
+echo "Copying to:   '${target_directory}'" >&2
+#adb shell -e mkdir -p /storage/self/primary/stuff/transfer/mac
+#echo adb push "${copy_source}" /storage/self/primary/stuff/transfer/mac
+if [ ${dry_run} -ne 0 ]
+then
+  echo adb push "${copy_source}" "${target_directory}"
+else
+  adb shell mkdir -p "${target_directory}"
+  adb push "${copy_source}" "${target_directory}"
+fi
 

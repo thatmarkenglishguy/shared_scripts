@@ -1,4 +1,75 @@
 #!/usr/bin/env sh
 
-mkdir -p ~/fish
-adb pull /storage/self/primary/stuff/transfer/mac ~/fish/
+# Examples
+# From this directory copy default target directory to default source directory
+# copy_from_phone
+
+# From this directory copy default target directory to this source directory
+# copy_from_phone .
+
+# From this directory copy phone target directory to this source directory
+# copy_from_phone . phone
+
+## This needs some serious cleaning up
+
+dry_run=0
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    --dry-run|--dryrrun)
+      dry_run=1
+      ;;
+    *)
+      if [ -z "${copy_target}" ]
+      then
+        copy_target="${arg}"
+      elif [ -z "${copy_source_suffix}" ]
+      then
+        copy_source_suffix="/${arg}"
+      fi
+      ;;
+  esac
+done
+
+if [ -z "${copy_target}" ]
+then
+  copy_target="${HOME}/fish"
+fi
+
+source_root_directory="/storage/self/primary/stuff/transfer/mac${copy_source_suffix}"
+source_subdirectory="${copy_target}"
+set -x
+case "${source_subdirectory}" in
+  \~/*)
+   source_subdirectory=$(echo "${source_subdirectory}" | cut -c 3-)
+    ;;
+  ${HOME}/*)
+    home_length=$(echo "${HOME}/" | wc -c | tr -d '[:space:]')
+    source_subdirectory=$(echo "${source_subdirectory}" | cut -c ${home_length}-)
+    ;;
+esac
+set +x
+source_directory="${source_root_directory}/${source_subdirectory}"
+
+if [ ! -e "${copy_target}" ]
+then
+  mkdir -p "${copy_target}"
+#  echo "Target does not exist: '${copy_target}'"
+#  exit 1
+fi
+
+echo "Copying from: '${source_directory}'" >&2
+echo "Copying to:   '${copy_target}'" >&2
+if [ ${dry_run} -ne 0 ]
+then
+  echo adb pull "${source_directory}" "${copy_target}"
+else
+  adb pull "${source_directory}" "${copy_target}"
+fi
+
+#adb shell -e mkdir -p /storage/self/primary/stuff/transfer/mac
+#copy_target="${1:-~/fish/}"
+#echo "Copying to ${copy_target}" >&2
+#mkdir -p "${copy_target}"
+#adb pull /storage/self/primary/stuff/transfer/mac "${copy_target}"
