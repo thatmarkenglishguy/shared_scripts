@@ -11,7 +11,7 @@ function usage() {
   local program_name
   program_name=$(basename {0})
   cat <<-EOF
-${program_name} FILE1 [FILE2 [FileN...]] TARGETDIR
+${program_name} FILE1 [FILE2 [FileN...]] TARGETDIR [--dry-run]
 
 Copy the specified files using their full paths rooted to in ${HOME} to a directory,
 preserving the directory structure.
@@ -19,6 +19,7 @@ preserving the directory structure.
 Parameters:
   FILEN...  - File to copy.
   TARGETDIR - Directory to copy to.
+  --dry-run - If specified, just perform a dry run.
 
 Example:
 # Copy current some_file1 and some_file2 to ~/somewhere maintaining directory structure.
@@ -29,7 +30,7 @@ EOF
 function hacked_realpath() {
   local directory
   local filename
-  if false #which realpath >/dev/null
+  if which realpath >/dev/null
   then
     realpath "${@}"
   else
