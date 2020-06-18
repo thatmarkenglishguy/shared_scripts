@@ -1,0 +1,125 @@
+#!/usr/bin/env bash
+
+declare -a subdirs
+subdirs=( $(gitsubdirs) )
+github_host="${GITHUB_HOST:-github.com}"
+
+update_repos=1
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    -h|--help|/?)
+      cat <<-EOF
+update_repos_file [REPOS_FILE] [--missing]
+
+Parameters:
+  REPOS_FILE - If specifed, update the specified file. Defaults to "repos".
+  --missing  - If specified, new directories are put in the "other_repo_directories" array.
+               Otherwise new directories are put in the "repo_directories" array.
+EOF
+      exit 1
+      ;;
+    --missing)
+      update_repos=0
+      ;;
+  esac
+done
+
+if [ ${#subdirs[@]} -eq 0 ] || [[ -z ${subdirs[0]} ]]
+then
+  echo 'gitsubdirs - it does nothing'
+else
+  org=$(cd "${subdirs[0]}"; git config --get remote.origin.url)
+  org=${org#*:} #Remove everything up to :
+  org=${org%/*} #Remove everything after /
+  target_file=${1:-repos}
+
+  if [ -f "${target_file}" ]
+  then
+    source "${target_file}"
+  else
+    declare -a repo_directories
+    declare -a other_repo_directories
+    repo_directories=()
+    other_repo_directories=()
+  fi
+
+  function array_contains() {
+    local needle
+    local haystack
+    local entry
+
+    needle="${1}"
+    declare -a haystack
+    haystack=( "${@:2}" )
+
+    for entry in "${haystack[@]}"
+    do
+      if [ "${entry}" == "${needle}" ]
+      then
+        return 0
+      fi
+    done
+    return 1
+  }
+
+  declare -a new_directories
+  new_directories=()
+
+  while read -r gitsubdir
+  do
+    if ! array_contains "${gitsubdir}" "${repo_directories[@]}" && ! array_contains "${gitsubdir}" "${other_repo_directories[@]}"
+    then
+      new_directories+=("${gitsubdir}")
+    fi
+  done < <(gitsubdirs | sort)
+
+  if [ ${#new_directories[@]} -gt 0 ]
+  then
+    for gitsubdir in "${new_directories[@]}"
+    do
+      echo "${gitsubdir}" >&2
+    done
+  fi
+
+  echo '#!/usr/bin/env bash
+
+declare -a repo_directories
+declare -a other_repo_directories
+repo_directories=( ' >"${target_file}"
+
+  if [ ${update_repos} -ne 0 ]
+  then
+    for gitsubdir in "${new_directories[@]}"
+    do
+      echo "  ${gitsubdir}" >>"${target_file}"
+    done
+  fi
+
+  for gitsubdir in "${repo_directories[@]}"
+  do
+    echo "  ${gitsubdir}" >>"${target_file}"
+  done
+
+  echo ')
+other_repo_directories=(' >>"${target_file}"
+
+  if [ ${update_repos} -eq 0 ]
+  then
+    for gitsubdir in "${new_directories[@]}"
+    do
+      echo "  ${gitsubdir}" >>"${target_file}"
+    done
+  fi
+
+  for gitsubdir in "${other_repo_directories[@]}"
+  do
+    echo "  ${gitsubdir}" >>"${target_file}"
+  done
+
+  cat <<-EOF >>"${target_file}"
+)
+repo_base=git@${github_host}:${org}
+EOF
+fi
