@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+#If all else fails follow these instructions which led to this script.
+# https://packaging.python.org/tutorials/installing-packages/#id13
+python3 -m ensurepip --default-pip
+python3 -m pip install --upgrade pip
