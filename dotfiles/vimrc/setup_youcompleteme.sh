@@ -10,10 +10,12 @@ fi
 ok_to_continue=0
 uname_result=$(uname -a | tr '[:upper:]' '[:lower:]') 
 platform=unknown
+sub_platform=unknown
 
 case "${uname_result}" in 
   *darwin*)
     platform=darwin
+    sub_platform=darwin
     ;;
 
   *cygwin*)
@@ -25,17 +27,20 @@ case "${uname_result}" in
     case "${uname_result}" in
       *mingw*)
         platform=msys
+        sub_platform=mingw
         ;;
       *)
-        (( ++ok_to_continue ))
-        cat <<-EOF >&2
-Platform result suggests msys2 terminal, not msys2/Mingw64 terminal as required.
-Presuming Msys2 is installed to standard location, please try launching from Windows Console as
-> c:\msys64\msys2_shell.cmd -mingw64 -full-path
-Then cd $(pwd) and re-run this script.
-
-Note platform result: '${uname_result}'.
-EOF
+        platform=msys
+        sub_platform=msys
+#        (( ++ok_to_continue ))
+#        cat <<-EOF >&2
+#Platform result suggests msys2 terminal, not msys2/Mingw64 terminal as required.
+#Presuming Msys2 is installed to standard location, please try launching from Windows Console as
+#> c:\msys64\msys2_shell.cmd -mingw64 -full-path
+#Then cd $(pwd) and re-run this script.
+#
+#Note platform result: '${uname_result}'.
+#EOF
         ;;
     esac
     ;;
@@ -109,6 +114,12 @@ function install_python() {
       msys)
         pacman -Su --noconfirm python3
         pacman -Su --noconfirm mingw64/mingw-w64-x86_64-python3-pip
+        case ${sub_platform} in
+          msys)
+            python3 -m ensurepip --default-pip
+            python3 -m pip install --upgrade pip
+            ;;
+        esac
         ;;
       *)
         echo "Don't know how to install python3 on this platform: $(uname -a)"
@@ -124,6 +135,37 @@ function install_python() {
 }
 
 function detect_python() {
+  local override_msys
+  local description
+  local python_exe_path
+  override_python_exe=${1:-0}
+  description="${2}"
+  if [ -n "${description}" ]
+  then
+    description=" ${description}"
+  fi
+
+  python_exe_path='python3'
+
+  case "${platform}" in
+    msys)
+      case "${sub_platform}" in
+        mingw)
+          if [ -f /usr/bin/python3 ]
+          then
+            if [ ${override_python_exe} -ne 0 ]
+            then
+              echo "Using the msys python3 installation on mingw64${description}" >&2
+              python_exe_path=/usr/bin/python3
+            else
+              echo "Using the standard python3 installation on mingw64${description}" >&2
+            fi
+          fi
+          ;;
+      esac
+      ;;
+  esac
+
   case "${platform}" in
     darwin)
       # Todo - I don't think we need python3_location.
@@ -135,9 +177,18 @@ function detect_python() {
       fi
       ;;
   esac
+#msys
+#python3_include_location: '/usr/include/python3.8'
+#python3_lib_dir         : '/usr/lib'
+#python3_lib_location    : '/usr/lib/libpython3.8.dll.a'
 
-  python3_include_location=$(python3 -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")
-  python3_lib_dir=$(python3 -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
+#mingw
+#python3_include_location: 'C:/msys64/mingw64/include/python3.8'
+#python3_lib_dir         : 'C:/msys64/mingw64/lib'
+#python3_lib_location    : 'C:/msys64/mingw64/lib/libpython3.8.dll.a'
+
+  python3_include_location=$(${python_exe_path} -c "from distutils.sysconfig import get_python_inc; print(get_python_inc())")
+  python3_lib_dir=$(${python_exe_path} -c "import distutils.sysconfig as sysconfig; print(sysconfig.get_config_var('LIBDIR'))")
   case "${platform}" in
     darwin)
       python3_lib_location=$(find "${python3_lib_dir}" -name 'libpython*m.dylib' -maxdepth 1 | tail -n 1)
@@ -146,7 +197,7 @@ function detect_python() {
       python3_lib_location=$(find "${python3_lib_dir}" -maxdepth 2 -name 'libpython*.dll.a' | tail -n 1)
       ;;
   esac
-  python3_executable=$(python3 -c "import sys; print(sys.executable)")
+  python3_executable=$(${python_exe_path} -c "import sys; print(sys.executable)")
 
   echo "python3_include_location: '${python3_include_location}'"
   echo "python3_lib_dir         : '${python3_lib_dir}'"
@@ -184,6 +235,7 @@ function mend_ycm() {
 
   if [ -d "${YCM_THIRDPARTY_DIR}" ]
   then
+    echo 'Mending YouCompleteMe' >&2
     pushd "${YCM_THIRDPARTY_DIR}" >/dev/null
     git submodule sync --recursive
     git submodule update --init --recursive
@@ -197,10 +249,13 @@ function build_ycm_core() {
   if [ ${1:-1} -ne 1 ]; then return; fi
 
   local system_clang_path
+  local build_dir
+  build_dir=~/stuff/builds/ycm/ycm_build/${sub_platform}
+
   echo 'Setting up build directories.'
-  rm -rf ~/stuff/builds/ycm/ycm_build
-  mkdir -p ~/stuff/builds/ycm/ycm_build
-  pushd ~/stuff/builds/ycm/ycm_build
+  rm -rf "${build_dir}"
+  mkdir -p "${build_dir}"
+  pushd "${build_dir}"
 
   case "${platform}" in
     msys-with-local-clang) #Never set, just here for posterity
@@ -219,7 +274,7 @@ function build_ycm_core() {
       ;;
   esac
 
-  echo 'Building the ycm core...'
+  echo 'building the ycm core...'
   cmake --build . --target ycm_core --config Release
 
   popd
@@ -229,13 +284,13 @@ function build_ycm_regex() {
   if [ ${1:-1} -ne 1 ]; then return; fi
 
   echo 'Setting up regex build directories.'
-  rm -rf ~/stuff/builds/ycm/regex_build
-  mkdir -p ~/stuff/builds/ycm/regex_build
-  pushd ~/stuff/builds/ycm/regex_build
+  rm -rf ~/stuff/builds/ycm/regex_build/${sub_platform}
+  mkdir -p ~/stuff/builds/ycm/regex_build/${sub_platform}
+  pushd ~/stuff/builds/ycm/regex_build/${sub_platform}
   #cmake -G "Unix Makefiles" . ~ -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/third_party/cregex"
   cmake -G "Unix Makefiles" . ~ -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/third_party/cregex"
 
-  echo 'Building the ycm regex engine...'
+  echo 'building the ycm regex engine...'
   cmake --build . --target _regex --config Release
 
   popd
@@ -439,13 +494,21 @@ do_rust=1
 do_ycm=1
 do_mend_ycm=1
 do_ycm_regex=1
+do_override_mingw_python3_on_msys=1
 
 case "${platform}" in
   msys)
     do_java=0
     do_node=0
     do_rust=0
-    do_mend_ycm=0
+    case "${sub_platform}" in
+      msys)
+        do_mend_ycm=1
+        ;;
+      mingw)
+        do_mend_ycm=0
+        ;;
+    esac
     ;;
   *)
     :
@@ -480,6 +543,8 @@ $(basename "${0}") [--[no-]python] [--[no-]java] [--[no-]node] [--[no-]rust] [--
   --node          If specified, install Node, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_node}).
   --rust          If specified, install rust, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_rust}).
   --mend-ycm      If specified, run 'git submodule update --init --recursive' after installing YouCompleteMe. Defaults to $(boolstring ${do_mend_ycm}).
+  --override-mingw-with-msys
+                  If specified on mingw platform with msys python3 available, build against msys platform. Defaults to $(boolstring ${do_override_mingw_python3_on_msys}).
 
   --no-python     Don't try to install Python3. Defaults to $(inverseboolstring ${do_python}).
   --no-java       Don't install the java support in YouCompleteMe. Defaults to $(inverseboolstring ${do_java}).
@@ -488,6 +553,8 @@ $(basename "${0}") [--[no-]python] [--[no-]java] [--[no-]node] [--[no-]rust] [--
   --no mend-ycm   Don't run 'git submodule update --init --recursive' after installing YouCompleteMe. Defaults to $(inverseboolstring ${do_mend_ycm}).
   --no-ycm        Don't build YouCompleteMe. Defaults to $(inverseboolstring ${do_ycm}).
   --no-ycm-regex  Don't build YouCompleteMe regex. Defaults to $(inverseboolstring ${do_ycm_regex}).
+  --no-override-mingw-with-msys
+                  Don't override mingw python3 installation with msys. Defaults to $(inverseboolstring ${do_override_mingw_python3_on_msys}).
 
 Notes:
 Java, node and rust all work on Mac, but are in progress for Msys/Mingw64.
@@ -532,6 +599,10 @@ do
     --mend-ycm)
       do_mend_ycm=1
       ;;
+    --override-mingw-with-msys)
+      do_override_mingw_python3_on_msys=1
+      ;;
+
     --no-python)
       do_python=0
       ;;
@@ -553,6 +624,10 @@ do
     --no-ycm-regex)
       do_ycm_regex=0
       ;;
+    --no-override-mingw-with-msys)
+      do_override_mingw_python3_on_msys=0
+      ;;
+
     --help|-h|/?)
       usage
       exit 1
@@ -580,9 +655,10 @@ esac
 
 install_python ${do_python}
 install_cmake
-detect_python
+detect_python ${do_override_mingw_python3_on_msys} 'building YouCompleteMe core'
 mend_ycm ${do_mend_ycm}
 build_ycm_core ${do_ycm}
+detect_python 0 'building YouCompleteMe regex'
 build_ycm_regex ${do_ycm_regex}
 install_node ${do_node}
 verify_java ${do_java}
