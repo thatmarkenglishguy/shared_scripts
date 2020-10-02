@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+declare -a args
+args=( )
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    -*)
+      args+=( "${arg}" )
+      ;;
+    *)
+      if filepath=$(which "${arg}")
+      then
+        args+=( "${filepath}" )
+      else
+        args+=( "${arg}" )
+      fi
+      ;;
+  esac
+done
+
+cat "${args[@]}"
+
