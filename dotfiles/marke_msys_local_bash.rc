@@ -110,7 +110,10 @@ source ~/.git-completion.bash
 # Setup GITAWAREPROMPT
 GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
 #export GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
-source "${GITAWAREPROMPT}/main.sh"
+if [ -z ${NOGITAWAREPROMPT+x} ]
+then
+  source "${GITAWAREPROMPT}/main.sh"
+fi
 
 # Setup PS1
 export PS1='\h:\W \u\$ '
