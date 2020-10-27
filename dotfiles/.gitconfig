@@ -24,7 +24,9 @@
   last = log HEAD^..HEAD --name-status
   firstremote = "!git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1"
   url = "!git config --get remote.$(git firstremote).url"
-  httpsurl = !git url | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!'  -e 's!\\.git$!!'
+  httpsrawurl = !git url | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!'  -e 's!\\.git$!!'
+  httpsurlbranch = !git url | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!'  -e 's!\\.git$!/tree!' | tr '\n' '/' && git rev-parse --abbrev-ref HEAD
+  httpsurl = httpsurlbranch
   diffl = "!_diffl() { git diff \"${@}\" -- ':(exclude)*.lockfile'; }; _diffl"
   diffdevl = diffl origin/develop
 
