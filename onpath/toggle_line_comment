@@ -1,0 +1,134 @@
+#!/usr/bin/env bash
+
+default_toggle_pattern='# hackme'
+function usage() {
+  local program_name=$(basename "${0}")
+  cat <<-EOF
+${program_name} [-f|--file] TARGET_FILE] [-p|--pattern] [TOGGLE_PATTERN] [-h|--help]
+
+Parameters:
+  -f|--file    TARGET_FILE    File to alter. If not specified, stdin is used.
+  -p|--pattern TOGGLE_PATTERN Pattern to identify lines to be toggled with.
+                              Defaults to: ${default_toggle_pattern}.
+  -i|--inplace                If specified and TARGET_FILE provided, edit fhe file in place.
+  -h|--help                   Show this help information.
+EOF
+}
+
+ok_exit_code=0
+declare -a args
+declare -a extra_args
+args=()
+extra_args=()
+inplace=0
+
+for ((i=1; i<=${#}; ++i))
+do
+  arg="${!i}"
+  case "${arg}" in
+    -f|--file)
+      (( i++ ))
+      if [ ${i} -lt ${#} ]
+      then
+        target_file="${!i}"
+      else
+        echo 'No target file name specified' >&2
+        (( ok_exit_code++ ))
+      fi
+      ;;
+    -p|--pattern)
+      (( i++ ))
+      if [ ${i} -lt ${#} ]
+      then
+        toggle_pattern="${!i}"
+      else
+        echo 'No pattern specified' >&2
+        (( ok_exit_code++ ))
+      fi
+      ;;
+    -i|--inplace)
+      inplace=1
+      ;;
+    -h|--help)
+      usage
+      exit 1
+      ;;
+    *)
+      if [ -z "${target_file}" ]
+      then
+        target_file="${arg}"
+      elif [ -z "${toggle_pattern}" ]
+      then
+        toggle_pattern="${arg}"
+      else
+        extra_args+=( "${arg}" )
+      fi
+      ;;
+  esac
+done
+
+if [ ${ok_exit_code} -ne 0 ]
+then
+  exit ${ok_exit_code}
+fi
+
+if [ -z "${toggle_pattern}" ]
+then
+  toggle_pattern="${default_toggle_pattern}"
+fi
+
+regex='(.*)[[:space:]]+(.*)'
+while [[ "${toggle_pattern}" =~ ${regex} ]]
+do
+  toggle_pattern="${BASH_REMATCH[1]}[[:space:]][[:space:]]*${BASH_REMATCH[2]}"
+done 
+
+read -d '' -r sed_command <<-EOCOMMAND
+# Print lines which don't contain the toggle pattern.
+/.*${toggle_pattern}/! {
+  p
+}
+
+# Address anything containing the toggle pattern...
+/.*${toggle_pattern}/ {
+    # Don't touch lines which start with toggle pattern.
+    /^[[:space:]]*${toggle_pattern}/ {
+      p
+      n
+    }
+
+    # Spaces ## remainder -> Spaces # remainder
+    # Spaces # remainder -> Spaces remainder
+    s/^\([[:space:]]*\)#\(#*\)[[:space:]]*\(.*\)/\1\2\3/p
+    # Skip to the next line.
+    t end
+
+    # Spaces remainder -> Spaces # remainder
+    s/^\([[:space:]]*\)\(.*\)$/\1# \2/gp
+
+    # Jump point for skipping to next line
+    :end
+}
+EOCOMMAND
+
+if [ -n "${target_file}" ]
+then
+  if [ ${inplace} -eq 0 ]
+  then
+    result=$(sed -n "${sed_command}" "${extra_args[@]}" "${target_file}")
+  else
+    case "$(uname -a | tr '[:upper:]' '[:lower:]')" in
+      darwin)
+        result=$(sed -i'' -n "${sed_command}" "${extra_args[@]}" "${target_file}")
+        ;;
+      *)
+        result=$(sed -i '' -n "${sed_command}" "${extra_args[@]}" "${target_file}")
+        ;;
+    esac
+  fi
+else
+  result=$(sed -n "${sed_command}" "${extra_args[@]}")
+fi
+echo "${result}"
+
+
