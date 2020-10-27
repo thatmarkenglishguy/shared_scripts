@@ -63,7 +63,7 @@ case "${os_name}" in
 esac
 
 alias gop='(url=$(git httpsurl); ${__open_cmd} "${url/publicgithub/github}")'
-alias gopr='(url=$(git httpsurl); ${__open_cmd} "${url/publicgithub/github}/pulls")'
+alias gopr='(url=$(git httpsrawurl); ${__open_cmd} "${url/publicgithub/github}/pulls")'
 
 # source the stuff in profile.d
 #  needs shared_scripts
@@ -108,10 +108,10 @@ fi
 source ~/.git-completion.bash
 
 # Setup GITAWAREPROMPT
-GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
-#export GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
-if [ -z ${NOGITAWAREPROMPT+x} ]
+if [ -z "${NOGITAWAREPROMPT}" ] || [ ${NOGITAWAREPROMPT} -ne 1 ]
 then
+  GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
+  #export GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
   source "${GITAWAREPROMPT}/main.sh"
 fi
 
