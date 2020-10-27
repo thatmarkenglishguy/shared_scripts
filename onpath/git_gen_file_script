@@ -1,0 +1,84 @@
+#!/usr/bin/env bash
+
+command_template=''
+ok_exit_code=0
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    *)
+      if [ -z "${command_template}" ]
+      then
+        command_template="${arg}"
+      else
+        echo "Unexpected argument: '${arg}'" >&2
+        (( ++ok_exit_code ))
+      fi
+      ;;
+  esac
+done
+
+if [ ${ok_exit_code} -ne 0 ]
+then
+  exit ${ok_exit_code}
+fi
+
+while [ $(pwd) != "${HOME}" ] && [ $(pwd) != '/' ] && [ ! -d './.git' ]
+do
+  cd ..
+done
+
+state='unset'
+add_newline=0
+
+function add_newline() {
+  if [ ${add_newline} -ne 0 ]
+  then
+    echo
+  else
+    add_newline=1
+  fi
+}
+
+while read -r
+do
+  status="${REPLY:0:2}"
+  case "${status}" in
+    " M")
+      if [ "${state}" != 'modified' ]
+      then
+        state='modified'
+        add_newline
+        echo '# Modified'
+      fi
+      ;;
+    ??)
+      if [ "${state}" != 'new' ]
+      then
+        state='new'
+        add_newline
+        echo '# New'
+      fi
+      ;;
+  esac
+
+  subpath="${REPLY:3}"
+  if [ "${subpath}" != '.*temp/.*' ] && [[ ! "${subpath}" =~ .*fish.* ]] && [[ ! "${subpath}" =~ .*soup.* ]]
+  then
+    path="$(pwd)/${subpath}"
+
+    if [ -n "${command_template}" ]
+    then
+      command="${command_template//\{\}/${path}}"
+      if [ "${command}" == "${command_template}" ]
+      then
+        echo "${command_template} ${path}"
+      else
+        echo "${command}"
+      fi
+    else
+      echo "${path}"
+    fi
+  fi
+done < <(git status --porcelain --untracked-files)
+
