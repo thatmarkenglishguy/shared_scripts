@@ -1,20 +1,50 @@
 #!/usr/bin/env bash
 
-. read_repos "${@}"
-target_branch=${1:-master)
-if [ $? -eq 0 ]
+function there_and_back() {
+  local target_branch
+  local branch
+  target_branch="${1}"
+  branch=$(git rev-parse --abbrev-ref HEAD)
+  git stash
+  git checkout "${target_branch}"
+  git fetch --prune
+  git rebase
+  git checkout "${branch}"
+  git stash pop
+  git rebase "${target_branch}"
+}
+
+source read_repos "${@}" >/dev/null
+if [ ${?} -eq 0 ]
 then
-  for d in "${repo_directories[@]}"; do
+  target_branch=${remaining_args[0]:-master}
+  for d in "${repo_directories[@]}"
+  do
     echo "${d}"
     pushd "${d}" >/dev/null
-    branch=$(git rev-parse --abbrev-ref HEAD)
-    git stash
-    git checkout "${target_branch}"
-    git fetch
-    git rebase
-    git checkout "${branch}"
-    git stash pop
-    git rebase "${target_branch}"
+    there_and_back "${target_branch}"
+#    branch=$(git rev-parse --abbrev-ref HEAD)
+#    git stash
+#    git checkout "${target_branch}"
+#    git fetch --prune
+#    git rebase
+#    git checkout "${branch}"
+#    git stash pop
+#    git rebase "${target_branch}"
     popd >/dev/null
   done
+elif [ -d ./git ] || git rev-parse --git-dir > /dev/null 2>&1
+then
+  target_branch="${1:-master}"
+  basename $(pwd)
+  there_and_back "${target_branch}"
+#  branch=$(git rev-parse --abbrev-ref HEAD)
+#  git stash
+#  git checkout "${target_branch}"
+#  git fetch --prune
+#  git rebase
+#  git checkout "${branch}"
+#  git stash pop
+#  git rebase "${target_branch}"
 fi
+
