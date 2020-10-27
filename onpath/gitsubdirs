@@ -15,6 +15,13 @@ else
 fi
 
 export -f flurgh
-find ${target} -type d -name '.git' -exec bash -c 'flurgh "${0}"' {} \;
 
-#find ${target} -type d -name '.git' -exec dirname {} \;
+while read -r
+do
+  # Filter out directories with no remote
+  if ( cd "${REPLY}"; git config --get remote.origin.fetch >/dev/null )
+  then
+    echo "${REPLY}"
+  fi
+done < <(find ${target} -type d -name '.git' -exec bash -c 'flurgh "${0}"' {} \; )
+
