@@ -1,12 +1,20 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 # Type EOF to close out message
+
+regex='([[:alnum:]]+-[[:digit:]]+)'
 
 branch=$(git rev-parse --abbrev-ref HEAD)
 
-if [ -t 0 ]
+if [[ "${branch}" =~ ${regex} ]]
 then
-  git commit -m "${branch##*/} ""${@}"
+  if [ -t 0 ]
+  then
+    git commit -m "${BASH_REMATCH[1]} ""${@}"
+  else
+    git commit -m "${BASH_REMATCH[1]} ""$(</dev/stdin)" "${@}"
+  fi
 else
-  git commit -m "${branch##*/} ""$(</dev/stdin)" "${@}"
+  cat <<-EOF >&2
+I couldn't work out the story from the branch name '${branch}'
+EOF
 fi
-

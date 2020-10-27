@@ -1,6 +1,14 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
+
+regex='([[:alnum:]]+-[[:digit:]]+)'
 
 branch=$(git rev-parse --abbrev-ref HEAD)
-
-git commit -m "${branch##*/} ""${@}"
+if [[ "${branch}" =~ ${regex} ]]
+then
+  git commit -m "${BASH_REMATCH[1]} ""${@}"
+else
+  cat <<-EOF >&2
+I couldn't work out the story from the branch name '${branch}'
+EOF
+fi
 
