@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+
+function get_the_ext() {
+  local thing
+  local ext_thing
+  # Just the end of the path
+  thing="${1##*/}"
+  # Just the extension
+  ext_thing="${thing##*.}"
+
+  if [ "${thing}" != "${ext_thing}" ]
+  then
+    echo " .${thing##*.}"
+    #echo "${1} .${thing##*.}"
+  fi
+}
+
+function all_the_exts() {
+  if [ ${#} -gt 0 ]
+  then
+    while read -r
+    do
+      get_the_ext "${REPLY}"
+    done < <(for directory in "${@}"
+     do
+       find "${directory}" -type f ! \( -path '*/.git*' -o -path '/*.env*' \)
+     done)
+  else
+    while read -r
+    do
+      declare -a entries
+      entries=( "${REPLY}" )
+      for entry in ${REPLY}
+      do
+        get_the_ext "${entry}"
+      done
+    done
+  fi
+}
+
+#all_the_exts "${@}"
+all_the_exts "${@}" | sort | uniq -c | sort -k1,1rn
