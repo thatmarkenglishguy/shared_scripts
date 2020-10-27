@@ -114,3 +114,34 @@ augroup cpp
   autocmd FileType cpp noremap <leader>h<Space> :InsertHeaderGuardBlock<Space>
 augroup END
 
+" Terraform
+augroup tf
+  autocmd!
+  " Plan
+  autocmd FileType tf command! -nargs=* TerraformPlanWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('terraform plan', <f-args>)
+  autocmd FileType tf command! -nargs=* TerraformPlanClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('terraform plan', <f-args>)
+  autocmd FileType tf noremap <leader>p :TerraformPlanWithPreviousArgs<cr>
+  autocmd FileType tf noremap <leader>p<Space> :TerraformPlanClearPreviousArgs<Space>
+
+  " Apply
+  autocmd FileType tf command! -nargs=* TerraformApplyWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('terraform apply', <f-args>)
+  autocmd FileType tf command! -nargs=* TerraformApplyClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('terraform apply', <f-args>)
+  autocmd FileType tf noremap <leader>a :TerraformApplyWithPreviousArgs<cr>
+  autocmd FileType tf noremap <leader>a<Space> :TerraformApplyClearPreviousArgs<Space>
+
+  " Refresh
+  autocmd FileType tf command! -nargs=* TerraformRefreshClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('terraform refresh', <f-args>)
+  autocmd FileType tf noremap <leader>r :TerraformRefreshClearPreviousArgs<cr>
+
+  " Output
+  autocmd FileType tf command! -nargs=* TerraformOutputClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('terraform output', <f-args>)
+  autocmd FileType tf noremap <leader>o :TerraformOutputClearPreviousArgs<cr>
+
+  " Taint
+  autocmd FileType tf command! -nargs=* TerraformTaintClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('terraform taint', <f-args>)
+  autocmd FileType tf noremap <leader>t<Space> :TerraformTaintClearPreviousArgs<Space>
+
+  " Destroy
+  autocmd FileType tf noremap <leader>d !terraform destroy
+augroup END
+
