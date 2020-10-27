@@ -33,6 +33,8 @@ grep --recursive \
   --exclude-dir '.gradle' \
   --exclude-dir '.metadata' \
   --exclude-dir '.plugins' \
+  --exclude-dir 'build-intellij' \
+  --exclude-dir 'target' \
   --exclude 'gradlew.bat' \
   --exclude 'gradle' \
   "${args[@]}"
