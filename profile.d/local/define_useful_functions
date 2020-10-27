@@ -3,3 +3,12 @@ function recgrep() {
   grep -nr "${2}" "${3:-.}" --include "${1}"
 }
 
+## Clear the screen and print n blank lines. Default is 6.
+function cl() {
+  max_empty="${1:-6}"
+  clear
+  for (( i=0; i<${max_empty}; ++i ))
+  do
+    echo
+  done
+}
