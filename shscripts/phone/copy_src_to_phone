@@ -1,0 +1,22 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+# For some reason passing through --dry-run is fine,
+# but the act of actually executing exits the while loop after first file.
+# so instead do this:
+# startscript fish
+# copy_src_to_phone >>fish
+# ./fish
+# rm fish
+
+while read -r line
+do
+  echo "${script_dir}/copy_to_phone" "${@}" "$(pwd)/${line}"
+done < <(srcfind)
+
