@@ -201,6 +201,15 @@ function setup_directories() {
   fi
 }
 
+function setup_external_files() {
+  case "${platform}" in
+    cygwin)
+      mkdir -p ~/.vim/colors
+      wget https://raw.githubusercontent.com/altercation/vim-colors-solarized/master/colors/solarized.vim -O ~/vim/colors/solarized.vim
+      ;;
+  esac
+}
+
 function setup_vimrc() {
   local do_vundle
   local do_plug
@@ -333,6 +342,7 @@ then
 fi
 
 setup_directories
+setup_external_files
 setup_vimrc ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile}
 setup_youcompleteme ${do_setup_ycm}
 
