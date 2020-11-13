@@ -95,6 +95,11 @@ augroup Rust
   autocmd FileType Rust noremap <leader>b :CargoCheckWithPreviousArgs<cr>
   autocmd FileType Rust noremap <leader>b<Space> :CargoCheckClearPreviousArgs<Space>
 
+  autocmd FileType Rust command! -nargs=* CargoFormatWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo fmt', <f-args>)
+  autocmd FileType Rust command! -nargs=* CargoFormatClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo fmt', <f-args>)
+  autocmd FileType Rust noremap <leader>f :CargoFormatWithPreviousArgs<cr>
+  autocmd FileType Rust noremap <leader>f<Space> :CargoFormatClearPreviousArgs<Space>
+
   autocmd FileType Rust command! -nargs=* CargoTestWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo test', <f-args>)
   autocmd FileType Rust command! -nargs=* CargoTestClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo test', <f-args>)
   autocmd FileType Rust noremap <leader>t :CargoTestWithPreviousArgs<cr>
