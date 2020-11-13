@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+
+# Parameters:
+# 1- Search directory (defaults to .)
+# All other parameters passed to find
+
+# Examples:
+# Find all source files under the current directory.
+# srcfind .
+
+start_directory="${1:-.}"
+declare -a args
+args=( "${@:2}" )
+
+function find_source() {
+# -o means or
+  find "${start_directory}" \
+    ! \
+    \( \
+      -path '*/.git' -o \
+      -path '*/.git/*' -o \
+      -path '*/build' -o \
+      -path '*/build/*' -o \
+      -path '*/output' -o \
+      -path '*/output/*' -o \
+      -path '*/out' -o \
+      -path '*/out/*' -o \
+      -path '*/bin' -o \
+      -path '*/bin/*' -o \
+      -path '*/node_modules' -o \
+      -path '*/node_modules/*' -o \
+      -path '*/.env' -o \
+      -path '*/.env/*' -o \
+      -path '*/.idea' -o \
+      -path '*/.idea/*' -o \
+      -path '*/.gradle' -o \
+      -path '*/.gradle/*' -o \
+      -path '*/.metadata' -o \
+      -path '*/.metadata/*' -o \
+      -path '*/.plugins' -o \
+      -path '*/.plugins/*' -o \
+      -path '*/build-intellij' -o \
+      -path '*/build-intellij/*' -o \
+      -path '*/target' -o \
+      -path '.' -o \
+      -path '*/target/*' \
+    \) \
+    "${args[@]}"
+    }
+if [ "${start_directory}" == '.' ]
+then
+  find_source | cut -c 3-
+else
+  find_source
+fi
+#      -path 'gradlew.bat' -o \
+#      -path 'gradle' \
+
