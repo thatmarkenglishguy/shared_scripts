@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+git config user.name 'Mark English'
+git config user.email 'thatmarkenglishguy@gmail.com'
+
