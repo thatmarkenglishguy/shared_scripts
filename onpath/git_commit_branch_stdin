@@ -17,4 +17,10 @@ else
   cat <<-EOF >&2
 I couldn't work out the story from the branch name '${branch}'
 EOF
+  if [ -t 0 ]
+  then
+    git commit -m "${@}"
+  else
+    git commit -m "$(</dev/stdin)" "${@}"
+  fi
 fi
