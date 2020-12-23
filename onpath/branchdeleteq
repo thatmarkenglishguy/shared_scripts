@@ -1,0 +1,145 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+force=0
+dry_run=0
+
+function usage() {
+  local program_name
+  program_name="$(basename ${0})"
+
+  cat <<-EOF
+${program_name} [-f|--force] [--dry-run] [--run]
+Ask the user if they want to delete all the git branches.
+
+Parameters:
+  -f|--force   If specified, force the branch deletion.
+  --run        Don't ask questions, just run.
+  -v|--verbose If specified, show commands.
+  --dry-run    If specified, just output the commands rather than executing them.
+EOF
+}
+
+run_all=0
+verbose=0
+action=
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    -f|--force)
+      force=1
+      ;;
+    --dry|--dryrun|--dry-run)
+      dry_run=1
+      ;;
+    --run)
+      run_all=1
+      ;;
+    -v|--verbose)
+      verbose=1
+      ;;
+  esac
+done
+
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+while read -r branch
+do
+  if [ "${branch}" != "${current_branch}" ]
+  then
+    if [ ${run_all} -eq 0 ]
+    then
+      read -r -p "Delete branch '${branch}' (Y[es]/f[orce]/n[o]/a[ll]/A[ll forced]/q[uit]) ? " response remainder </dev/tty
+      response_lower="$(echo "${response}" | tr '[:upper:]' '[:lower:]')"
+    else
+      response_lower='y'
+    fi
+
+    force_this=${force}
+    case "${response_lower}" in
+      a|all)
+        run_all=1
+        case "${response}" in
+          A|All|ALL)
+            force=1
+            force_this=1
+            run_all=1
+            ;;
+        esac
+        response='y'
+        response_lower='y'
+        ;;
+      f|force)
+        action='force'
+        force_this=1
+        response_lower='y'
+        ;;
+    esac
+
+    case "${response_lower}" in
+      ''|y|yes)
+        if [ ${force_this} -eq 0 ]
+        then
+          action='delete'
+          command=( git branch -d "${branch}" )
+        else
+          action='delete_forced'
+          command=( git branch -D "${branch}" )
+        fi
+
+        if [ ${dry_run} -ne 0 ]
+        then
+          echo "${command[@]}"
+        else
+          if [ ${verbose} -ne 0 ]
+          then
+            echo "${command[@]}"
+          fi
+          "${command[@]}"
+
+          if git show-ref -q --heads "${branch}" # If branch still exists
+          then
+            case "${action}" in
+              delete)
+                read -r -p "Branch '${branch}' still exists. Force delete (Y[es]/n[o]/q[uit]) ? " retry_response remainder </dev/tty
+                retry_response_lower="$(echo "${retry_response}" | tr '[:upper:]' '[:lower:]')"
+                case "${retry_response_lower}" in
+                  ''|y|yes)
+                    git branch -D "${branch}"
+                    ;;
+                  n|no)
+                    :
+                    ;;
+                  q|quit)
+                    exit 0
+                    ;;
+                  *)
+                    echo "Unexpected response '${retry_response}'. Skipping..." >&2
+                    ;;
+                esac # retry_reponse_lower
+              ;;
+            esac # action
+          fi # Ends if branch still exists
+        fi # Ends else not dry run
+        ;;
+      n|no)
+        :
+        ;;
+      q|quit)
+        break
+        ;;
+      *)
+        echo "Unexpected response '${response}'. Skipping..." >&2
+        ;;
+    esac # response_lower
+  fi
+done < <(git branch | cut -c 3-)
+
+ 
