@@ -17,6 +17,7 @@ function find_source() {
   find "${start_directory}" \
     ! \
     \( \
+      -path '*.sw?' -o \
       -path '*/.git' -o \
       -path '*/.git/*' -o \
       -path '*/build' -o \
@@ -42,16 +43,30 @@ function find_source() {
       -path '*/build-intellij' -o \
       -path '*/build-intellij/*' -o \
       -path '*/target' -o \
-      -path '.' -o \
-      -path '*/target/*' \
+      -path '*/target/*' -o \
+      -path '*/cmake-build-debug/*' -o \
+      -path '*/cmake-build-debug' -o \
+      -path '.' \
     \) \
     "${args[@]}"
     }
-if [ "${start_directory}" == '.' ]
+
+function find_filtered_source() {
+  while read -r line
+  do
+    # Try to filter out binaries.
+    if [ ! -x "${line}" ] || [ -d "${line}" ] || file "${line}" | grep 'text executable' >/dev/null
+    then
+      echo "${line}"
+    fi
+  done < <(find_source)
+}
+
+if [ "${start_directory}" == '.' ] && [ ${#} -lt 2 ]
 then
-  find_source | cut -c 3-
+  find_filtered_source | cut -c 3-
 else
-  find_source
+  find_filtered_source
 fi
 #      -path 'gradlew.bat' -o \
 #      -path 'gradle' \
