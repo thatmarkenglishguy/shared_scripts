@@ -1,0 +1,17 @@
+#!/usr/bin/env sh
+
+for source in "${@}"
+do
+  case "${source}" in
+    *Jenkinsfile|*.gradle)
+      source-highlight --failsafe -f esc --lang-def=Groovy.lang --style-file=esc.style -i "${source}"
+      ;;
+    *.toml)
+      source-highlight --failsafe -f esc --lang-def=tml.lang --style-file=esc.style -i "${source}"
+      ;;
+    *)
+      src-hilite-lesspipe.sh "${@}"
+      ;;
+  esac
+done
+

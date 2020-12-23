@@ -129,7 +129,8 @@ export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;34m\]\W\[\033[00m\] \[
 source ~/code/thirdparty/shscripts/gradle-completion.git/gradle-completion.bash
 
 # Setup LESSPIPE
-LESSPIPE=`which src-hilite-lesspipe.sh`
+LESSPIPE="${marke_local_bash_script_dir}/shscripts/src_highlight_wrapper"
+#LESSPIPE=`which src-hilite-lesspipe.sh`
 export LESSOPEN="| ${LESSPIPE} %s"
 export LESS="-R -X -F ${LESS}"
 
