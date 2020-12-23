@@ -72,12 +72,12 @@ do
       command="${command_template//\{\}/${path}}"
       if [ "${command}" == "${command_template}" ]
       then
-        echo "${command_template} ${path}"
+        echo "${command_template} ${path} \"\${@}\""
       else
-        echo "${command}"
+        echo "${command} \"\${@}\""
       fi
     else
-      echo "${path}"
+      echo "${path} \"\${@}\""
     fi
   fi
 done < <(git status --porcelain --untracked-files)
