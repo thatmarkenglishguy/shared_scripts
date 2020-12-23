@@ -46,7 +46,7 @@ case "${target_subdirectory}" in
     home_length=$(echo "${HOME}/" | wc -c | tr -d '[:space:]')
     target_subdirectory=$(echo "${target_subdirectory}" | cut -c ${home_length}-)
     ;;
-    *)
+  *)
       if [ -z "${copy_source}" ]
       then
         copy_source="${arg}"
@@ -57,7 +57,16 @@ case "${target_subdirectory}" in
       ;;
 esac
 
+if [ -f "${copy_source}" ]
+then
+  target_subdirectory="$(dirname "${target_subdirectory}")"
+  target_subpath="/$(basename "${copy_source}")"
+else
+  target_subpath=''
+fi
+
 target_directory="${target_root_directory}/${target_subdirectory}"
+target_path="${target_root_directory}/${target_subdirectory}${target_subpath}"
 
 if [ ! -e ${copy_source} ]
 then
@@ -71,7 +80,8 @@ echo "Copying to:   '${target_directory}'" >&2
 #echo adb push "${copy_source}" /storage/self/primary/stuff/transfer/mac
 if [ ${dry_run} -ne 0 ]
 then
-  echo adb push "${copy_source}" "${target_directory}"
+  echo adb shell mkdir -p "${target_directory}"
+  echo adb push "${copy_source}" "${target_path}"
 else
   adb shell mkdir -p "${target_directory}"
   adb push "${copy_source}" "${target_directory}"
