@@ -56,17 +56,25 @@ case "${uname_result}" in
 esac
 
 function install_llvm() {
+  local do_llvm
+  do_llvm=${1:-1}
+
   case "${platform}" in
     darwin)
-      if ! which llvm 2>&1 1>/dev/null
+      if [ ${do_llvm} -eq 1 ]
       then
-        echo 'Installing llvm'
-        brew install llvm
-      else
-        brew upgrade llvm
+        if ! which llvm 2>&1 1>/dev/null
+        then
+          echo 'Installing llvm'
+          brew install llvm
+        else
+          brew upgrade llvm
+        fi
       fi
 
       llvm_location=$(brew --prefix llvm)
+#      llvm_location='/usr/local/Cellar/llvm/11.0.0' # HACKKKKKKKKKKKKKK
+      echo "llvm_location: ${llvm_location}"
       if [ -z "${llvm_location}" ]
       then
         echo 'brew --prefix llvm did not reveal the llvm location ! Did the installation work ?' >&2
@@ -192,6 +200,10 @@ function detect_python() {
   case "${platform}" in
     darwin)
       python3_lib_location=$(find "${python3_lib_dir}" -name 'libpython*m.dylib' -maxdepth 1 | tail -n 1)
+      if [ -z "${python3_lib_location}" ]
+      then
+        python3_lib_location=$(find "${python3_lib_dir}" -name 'libpython*.dylib' -maxdepth 1 | tail -n 1)
+      fi
       ;;
     msys)
       python3_lib_location=$(find "${python3_lib_dir}" -maxdepth 2 -name 'libpython*.dll.a' | tail -n 1)
@@ -239,10 +251,50 @@ function mend_ycm() {
     pushd "${YCM_THIRDPARTY_DIR}" >/dev/null
     git submodule sync --recursive
     git submodule update --init --recursive
+
     popd >/dev/null
   else
     echo "YCM_THIRDPARTY_DIR '${YCM_THIRDPARTY_DIR}' not found" >&2
   fi
+}
+
+function fixup_cmake_files() {
+  case "${platform}" in
+    darwin)
+      if ! grep 'CMAKE_OSX_DEPLOYMENT_TARGET' "${YCM_THIRDPARTY_DIR}/cpp/CMakeLists.txt"  >/dev/null
+      then
+        # Here:     ~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/CMakeLists.txt
+        # Not here: ~/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp/ycm/CMakeLists.txt
+        echo "Adding 'set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)' to ${YCM_THIRDPARTY_DIR}/cpp/CMakeLists.txt"
+        sed -i'' -e '/^if[[:space:]][[:space:]]*([[:space:]][[:space:]]*APPLE[[:space:]][[:space:]]*)/ {
+a\
+\ \ set( CMAKE_OSX_DEPLOYMENT_TARGET 10.15 )
+}' "${YCM_THIRDPARTY_DIR}/cpp/CMakeLists.txt"
+      fi
+
+      # WIP so not yet writing to file. Haven't decided where to put this yet.
+      # Initially wrote it above if ( MSVC )...
+      if ! grep 'CMP0066' "${YCM_THIRDPARTY_DIR}/cpp/ycm/CMakeLists.txt" >/dev/null
+      then
+        cat <<-EOF
+# Honor per-config flags in try_compile() source-file signature.
+# Introduced in CMake 3.7.
+# On a Mac this enables the filesystem detection mechanism.
+cmake_policy(SET CMP0066 NEW)
+EOF
+      fi
+
+      if ! grep 'CMP0056' "${YCM_THIRDPARTY_DIR}/cpp/ycm/CMakeLists.txt" >/dev/null
+      then
+        cat <<-EOF
+# Honor link flags in try_compile() source-file signature.
+# Introduced in CMake 3.2.
+# On a Mac this enables the filesystem detection mechanism.
+cmake_policy(SET CMP0056 NEW)
+EOF
+      fi
+      ;;
+  esac
 }
 
 function build_ycm_core() {
@@ -270,13 +322,19 @@ function build_ycm_core() {
 #     cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
       ;;
     *)
+      set -x
+      # This works from the command line, but not from this script...
+#      cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT=/usr/local/opt/llvm -DPYTHON_INCLUDE_DIR=/usr/local/Cellar/python@3.9/3.9.0_2/Frameworks/Python.framework/Versions/3.9/include/python3.9 -DPYTHON_LIBRARY=/usr/local/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/libpython3.9.dylib -DPYTHON_EXECUTABLE:FILEPATH=/usr/local/opt/python@3.9/bin/python3.9 /Users/markenglish/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp
+      
       cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+      set +x
       ;;
   esac
 
-  echo 'building the ycm core...'
+  echo "building the ycm core in $(pwd)..."
+  set -x
   cmake --build . --target ycm_core --config Release
-
+  set +x
   popd
 }
 
@@ -441,8 +499,8 @@ function build_extra_components() {
         :
         ;;
     esac
-    echo "python3 ./install.py --skip-build --no-regex ${install_args[@]}" >&2
-    python3 ./install.py --skip-build --no-regex "${install_args[@]}"
+    echo "python3 ./install.py --skip-build ${install_args[@]}" >&2
+    python3 ./install.py --skip-build "${install_args[@]}"
     popd
   fi
 #  case "${platform}" in
@@ -495,6 +553,7 @@ do_ycm=1
 do_mend_ycm=1
 do_ycm_regex=1
 do_override_mingw_python3_on_msys=1
+do_llvm=1
 
 case "${platform}" in
   msys)
@@ -555,6 +614,7 @@ $(basename "${0}") [--[no-]python] [--[no-]java] [--[no-]node] [--[no-]rust] [--
   --no-ycm-regex  Don't build YouCompleteMe regex. Defaults to $(inverseboolstring ${do_ycm_regex}).
   --no-override-mingw-with-msys
                   Don't override mingw python3 installation with msys. Defaults to $(inverseboolstring ${do_override_mingw_python3_on_msys}).
+  --no-llvm       Don't install llvm. Defaults to $(inverseboolstring ${do_llvm}).
 
 Notes:
 Java, node and rust all work on Mac, but are in progress for Msys/Mingw64.
@@ -627,7 +687,9 @@ do
     --no-override-mingw-with-msys)
       do_override_mingw_python3_on_msys=0
       ;;
-
+    --no-llvm)
+      do_llvm=0
+      ;;
     --help|-h|/?)
       usage
       exit 1
@@ -649,7 +711,7 @@ case "${platform}" in
     :
     ;;
   *)
-    install_llvm
+    install_llvm ${do_llvm}
     ;;
 esac
 
@@ -657,6 +719,7 @@ install_python ${do_python}
 install_cmake
 detect_python ${do_override_mingw_python3_on_msys} 'building YouCompleteMe core'
 mend_ycm ${do_mend_ycm}
+#fixup_cmake_files
 build_ycm_core ${do_ycm}
 detect_python 0 'building YouCompleteMe regex'
 build_ycm_regex ${do_ycm_regex}
