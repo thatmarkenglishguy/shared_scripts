@@ -9,10 +9,10 @@ fi
 
 function usage() {
   cat <<EOF >&2
-$(basename "${0}") [-u|--user] GITHUB_USER [-s|--server] GITHUB_SERVER [-t|--token[-file]] GITHUB_TOKENFILE [-o|--org] GITHUB_ORG
+$(basename "${0}") [-u|--user] GITHUB_USER [-s|--server] GITHUB_HOST [-t|--token[-file]] GITHUB_TOKENFILE [-o|--org] GITHUB_ORG
 
   -u|--user         GITHUB_USER       - Use to communicate with Github with. Defaults to environment variable GITHUB_USER (which is set to '${GITHUB_USER}').
-  -s|--server       GITHUB_SERVER     - Server to communicate with. Defaults to http://github.com.
+  -s|--server       GITHUB_HOST       - Host to communicate with. Defaults to http://github.com.
   -t|--token[-file] GITHUB_TOKENFILE  - File containing github token. Defaults to ~/.tokens/githubread.
   -o|--org          GITHUB_ORG        - Org to get repos of. Defaults to current directory name (here '$(basename $(pwd))').
 EOF
@@ -53,7 +53,7 @@ do
       take_an_argument github_user "${arg}" "${github_user}"
       ;;
     -s|--server)
-      take_an_argument github_server "${arg}" "${github_server}"
+      take_an_argument github_host "${arg}" "${github_host}"
       ;;
     -t|--token|--tokenfile)
       take_an_argument github_token_file "${arg}" "${github_token_file}"
@@ -69,9 +69,9 @@ do
       if [ -z "${github_user}" ]
       then
         github_user="${arg}"
-      elif [ -z "${github_server}" ]
+      elif [ -z "${github_host}" ]
       then
-        github_server="${arg}"
+        github_host="${arg}"
       elif [ -z "${github_token_file}" ]
       then
         github_token_file="${arg}"
@@ -85,6 +85,54 @@ do
   esac
 done
 
+# Default parameters
+if [ -z "${github_user}" ]
+then
+  github_user="${GITHUB_USER}"
+fi
+
+if [ -z "${github_host}" ]
+then
+  if [ -n "${GITHUB_HOST}" ]
+  then
+    github_host="${GITHUB_HOST}"
+  else
+    github_host='http://github.com'
+  fi
+fi
+
+if [ -z "${github_token_file}" ] && [ -f "${HOME}/.tokens/githubread" ]
+then
+  github_token_file="${HOME}/.tokens/githubread"
+fi
+
+if [ -z "${github_org}" ]
+then
+  github_org="$(basename $(pwd))"
+fi
+
+# Validate parameters
+if [ -z "${github_user}" ]
+then
+    echo 'No github user specified. Should be first parameter.' >&2
+    usage
+    (( ok_to_continue++ ))
+fi
+
+if [ -z "${github_host}" ]
+then
+  echo 'Empty github server specified.' >&2
+  usage
+  (( ok_to_continue++ ))
+fi
+
+if [ ! -f "${github_token_file}" ]
+then
+  echo "'${github_token_file}' Github token file does not exist." >&2
+  usage
+  (( ok_to_continue++ )) 
+fi
+
 #if [ -z "${github_user}" ]
 #then
 #  github_user="${1:-${GITHUB_USER}}"
@@ -96,10 +144,10 @@ done
 #  fi
 #fi
 #
-#if [ -z "${github_server}" ]
+#if [ -z "${github_host}" ]
 #then
-#  github_server="${2:-http://github.com}"
-#  if [ -z "${github_server}" ]
+#  github_host="${2:-http://github.com}"
+#  if [ -z "${github_host}" ]
 #  then
 #    echo 'Empty github server specified.' >&2
 #    usage
@@ -128,20 +176,20 @@ then
   exit ${ok_to_continue}
 fi
 
-if [[ ! "${github_server}" =~ ^https?:// ]]
+if [[ ! "${github_host}" =~ ^https?:// ]]
 then
-  github_server="https://${github_server}"
+  github_host="https://${github_host}"
 fi
 
 first_link=''
-first_link="$(curl -u "${github_user}":$(cat "${github_token_file}") "${github_server}/api/v3/orgs/${github_org}/repos" -sS -I | grep '^Link: ')"
+first_link="$(curl -u "${github_user}":$(cat "${github_token_file}") "${github_host}/api/v3/orgs/${github_org}/repos" -sS -I | grep '^Link: ')"
 
-curl -sS -u "${github_user}":$(cat "${github_token_file}") "${github_server}/api/v3/orgs/${github_org}/repos" -o >(jq -r '.[].name')
+curl -sS -u "${github_user}":$(cat "${github_token_file}") "${github_host}/api/v3/orgs/${github_org}/repos" -o >(jq -r '.[].name')
 
 if [ -n "${first_link}" ]
 then
   read -d '' sed_url_next_link_pattern <<-END_OF_SED
-    s!.*<\\\\(${github_server}[^>]*\\\\)>; rel="next".*!\\\\1!p
+    s!.*<\\\\(${github_host}[^>]*\\\\)>; rel="next".*!\\\\1!p
 END_OF_SED
 #echo "first link....'${first_link}'"
 #echo "sed pattern...'${sed_url_next_link_pattern}'"
@@ -161,5 +209,4 @@ do
   #echo "next_link further updated to: '${next_link}'"
 done
 fi
-
 
