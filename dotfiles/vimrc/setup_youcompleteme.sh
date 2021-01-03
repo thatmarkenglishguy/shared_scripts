@@ -326,7 +326,16 @@ function build_ycm_core() {
       # This works from the command line, but not from this script...
 #      cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT=/usr/local/opt/llvm -DPYTHON_INCLUDE_DIR=/usr/local/Cellar/python@3.9/3.9.0_2/Frameworks/Python.framework/Versions/3.9/include/python3.9 -DPYTHON_LIBRARY=/usr/local/opt/python@3.9/Frameworks/Python.framework/Versions/3.9/lib/libpython3.9.dylib -DPYTHON_EXECUTABLE:FILEPATH=/usr/local/opt/python@3.9/bin/python3.9 /Users/markenglish/.vim/bundle/YouCompleteMe/third_party/ycmd/cpp
       
-      cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+      # Seeing
+      # CMake Error at /usr/local/Cellar/cmake/3.17.3/share/cmake/Modules/FindPackageHandleStandardArgs.cmake:164 (message):
+      # Could NOT find PythonLibs (missing: PYTHON_LIBRARIES) (found suitable
+      # version "3.8.3", minimum required is "3.5")
+      #cmake -G 'Unix Makefiles' . -DUSE_PYTHON2=OFF -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+      cmake -G 'Unix Makefiles' . -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+      # Makes no difference to rpath problem
+      #cmake -G 'Unix Makefiles' . -DDYLD_LIBRARY_PATH="${llvm_location}/lib" -DEXTERNAL_LIBCLANG_PATH="${llvm_location}/lib/libclang.dylib" -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
+      # Seems to make no difference
+      #cmake -G 'Unix Makefiles' . -DUSE_SYSTEM_LIBCLANG=1 -DPATH_TO_LLVM_ROOT="${llvm_location}" -DPYTHON_INCLUDE_DIR="${python3_include_location}" -DPYTHON_LIBRARY="${python3_lib_location}" -DPYTHON_EXECUTABLE:FILEPATH="${python3_executable}" "${YCM_THIRDPARTY_DIR}/cpp"
       set +x
       ;;
   esac
@@ -597,6 +606,7 @@ function usage() {
 $(basename "${0}") [--[no-]python] [--[no-]java] [--[no-]node] [--[no-]rust] [--no-ycm] [--no-ycm-regex]
 
 
+  --llvm          If specified, install llvm. Defaults to $(boolstring ${do_llvm}).
   --python        If specified, install Python3 if necessary. Defaults to $(boolstring ${do_python}).
   --java          If specified, install the java support in YouCompleteMe. Defaults to $(boolstring ${do_java}).
   --node          If specified, install Node, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_node}).
@@ -644,6 +654,9 @@ do
   arg="${args[${i}]}"
 
   case "${arg}" in
+    --llvm)
+      do_llvm=1
+      ;;
     --python)
       do_python=1
       ;;
@@ -719,7 +732,7 @@ install_python ${do_python}
 install_cmake
 detect_python ${do_override_mingw_python3_on_msys} 'building YouCompleteMe core'
 mend_ycm ${do_mend_ycm}
-#fixup_cmake_files
+fixup_cmake_files
 build_ycm_core ${do_ycm}
 detect_python 0 'building YouCompleteMe regex'
 build_ycm_regex ${do_ycm_regex}
