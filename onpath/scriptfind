@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+# Parameters:
+# 1- Search directory (defaults to .)
+# All other parameters passed to find
+
+# Examples:
+# Find all script files under the current directory.
+# scriptfind .
+
+source "${script_dir}/srcfindcommon"
+
+if [ "${start_directory}" == '.' ] && [ ${#} -lt 2 ]
+then
+  find_script_source | cut -c 3-
+else
+  find_script_source
+fi
+
