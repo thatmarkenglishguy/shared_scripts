@@ -1,0 +1,159 @@
+# vi:syntax=bash autoindent smartindent
+
+# Parameters:
+# 1- Search directory (defaults to .)
+# All other parameters passed to find
+
+# Examples:
+# Find all source files under the current directory.
+# srcfind .
+
+start_directory="${1:-.}"
+declare -a args
+args=( "${@:2}" )
+
+function find_source() {
+# -o means or
+  find "${start_directory}" \
+    ! \
+    \( \
+      -path '*.sw?' -o \
+      -path '*.iml' -o \
+      -path '*/.git' -o \
+      -path '*/.git/*' -o \
+      -path '*/build' -o \
+      -path '*/build/*' -o \
+      -path '*/output' -o \
+      -path '*/output/*' -o \
+      -path '*/out' -o \
+      -path '*/out/*' -o \
+      -path '*/bin' -o \
+      -path '*/bin/*' -o \
+      -path '*/node_modules' -o \
+      -path '*/node_modules/*' -o \
+      -path '*/.env' -o \
+      -path '*/.env/*' -o \
+      -path '*/.idea' -o \
+      -path '*/.idea/*' -o \
+      -path '*/.gradle' -o \
+      -path '*/.gradle/*' -o \
+      -path '*/.metadata' -o \
+      -path '*/.metadata/*' -o \
+      -path '*/.plugins' -o \
+      -path '*/.plugins/*' -o \
+      -path '*/build-intellij' -o \
+      -path '*/build-intellij/*' -o \
+      -path '*/target' -o \
+      -path '*/target/*' -o \
+      -path '*/cmake-build-debug/*' -o \
+      -path '*/cmake-build-debug' -o \
+      -path '.' \
+    \) \
+    "${args[@]}" \
+    "${@}"
+}
+
+#      -path 'gradlew.bat' -o \
+#      -path 'gradle' \
+
+function find_filtered_source() {
+  while read -r line
+  do
+    # Try to filter out binaries.
+    #if [ ! -x "${line}" ] || [ -d "${line}" ] || file "${line}" | grep 'text executable' >/dev/null
+    if [ ! -x "${line}" ] || [ -d "${line}" ] || file "${line}" | grep 'text executable' >/dev/null
+    then
+      echo "${line}"
+    fi
+  done < <(find_source)
+}
+
+function find_script_source() {
+  local line
+  local extension
+  local file_name
+  local file_type
+  local show_line
+  local top_line
+  local path_accepted
+
+  while read -r line
+  do
+    if [ -d "${line}" ]
+    then
+      continue
+    fi
+    show_line=0
+    path_accepted=1
+    file_name="${line##*/}"
+    extension="${file_name##*.}"
+#    echo "line ${line}. file ${file_name}. ext: ${extension}" >&2
+
+    case "${line}" in
+      *'.cargo/config')
+        path_accepted=0
+        ;;
+      *)
+        path_accepted=1
+        ;;
+    esac # ${line}
+
+    if [ ${path_accepted} -ne 0 ]
+    then
+      case "${extension}" in
+        Jenkinsfile|Dockerfile|\
+        CODEOWNERS|\
+        rust-toolchain|\
+        *[/]'config')
+          show_line=0
+          ;;
+        "${file_name}"|sh)
+          show_line=1 # Leave this line in if you're just going to take ALL the text
+          if [ ${show_line} -ne 0 ]
+          then
+            file_type="$(file "${line}")"
+            case "${file_type}" in
+              *'text executable'*)
+                show_line=1
+                ;; # text executable
+              *' text'*)
+                top_line="$(head -n 1 "${line}")"
+                # shbang
+                if [ "${top_line:0:2}" == '#!' ]
+                then
+                  top_line="${top_line:2}"
+                  case "${top_line}" in
+                    *[\ /]sh|*[\ /]bash)
+                      show_line=1
+                      ;;
+                  esac
+                # vi modeline
+                # vi:syntax=bash autoindent smartindent
+                elif [[ "${top_line:0:4}" == *vi* ]]
+                then
+                  case "${top_line}" in
+                    *'syntax=bash'*|*'syntax=sh'*|*'syntax=shell'*)
+                      show_line=1
+                      ;;
+                  esac
+                fi
+                ;; # text
+              *)
+                show_line=1
+                ;;
+            esac # case "${file_type}"
+          fi # if not showing line already
+          ;; # no extension|sh
+        *)
+          show_line=0
+          ;;
+      esac # case "${extension}"
+    fi # if ${path_accepted}
+
+    if [ ${show_line} -eq 1 ]
+    then
+      echo "${line}"
+    fi
+  done < <(find_source ! \( -type d \) "${@}")
+}
+

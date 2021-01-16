@@ -1,5 +1,12 @@
 #!/usr/bin/env bash
 
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
 # Parameters:
 # 1- Search directory (defaults to .)
 # All other parameters passed to find
@@ -8,59 +15,7 @@
 # Find all source files under the current directory.
 # srcfind .
 
-start_directory="${1:-.}"
-declare -a args
-args=( "${@:2}" )
-
-function find_source() {
-# -o means or
-  find "${start_directory}" \
-    ! \
-    \( \
-      -path '*.sw?' -o \
-      -path '*/.git' -o \
-      -path '*/.git/*' -o \
-      -path '*/build' -o \
-      -path '*/build/*' -o \
-      -path '*/output' -o \
-      -path '*/output/*' -o \
-      -path '*/out' -o \
-      -path '*/out/*' -o \
-      -path '*/bin' -o \
-      -path '*/bin/*' -o \
-      -path '*/node_modules' -o \
-      -path '*/node_modules/*' -o \
-      -path '*/.env' -o \
-      -path '*/.env/*' -o \
-      -path '*/.idea' -o \
-      -path '*/.idea/*' -o \
-      -path '*/.gradle' -o \
-      -path '*/.gradle/*' -o \
-      -path '*/.metadata' -o \
-      -path '*/.metadata/*' -o \
-      -path '*/.plugins' -o \
-      -path '*/.plugins/*' -o \
-      -path '*/build-intellij' -o \
-      -path '*/build-intellij/*' -o \
-      -path '*/target' -o \
-      -path '*/target/*' -o \
-      -path '*/cmake-build-debug/*' -o \
-      -path '*/cmake-build-debug' -o \
-      -path '.' \
-    \) \
-    "${args[@]}"
-    }
-
-function find_filtered_source() {
-  while read -r line
-  do
-    # Try to filter out binaries.
-    if [ ! -x "${line}" ] || [ -d "${line}" ] || file "${line}" | grep 'text executable' >/dev/null
-    then
-      echo "${line}"
-    fi
-  done < <(find_source)
-}
+source "${script_dir}/srcfindcommon"
 
 if [ "${start_directory}" == '.' ] && [ ${#} -lt 2 ]
 then
@@ -68,6 +23,4 @@ then
 else
   find_filtered_source
 fi
-#      -path 'gradlew.bat' -o \
-#      -path 'gradle' \
 
