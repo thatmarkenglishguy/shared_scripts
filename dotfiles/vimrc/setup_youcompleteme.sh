@@ -606,7 +606,6 @@ function usage() {
 $(basename "${0}") [--[no-]python] [--[no-]java] [--[no-]node] [--[no-]rust] [--no-ycm] [--no-ycm-regex]
 
 
-  --llvm          If specified, install llvm. Defaults to $(boolstring ${do_llvm}).
   --python        If specified, install Python3 if necessary. Defaults to $(boolstring ${do_python}).
   --java          If specified, install the java support in YouCompleteMe. Defaults to $(boolstring ${do_java}).
   --node          If specified, install Node, and the plugin for YouCompleteMe. Defaults to $(boolstring ${do_node}).
@@ -655,58 +654,58 @@ do
 
   case "${arg}" in
     --llvm)
-      do_llvm=1
-      ;;
+        do_llvm=1
+        ;;
     --python)
-      do_python=1
-      ;;
+        do_python=1
+        ;;
     --java)
-      do_java=1
-      ;;
+        do_java=1
+        ;;
     --node)
-      do_node=1
-      ;;
+        do_node=1
+        ;;
     --rust)
-      do_rust=1
-      ;;
+        do_rust=1
+        ;;
     --mend-ycm)
-      do_mend_ycm=1
-      ;;
+        do_mend_ycm=1
+        ;;
     --override-mingw-with-msys)
-      do_override_mingw_python3_on_msys=1
-      ;;
+        do_override_mingw_python3_on_msys=1
+        ;;
 
     --no-python)
-      do_python=0
-      ;;
+        do_python=0
+        ;;
     --no-java)
-      do_java=0
-      ;;
+        do_java=0
+        ;;
     --no-node)
-      do_node=0
-      ;;
+        do_node=0
+        ;;
     --no-rust)
-      do_rust=0
-      ;;
+        do_rust=0
+        ;;
     --no-mend-ycm)
-      do_mend_ycm=0
-      ;;
+        do_mend_ycm=0
+        ;;
     --no-ycm)
-      do_ycm=0
-      ;;
+        do_ycm=0
+        ;;
     --no-ycm-regex)
-      do_ycm_regex=0
-      ;;
+        do_ycm_regex=0
+        ;;
     --no-override-mingw-with-msys)
-      do_override_mingw_python3_on_msys=0
-      ;;
+        do_override_mingw_python3_on_msys=0
+        ;;
     --no-llvm)
-      do_llvm=0
-      ;;
+        do_llvm=0
+        ;;
     --help|-h|/?)
-      usage
-      exit 1
-      ;;
+        usage
+        exit 1
+        ;;
     *)
       echo "Unexpected argument '${arg}'" >&2
       (( ok_to_continue++ ))
