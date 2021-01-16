@@ -9,13 +9,30 @@ fi
 
 force=0
 dry_run=0
+default_response='n'
+run_all=0
+verbose=0
+action=
 
 function usage() {
   local program_name
+  local this_is_default_text
+  local n_is_default
+  local y_is_default
+
   program_name="$(basename ${0})"
+  this_is_default_text=' (this is the default behaviour)'
+  case "${default_response}" in
+    y)
+      y_is_default="${this_is_default_text}"
+      ;;
+    n)
+      n_is_default="${this_is_default_text}"
+      ;;
+  esac
 
   cat <<-EOF
-${program_name} [-f|--force] [--dry-run] [--run]
+${program_name} [-f|--force] [--dry-run] [--run] [-n|--no] [-y|--yes]
 Ask the user if they want to delete all the git branches.
 
 Parameters:
@@ -23,12 +40,10 @@ Parameters:
   --run        Don't ask questions, just run.
   -v|--verbose If specified, show commands.
   --dry-run    If specified, just output the commands rather than executing them.
+  -n|--no      Set default response to no${n_is_default}.
+  -y|--yes     Set the default response to yes${y_is_default}.
 EOF
 }
-
-run_all=0
-verbose=0
-action=
 
 for arg in "${@}"
 do
@@ -36,15 +51,24 @@ do
     -f|--force)
       force=1
       ;;
-    --dry|--dryrun|--dry-run)
-      dry_run=1
-      ;;
     --run)
       run_all=1
       ;;
     -v|--verbose)
       verbose=1
       ;;
+    --dry|--dryrun|--dry-run)
+      dry_run=1
+      ;;
+    -n|--no)
+      default_response='n'
+      ;;
+    -y|--yes)
+      default_response='y'
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
   esac
 done
 
@@ -54,14 +78,22 @@ while read -r branch
 do
   if [ "${branch}" != "${current_branch}" ]
   then
+    # If asking
     if [ ${run_all} -eq 0 ]
     then
-      read -r -p "Delete branch '${branch}' (Y[es]/f[orce]/n[o]/a[ll]/A[ll forced]/q[uit]) ? " response remainder </dev/tty
+      # Ask
+      read -r -p "Delete branch '${branch}' (Y[es]/f[orce]/n[o]/a[ll]/A[ll forced]/q[uit]) [${default_response}]? " response remainder </dev/tty
+      if [ -z "${response}" ]
+      then
+        response="${default_response}"
+      fi
       response_lower="$(echo "${response}" | tr '[:upper:]' '[:lower:]')"
     else
-      response_lower='y'
+      # Don't ask - default
+      response_lower="${default_response}"
     fi
 
+    # Determine force
     force_this=${force}
     case "${response_lower}" in
       a|all)
@@ -73,13 +105,13 @@ do
             run_all=1
             ;;
         esac
-        response='y'
-        response_lower='y'
+        response="${default_response}"
+        response_lower="${default_response}"
         ;;
       f|force)
         action='force'
         force_this=1
-        response_lower='y'
+        response_lower="${default_response}"
         ;;
     esac
 
@@ -108,7 +140,12 @@ do
           then
             case "${action}" in
               delete)
-                read -r -p "Branch '${branch}' still exists. Force delete (Y[es]/n[o]/q[uit]) ? " retry_response remainder </dev/tty
+                read -r -p "Branch '${branch}' still exists. Force delete (Y[es]/n[o]/q[uit]) [${default_response}]? " retry_response remainder </dev/tty
+                if [ -z "${retry_response}" ]
+                then
+                  retry_response="${default_response}"
+                fi
+
                 retry_response_lower="$(echo "${retry_response}" | tr '[:upper:]' '[:lower:]')"
                 case "${retry_response_lower}" in
                   ''|y|yes)
