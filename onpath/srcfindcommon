@@ -19,6 +19,23 @@ function find_source() {
     \( \
       -path '*.sw?' -o \
       -path '*.iml' -o \
+      -path '*.pdb' -o \
+      -path '*.ilk' -o \
+      -path '*.pch' -o \
+      -path '*.ipch' -o \
+      -path '*.tlog' -o \
+      -path '*.idb' -o \
+      -path '*.obj' -o \
+      -path '*/Debug' -o \
+      -path '*/Debug/*' -o \
+      -path '*/Release' -o \
+      -path '*/Release/*' -o \
+      -path '*/.vs' -o \
+      -path '*/.vs/*' -o \
+      -path '*/x64' -o \
+      -path '*/x64/*' -o \
+      -path '*/ipch' -o \
+      -path '*/ipch/*' -o \
       -path '*/.git' -o \
       -path '*/.git/*' -o \
       -path '*/build' -o \
