@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 """Module used to CalendarText."""
 from __future__ import print_function
