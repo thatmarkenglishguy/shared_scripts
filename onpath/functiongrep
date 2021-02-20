@@ -1,0 +1,149 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+declare -a args
+args=( "${@}" )
+declare -a remaining_args
+remaining_args=()
+verbose=0
+
+function _inner_verbose() {
+  local level
+  level=${1}
+  shift
+  if [ ${verbose} -ge ${level} ]
+  then
+    echo "${@}"
+  fi
+}
+function verbose() {
+  _inner_verbose 1 "${@}"
+}
+
+function verbose2() {
+  _inner_verbose 2 "${@}"
+}
+
+function verbose3() {
+  _inner_verbose 3 "${@}"
+}
+
+function scan_for_functions() {
+  # All parameters are globals
+  local functions_and_scripts
+  local functions_used_in
+  local script_path
+  local some_function
+  local function_is_used
+  local function_used_count
+  local other_script
+  local other_script_match
+  local usage
+
+  declare -a functions_and_scripts
+  functions_and_scripts=()
+  declare -a functions_used_in
+  functions_used_in=()
+
+  while read -r script_path
+  do
+    while read -r some_function
+    do
+      function_is_used=0
+      functions_and_scripts+=( "${some_function},${script_path}" )
+      functions_used_count=${#functions_used_in[@]}
+
+      if ! grep "\(${some_function}[[:space:]]*\$\)\|\(${some_function}[[:space:]]*[^\(]\)" "${script_path}" >/dev/null
+      then
+        verbose "${script_path} : ${some_function} is not used internally"
+      else
+        verbose2 "${script_path}:${some_function}" used in "${script_path}"
+        function_is_used=1
+      fi
+
+      #verbose3 "${script_path}:${some_function} usage..."
+      while read -r other_script
+      do
+        if [ "${other_script}" != "${script_path}" ]
+        then
+          if other_script_match="$(grep --binary-file=without-match -n "${some_function}" "${other_script}")"
+          then
+            functions_used_in+=( "${script_path}:${some_function} used in '${other_script}':"$'\n'"${other_script_match}" )
+          fi
+        fi
+      done < <(scriptfind "${remaining_args[@]}") # while read other_script
+  
+      if [ ${function_is_used} -eq 0 ] && [ ${functions_used_count} -eq ${#functions_used_in[@]} ]
+      then
+        echo "${script_path} : ${some_function} is not used"
+      else
+        if [ ${verbose} -gt 2 ]
+        then
+          for usage in "${functions_used_in[@]}"
+          do
+            echo ''
+            echo "${usage}"
+          done
+        fi
+      fi
+  
+      verbose3 ''
+  
+    # The {0,1} is a way to make "function " optional.
+    # The matched results aren't what I'd expect so then we disallow clauses with '=' and ' '
+    # which _seems_ to fix it.
+    # Find lines which start with function() OR () (ignoring whitespace)
+    # and capture the function name
+    done < <(sed -n 's/^[ ]*\(function \)\{0,1\}\([[:alnum:]_]*[^=[:space:]]\)().*/\2/p' "${script_path}")
+  done < <(scriptfind "${remaining_args[@]}")
+}
+
+function usage() {
+  local program_name
+  program_name="$(basename "${BASH_SOURCE[0]}")"
+
+  cat <<-EOF
+${program_name} [SCAN_DIRECTORY] [-v|--verbose]
+Find functions in shell scripts, then search to see where those functions are used.
+
+Parameters:
+  [SCAN_DIRECTORY] Directory to scan. Defaults to current working directory.
+  -v|--verbose     Verbose output including showing where functions are used.
+                   Can be specified multiple times for increased verbosity.
+EOF
+}
+
+for ((i=0; i<${#args[@]}; ++i))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    -v*)
+      for ((vcount=1; vcount<${#arg}; ++vcount))
+      do
+        if [ "${arg:${vcount}:1}" == 'v' ]
+        then
+          ((verbose += 1))
+        fi
+      done
+      ;;
+    --verbose)
+      ((verbose += 1))
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      remaining_args+=( "${arg}" )
+      ;;
+  esac
+done
+
+scan_for_functions "${remaining_args}"
+
