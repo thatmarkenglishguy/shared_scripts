@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+
+fetched=0
+current_branch=$(git rev-parse --abbrev-ref HEAD)
+
+for branch in master main develop
+do
+  if git show-ref --verify --quiet "refs/heads/${branch}"
+  then
+    echo "$(basename "$(pwd)"):${branch}"
+    if [ ${fetched} -eq 0 ]
+    then
+      git stash
+      git fetch --prune
+      fetched=1
+    else
+      echo
+    fi
+
+    git checkout "${branch}"
+    git rebase
+  fi
+done
+
+if [ ${fetched} -ne 0 ]
+then
+  git checkout "${current_branch}"
+  git stash pop
+fi
+
