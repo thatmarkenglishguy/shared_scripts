@@ -7,8 +7,16 @@ if [[ "${branch}" =~ ${regex} ]]
 then
   git commit -m "${BASH_REMATCH[1]} ""${@}"
 else
-  cat <<-EOF >&2
-I couldn't work out the story from the branch name '${branch}'
-EOF
+  case "${branch}" in
+    master|main|develop)
+      git commit -m "${@}"
+      ;;
+    *)
+      git commit -m "${branch} ""${@}"
+      ;;
+  esac
+#  cat <<-EOF >&2
+#I couldn't work out the story from the branch name '${branch}'
+#EOF
 fi
 
