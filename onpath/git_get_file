@@ -1,0 +1,214 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+default_org="$(basename "$(basename "$(pwd)")")"
+default_repo="$(basename "$(pwd)")"
+
+function usage() {
+  local program="$(basename "${0}")"
+  local host_info
+  if [ -n "${GITHUB_HOST}" ]
+  then
+    host_info=" (which is set to '${GITHUB_HOST}')"
+  fi
+  cat <<EOF >&2
+${program} [-u|--user] GITHUB_USER [-s|--server] GITHUB_HOST [-t|--token[-file]] GITHUB_TOKENFILE [-o|--org] 
+    GITHUB_ORG [-r|--repo] GITHUB_REPO [-p|--path] PATH
+
+Parameters:
+  -u|--user         GITHUB_USER       - Use to communicate with Github with. Defaults to environment variable GITHUB_USER (which is set to '${GITHUB_USER}').
+  -s|--server       GITHUB_HOST       - Host to communicate with. Defaults to GITHUB_HOST${host_info}, or otherwise http://github.com.
+  -t|--token[-file] GITHUB_TOKENFILE  - File containing github token. Defaults to ~/.tokens/githubread.
+  -o|--org          GITHUB_ORG        - Org containing repo. Defaults to current directory parent name (here '${default_org}').
+  -r|--repo         GITHUB_REPO       - Repo to get file in. Defaults to current directory name (here '${default_repo}').
+  -p|--path         PATH              - Path to file in repo to get.
+  --raw                               - If specified, output raw result from github.
+  -d|--decode                         - If specified, decode the content from github and output that.
+  -v|--verbose                        - If specified, verbose output.
+EOF
+}
+
+ok_to_continue=0
+declare -a args
+args=( "${@}" )
+args_length="${#args[@]}"
+decode=0
+verbose=0
+
+function take_an_argument() {
+  local var_name
+  local param_name
+  var_name="${1}"
+  param_name="${2}"
+
+  if [ -n "${current_value}" ]
+  then
+    echo "${param_name} already set to '${current_value}'" >&2
+    (( ok_to_continue++ ))
+  else
+    (( i++ ))
+    if (( i < args_length ))
+    then
+      eval ${var_name}=${args[${i}]}
+    else
+      echo "${param_name} parameter expects an argument." >&2
+      (( ok_to_continue++ ))
+    fi
+  fi
+}
+
+for (( i=0; i<args_length; i++ ))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    -u|--user)
+      take_an_argument github_user "${arg}" "${github_user}"
+      ;;
+    -s|--server)
+      take_an_argument github_host "${arg}" "${github_host}"
+      ;;
+    -t|--token|--tokenfile)
+      take_an_argument github_token_file "${arg}" "${github_token_file}"
+      ;;
+    -o|--org)
+      take_an_argument github_org "${arg}" "${github_org}"
+      ;;
+    -r|--repo)
+      take_an_argument github_repo "${arg}" "${github_repo}"
+      ;;
+    -p|--path)
+      take_an_argument github_path "${arg}" "${github_path}"
+      ;;
+    --raw)
+      decode=0
+      ;;
+    --decode)
+      decode=1
+      ;;
+    -v|--verbose)
+      verbose=1
+      ;;
+    --help|-h|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      if [ -z "${github_path}" ]
+      then
+        github_path="${arg}"
+      elif [ -z "${github_repo}" ]
+      then
+        github_repo="${arg}"
+      elif [ -z "${github_user}" ]
+      then
+        github_user="${arg}"
+      elif [ -z "${github_host}" ]
+      then
+        github_host="${arg}"
+      elif [ -z "${github_token_file}" ]
+      then
+        github_token_file="${arg}"
+      elif [ -z "${github_org}" ]
+      then
+        github_org="${arg}"
+      else
+        echo "Unexpected argument '${arg}'" >&2
+        (( ok_to_continue++ ))
+      fi
+  esac
+done
+
+# Default parameters
+if [ -z "${github_user}" ]
+then
+  github_user="${GITHUB_USER}"
+fi
+
+if [ -z "${github_host}" ]
+then
+  if [ -n "${GITHUB_HOST}" ]
+  then
+    github_host="${GITHUB_HOST}"
+  else
+    github_host='http://github.com'
+  fi
+fi
+
+if [ -z "${github_token_file}" ] && [ -f "${HOME}/.tokens/githubread" ]
+then
+  github_token_file="${HOME}/.tokens/githubread"
+fi
+
+if [ -z "${github_org}" ]
+then
+  github_org="${default_github_org}"
+fi
+
+if [ -z "${github_repo}" ]
+then
+  github_repo="${default_github_repo}"
+fi
+
+if [ -z "${github_path}" ]
+then
+  echo "No file path specified. Should be first parameter." >&2
+  usage
+  (( ok_to_continue++ ))
+fi
+
+# Validate parameters
+if [ -z "${github_user}" ]
+then
+  echo 'No github user specified. Should be second parameter.' >&2
+  usage
+  (( ok_to_continue++ ))
+fi
+
+if [ -z "${github_host}" ]
+then
+  echo 'Empty github server specified.' >&2
+  usage
+  (( ok_to_continue++ ))
+fi
+
+if [ ! -f "${github_token_file}" ]
+then
+  echo "'${github_token_file}' Github token file does not exist." >&2
+  usage
+  (( ok_to_continue++ )) 
+fi
+
+if [ ${ok_to_continue} -ne 0 ]
+then
+  exit ${ok_to_continue}
+fi
+
+if [[ ! "${github_host}" =~ ^https?:// ]]
+then
+  github_host="https://${github_host}"
+fi
+set -x
+result="$(curl -sS -u "${github_user}":$(cat "${github_token_file}") "${github_host}/api/v3/repos/${github_org}/${github_repo}/contents/${github_path}")"
+#result="$(curl -sS -u $(cat "${github_token_file}") "${github_host}/api/v3/repos/${github_org}/${github_repo}/contents/${github_path}")"
+set +x
+if [ ${decode} -ne 0 ] || [ ${verbose} -ne 0 ]
+then
+  echo "${result}" | jq -r '.content' | base64 --decode
+fi
+
+if [ ${verbose} -ne 0 ]
+then
+  echo '-----------------'
+fi
+
+if [ ${decode} -eq 0 ] || [ ${verbose} -ne 0 ]
+then
+  echo "${result}"
+fi
+
