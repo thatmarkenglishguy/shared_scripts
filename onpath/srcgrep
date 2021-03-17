@@ -12,21 +12,83 @@
 
 # --binary-file=without-match means ignore binary files
 declare -a args
-args=( "${@:4}" )
+declare -a extra_args
 
-if [ -t 1 ]
+args=( "${@}" )
+extra_args=()
+color=1
+
+function usage() {
+  local program
+  program="${0##*/}"
+  cat <<EOF
+${program} SEARCH_STRING SEARCH_DIRECTORY SEARCH_PATTERN [--no-color] [EXTRA_ARGS...]
+  Search source code for the specified search string (required).
+  Start search in specified SEARCH_DIRECTORY, matching files with specified SEARCH_PATTERN.
+ 
+Parameters:
+  SEARCH_STRING    String to search for.
+  SEARCH_DIRECTORY Directory to start search in. Defaults to .
+  SEARCH_PATTERN   Pattern to match files against. Default is all files (*).
+  --no-color       If specified, don't colourize output. Useful if piping.
+  EXTRA_ARGS       All additional args passed to grep.
+EOF
+}
+
+for ((i=0; i<${#args[@]}; ++i))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    --nocolor|--no-color)
+      color=0
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
+      ;;
+    *)
+        if [ -z "${search_string+x}" ]
+        then
+          search_string="${arg}"
+        elif [ -z "${search_dir+x}" ]
+        then
+          search_dir="${arg}"
+        elif [ -z "${search_pattern+x}" ]
+        then
+          search_pattern="${arg}"
+        else
+          extra_args+=( "${arg}" )
+        fi
+      ;;
+  esac
+done
+#args=( "${@:4}" )
+#
+#for arg in "${args[@]}"
+#do
+#  case "${arg}" in
+#    --nocolor|--no-color)
+#      color=0
+#      ;;
+#    *)
+#      extra_args+=( "${arg}" )
+#      ;;
+#  esac
+#done
+#
+#if [ -t 0 ]
+if [ ${color} -ne 0 ]
 then
-  color='--color=always'
+  extra_args=( '--color=always' "${extra_args[@]}" )
 fi
 
 grep --recursive \
   --ignore-case \
-  "${1:?Must specific search string}" \
-  "${2:-.}" \
+  "${search_string:?Must specific search string}" \
+  "${search_directory:-.}" \
   --binary-file=without-match \
-  "${color}" \
   --line-number \
-  --include "${3:-*}" \
+  --include "${search_pattern:-*}" \
   --exclude-dir '.git' \
   --exclude-dir 'build' \
   --exclude-dir 'output' \
@@ -42,4 +104,4 @@ grep --recursive \
   --exclude-dir 'target' \
   --exclude 'gradlew.bat' \
   --exclude 'gradle' \
-  "${args[@]}"
+  "${extra_args[@]}"
