@@ -14,12 +14,17 @@
 declare -a args
 args=( "${@:4}" )
 
+if [ -t 1 ]
+then
+  color='--color=always'
+fi
+
 grep --recursive \
   --ignore-case \
   "${1:?Must specific search string}" \
   "${2:-.}" \
   --binary-file=without-match \
-  --color=always \
+  "${color}" \
   --line-number \
   --include "${3:-*}" \
   --exclude-dir '.git' \
