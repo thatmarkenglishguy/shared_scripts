@@ -1,0 +1,292 @@
+#!/usr/bin/env bash
+if [[ $_ != $0 ]]
+then
+  sourced=1
+else
+  sourced=0
+fi
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+function verbose() {
+#  echo "# ${@}" >&2
+  :
+}
+
+function path_colon_line_to_github_url() {
+  local use_master
+  local github_host
+  local the_org
+  local the_repo
+  local the_branch
+  local sub_directory
+  local regex
+  local line
+  local file_path
+  local file_directory
+  local line_number
+  local remainder
+  local the_root
+  local use_branch
+  local local_org
+  local local_repo
+  local repo_path
+  local url
+
+  use_master=${1:-0}
+  shift
+
+  if [ -n "${1}" ]
+  then
+    github_host="${1}"
+    shift
+  else
+    github_host="${GITHUB_HOST:-${default_github_host}}"
+  fi
+
+  the_org="${1}"
+  shift
+  the_repo="${1}"
+  shift
+  the_branch="${1}"
+  shift
+
+  the_root="$(pwd)"
+
+  # Do a bit of guesswork on the org and repo from the filesystem.
+  # May be ignored later on if supplied by git remote.
+  if git rev-parse --git-dir &>/dev/null
+  then
+    # We're in a git repo...
+    if [ -z "${the_repo}" ]
+    then
+      the_repo="${the_root##*/}"
+    fi
+    the_root="${the_root%/*}"
+    if [ -z "${the_org}" ]
+    then
+      the_org="${the_root##*/}"
+    fi
+    the_root="${the_root%/*}"
+  fi
+
+  if [ -z "${the_org}" ]
+  then
+    # See if any sub-directories are git repos
+    while read sub_directory
+    do
+      if ( cd "${sub_directory}"; git rev-parse --git-dir &>/dev/null )
+      then
+        the_org="${the_root##*/}"
+        the_root="${the_root%/*}"
+        break
+      fi
+    done < <(find . -maxdepth 1 -type d ! \( -path '.' -o -path './.*' \))
+  fi
+  verbose "the_org: ${the_org}. the_repo: ${the_repo}"
+
+  # Read the input grep output...
+  regex='^([^:]+):([[:digit:]]+)(.*)'
+  while read -r line
+  do
+    verbose line "${line}" >&2
+
+    # Extract the interesting bits from the grep output.
+    if [[ "${line}" =~ ${regex} ]]
+    then
+      file_path="${BASH_REMATCH[1]}"
+      file_directory="${file_path%/*}"
+      file_path="${file_path//.\//}"
+      line_number="${BASH_REMATCH[2]}"
+      remainder="${BASH_REMATCH[3]}"
+      verbose "File path: ${file_path}. File directory: ${file_directory}. Line ${line_number}. Remainder: ${remainder}" >&2
+
+      # Read the branch from the file-system, and optionally discover the remote url
+      IFS=',' read -r use_branch use_url< <(
+        cd "${file_directory}"
+
+        remote_url=''
+        if git rev-parse --git-dir &>/dev/null 
+        then
+          first_remote="$(git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1)"
+          remote_url="$(git config --get "remote.${first_remote}.url")"
+          if [ "${remote_url%%.git*}" != "${remote_url}" ]
+          then
+            remote_url="${remote_url%%.git*}/blob/"
+          fi
+          if [ ! "${remote_url:0:4}" == 'http' ]
+          then
+            remote_url="${remote_url/://}"
+            if [ "${remote_url#*@}" != "${remote_url}" ]
+            then
+             remote_url="https://${remote_url#*@}"
+            fi 
+          fi
+        fi
+
+        if [ -n "${the_branch}" ]
+        then
+          branch="${the_branch}"
+        elif [ ${use_master} -eq 0 ] && branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+        then
+          verbose "got branch: ${branch}"
+        else
+          for try_branch in master main develop
+          do
+            if git show-ref --verify --quiet "refs/heads/${try_branch}"
+            then
+              verbose "try branch: ${try_branch}"
+              branch="${try_branch}"
+              break
+            fi
+          done
+        fi
+  
+        if [ -z "${branch}" ]
+        then
+          echo "Unable to find branch for ${file_directory}" >&2
+          branch='master'
+        fi
+
+        if [ -n "${remote_url}" ]
+        then
+          remote_url="${remote_url}${branch}"
+        fi
+        echo "${branch},${remote_url}"
+      )
+      verbose "use_branch: ${use_branch}. use_url: ${use_url}"
+
+      # Either use the org and repo discovered locally at the start, or try to work them out from the grep file path.
+      if [ -z "${the_org}" ]
+      then
+        if [ -z "${the_repo}" ]
+        then
+          IFS='/' read -r -d$'\n' local_org local_repo repo_path <<<"${file_path}"
+        else
+          # This is weird. Been able to determine the repo, but not the org.
+          # Assume it's all in the path, and override the repo and the path.
+          IFS='/' read -r -d$'\n' local_org local_repo repo_path <<<"${file_path}"
+          local_repo="${the_repo}"
+          repo_path="${file_path}"
+        fi
+      else
+        if [ -z "${the_repo}" ]
+        then
+          IFS='/' read -r -d$'\n' local_repo repo_path <<<"${file_path}"
+        else
+          local_repo="${the_repo}"
+          repo_path="${file_path}"
+        fi
+
+        local_org="${the_org}"
+      fi
+
+      verbose "local_org: ${local_org}. local_repo: ${local_repo}. repo_path: ${repo_path}" >&2
+
+      # If no url discovered, use the various collected variables to construct one.
+      if [ -z "${use_url}" ]
+      then
+        use_url="https://${github_host}/${local_org}/${repo}/blob/${use_branch}"
+      fi
+
+      url="${use_url}/${repo_path}#L${line_number}"
+      verbose "url: ${url}"  
+      echo "${url}${remainder}"
+    fi
+  done
+}
+
+default_github_host='github.com'
+use_master=0
+
+declare -a args
+args=( "${@}" )
+
+function usage() {
+  local program
+  program="$(basename "${0}")"
+  cat <<-EOF
+${program} [-m|--master|--use-master] [-g|--github GITHUB_HOST] [-o|--org ORG] [-r|--repo REPO] [-b|--branch BRANCH]
+Reads from stdin and converts "directory:line_number" prefix to github url.
+
+Parameters:
+  -o|--org ORG              If specified, use as the organisation in the Github url. Otherwise deduce from the file system when visiting each repo directory.
+  -r|--repo REPO            If specified, use as the repository in the Github url. Otherwise deduce from the file system when visiting each repo directory.
+  -b|--branch BRANCH        If specified, use as the branch in the Github url.
+                            Otherwise deduce from the git repository when visiting each repo directory, unless -m parameter specificed.
+  -m|--master|--use-master  If specified, don't use local branch. Override with master, main, or develop depending on what's available for that repository.
+  -g|--github GITHUB_HOST   If specified, use GITHUB_HOST parameter in url. Otherwise use environment variable GITHUB_HOST.
+                            If GITHUB_HOST unset, use '${default_github_host}'.
+EOF
+}
+
+ok_exit_code=0
+
+if [ ${sourced} -eq 0 ]
+then
+  for ((i=0; i<${#args[@]}; ++i))
+  do
+    arg="${args[${i}]}"
+
+    case "${arg}" in
+      -o|--org)
+        ((++i))
+        if [ ${i} -lt ${#args[@]} ]
+        then
+          arg="${args[${i}]}"
+          the_org="${arg}"
+        else
+          echo "${arg} expects a parameter." >&2
+          ((++ok_exit_code))
+        fi
+        ;;
+      -r|--repo)
+        ((++i))
+        if [ ${i} -lt ${#args[@]} ]
+        then
+          arg="${args[${i}]}"
+          the_repo="${arg}"
+        else
+          echo "${arg} expects a parameter." >&2
+          ((++ok_exit_code))
+        fi
+        ;;
+      -b|--branch)
+        ((++i))
+        if [ ${i} -lt ${#args[@]} ]
+        then
+          arg="${args[${i}]}"
+          the_branch="${arg}"
+        else
+          echo "${arg} expects a parameter." >&2
+          ((++ok_exit_code))
+        fi
+        ;;
+      -m|--master|--use-master)
+        use_master=1
+        ;;
+      -h|--help|/?)
+        usage
+        exit 1
+        ;;
+      *)
+        :
+        ;;
+    esac
+  done
+ 
+  if [ ${ok_exit_code} -ne 0 ]
+  then
+   exit ${ok_exit_code}
+  fi
+
+  github_host="${GITHUB_HOST:-${default_github_host}}"
+
+  path_colon_line_to_github_url ${use_master} "${github_host}" "${the_org}" "${the_repo}" "${the_branch}"
+fi
+
