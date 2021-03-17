@@ -31,6 +31,7 @@ Parameters:
   SEARCH_DIRECTORY Directory to start search in. Defaults to .
   SEARCH_PATTERN   Pattern to match files against. Default is all files (*).
   --no-color       If specified, don't colourize output. Useful if piping.
+  --color=COLOR    Overrides the default color=always with the specified setting.
   EXTRA_ARGS       All additional args passed to grep.
 EOF
 }
@@ -40,6 +41,10 @@ do
   arg="${args[${i}]}"
   case "${arg}" in
     --nocolor|--no-color)
+      color=0
+      ;;
+    --color=*)
+      extra_args=( "${arg}" "${extra_args[@]}" )
       color=0
       ;;
     -h|--help|/?)
