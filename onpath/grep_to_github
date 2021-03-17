@@ -115,6 +115,9 @@ function path_colon_line_to_github_url() {
         then
           first_remote="$(git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1)"
           remote_url="$(git config --get "remote.${first_remote}.url")"
+          remote_url="${remote_url/megithub/github}"
+          remote_url="${remote_url/publicgithub/github}"
+
           if [ "${remote_url%%.git*}" != "${remote_url}" ]
           then
             remote_url="${remote_url%%.git*}/blob/"
