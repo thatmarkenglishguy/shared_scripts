@@ -1,0 +1,229 @@
+#!/usr/bin/env bash
+# Work out if this script is being run or sourced.
+if [[ ${_} != ${0} ]]
+then
+  script_sourced=1
+else
+  script_sourced=0
+fi
+
+#Deduce this script's directory
+if [ -z "${BASH_SOURCE}" ]; then
+  script_dir="$(readlink -f "$(dirname "${0}")")"
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+declare -a args
+args=( "${@}" )
+
+#kernel-core/src/dataflow/dataflow_graph.rs:1563:                .offset_function("StrictlyNegativeOffset")
+
+function verbose() {
+#  echo "# ${@}" >&2
+  :
+}
+
+
+default_command='less'
+separate=0
+dry_run=0
+
+function usage() {
+  local program
+  program="$(basename "${0}")"
+
+  cat <<-EOF
+${program} [[-c|--command] COMMAND] [--dry-run] [-h|--help] [--vim] [--less]
+Take grep output lines prefixed with path and line number and open them using a command such as less or vim.
+The default view command is ${default_command}.
+
+Parameters:
+  --less                Set view command to less.
+  --view                Set view command to vim.
+  -c|--command COMMAND  Command to run with. Defaults to ${default_command}.
+  --dry-run             Output commands which would be executed.
+  -h|--help             Show usage.
+
+E.g.
+# Look for 'my_function' in rust files, including line number, and then open in viewer.
+grep --recursive --ignore-case --line-number --color=always 'my_function' '.' --include '*.rs' | ${program}
+# As above with short grep options.
+grep -rin 'my_function' '.' --include '*.rs' | ${program}
+EOF
+}
+
+function view_path_colon_line() {
+  local command
+  local separate
+  local the_command
+  local regex
+  local file_path
+  local file_directory
+  local line_number
+  local remainder
+  local file_paths
+  local line_numbers
+  local command_suffix
+  local buffer_number
+  local found_file
+  local show_command_suffix
+  local i
+
+  command="${1}"
+  shift
+  separate=${1}
+  shift
+
+  declare -a the_command
+  declare -a file_paths
+  declare -a line_numbers
+  file_paths=()
+  line_numbers=()
+  regex='^([^:]+):([[:digit:]]+)(.*)'
+
+  while read -r line
+  do
+    verbose line "${line}" >&2
+    if [[ "${line}" =~ ${regex} ]]
+    then
+      file_path="${BASH_REMATCH[1]}"
+      file_directory="${file_path%/*}"
+      file_path="${file_path//.\//}"
+      line_number="${BASH_REMATCH[2]}"
+      remainder="${BASH_REMATCH[3]}"
+      verbose "File path: ${file_path}. File directory: ${file_directory}. Line ${line_number}. Remainder: ${remainder}" >&2
+      found_file=0
+      for search_file_path in "${file_paths[@]}"
+      do
+        if [ "${search_file_path}" == "${file_path}" ]
+        then
+          found_file=1
+          break
+        fi
+      done
+
+      if [ ${found_file} -eq 0 ]
+      then
+        file_paths+=( "${file_path}" )
+        line_numbers+=( ${line_number} )
+      fi
+    fi
+  done
+
+  verbose "Finished reading ${#file_paths[@]} lines..."
+
+  if [ ${separate} -ne 0 ]
+  then
+    for ((i=0; i<${#file_paths[@]}; ++i))
+    do
+      case "${command}" in
+        less)
+          the_command=( "${command}" -N -j 5 +${line_numbers[${i}]} "${file_paths[${i}]}" )
+          ;;
+        vim)
+          the_command=( "${command}" +${line_numbers[${i}]} "${file_path[${i}]}" )
+          ;;
+      esac
+
+      if [ ${dry_run} -ne 0 ]
+      then
+        echo "${the_command[@]}"
+      else
+        "${the_command[@]}"
+      fi
+    done
+  else # Else not separate
+    command_suffix=''
+
+    # Set up the first file
+    case "${command}" in
+      less)
+        # Only the first line number supported in less...
+        the_command=( "${command}" -N -j 5 +${line_numbers[0]} "${file_paths[0]}")
+        ;;
+      vim)
+        the_command=( "${command}" "${file_paths[0]}")
+        command_suffix=":${line_numbers[0]}"
+        ;;
+    esac
+
+    # Set up the remaining files
+    for ((i=1; i<${#file_paths[@]}; ++i))
+    do
+      case "${command}" in
+        less)
+          the_command+=( "${file_paths[${i}]}" )
+          ;;
+        vim)
+          #vim filea fileb filec -c ':10|:bu 2|:100|:bu 3|:200|:rewind'
+          ((buffer_number=i+1))
+          the_command+=( "${file_paths[${i}]}" )
+          command_suffix+="|bu ${buffer_number}|${line_numbers[${i}]}"
+          ;;
+      esac
+    done
+
+    case "${command}" in
+      vim)
+        the_command+=( '-c' )
+        command_suffix+='|:rewind'
+        ;;
+    esac
+
+    if [ ${dry_run} -ne 0 ]
+    then
+      show_command_suffix=''
+      if [ -n "${command_suffix}" ]
+      then
+        show_command_suffix=" '${command_suffix}'"
+      fi
+
+      echo "${the_command[@]}${show_command_suffix}"
+    else
+     < /dev/tty "${the_command[@]}" "${command_suffix}"
+    fi
+  fi # Else not separate
+ }
+
+if [ ${script_sourced} -eq 0 ]
+then
+  for ((i=0; i<${#args[@]}; ++i))
+  do
+    arg="${args[${i}]}"
+    case "${arg}" in
+      --vim)
+        command='vim'
+        ;;
+      --less)
+        command='less'
+        ;;
+      -c|--command)
+        ((++i))
+        if [ ${i} -lt ${#args[${i}]} ]
+        then
+          arg="${args[${i}]}"
+          command="${arg}"
+          echo "Command is ${command}"
+        fi
+        ;;
+      -s|--separate)
+        separate=1
+        ;;
+      --dry|--dry-run|--dryrun)
+        dry_run=1
+        ;;
+      -h|--help|/?)
+        usage
+        exit 1
+        ;;
+    esac
+  done
+
+  if [ -z "${command}" ]
+  then
+    command="${default_command}"
+  fi
+
+  view_path_colon_line "${command}" ${separate}
+fi
