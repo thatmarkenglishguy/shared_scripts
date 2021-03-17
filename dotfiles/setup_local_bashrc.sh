@@ -67,10 +67,12 @@ fi
 
 case "${os_name}" in
   msys|cygwin)
+    _setup_local_dir="${HOME}/code/onpath"
     _setup_shscripts_dir="${HOME}/code/shscripts"
 #    source_line='source "${HOME}/code/shscripts/marke_mac_bash.rc"'
     ;;
   darwin)
+    _setup_local_dir="${HOME}/mE/code/onpath"
     _setup_shscripts_dir="${HOME}/code/mE/shscripts"
 #    source_line='source "${HOME}/code/mE/shscripts/marke_mac_bash.rc"'
     ;;
@@ -91,8 +93,16 @@ function _add_to_file() {
   fi
 }
 
-_add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
-_add_to_file "source \"${_setup_shscripts_dir}/marke_mac_bash.rc\"" "${HOME}/.bashrc"
+case "${os_name}" in
+  darwin)
+    _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
+    _add_to_file "source \"${_setup_shscripts_dir}/marke_mac_bash.rc\"" "${HOME}/.bashrc"
+    ;;
+  msys|cygwin)
+    _add_to_file "source \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\"" "${HOME}/.bashrc"
+    _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
+    ;;
+esac
 #source_line="source \"${_setup_shscripts_dir}/marke_mac_bash.rc\""
 #if ! grep "${source_line}" ~/.bashrc 2>&1 1>/dev/null
 #then
@@ -173,7 +183,7 @@ fi
 
 if ! which src-hilite-lesspipe.sh 1>/dev/null 2>&1
 then
-  case $(os_name) in
+  case ${os_name} in
     darwin)
       brew install source-highlight
       ;;
