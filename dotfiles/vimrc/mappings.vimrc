@@ -16,6 +16,10 @@ cabbr <expr> %% expand('%:p:h')
 " Toggling list (whitespace visible)
 :nnoremap <leader>wv :set list!<cr>
 
+" mE
+" Show hex
+:nnoremap <leader>x :call ToggleHex()<cr>
+
 " mE YouCompleteMe
 " IntelliJ uses Command+B and Alt+Command+B.
 " Let's do the same, and also leader...

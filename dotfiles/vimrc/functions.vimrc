@@ -11,6 +11,23 @@
   endif
 endfunction
 
+" ===Display Functions===
+:function! ToggleHex()
+:  if &display == "uhex"
+:    if ! exists('b:prev_display')
+:      setlocal display=
+:      echom "unhexed"
+:    else
+:      setlocal display="&b:prev_display"
+:      echom "unhexed with: '" . &display . "'"
+:    endif
+:  else
+:    let b:prev_display=&display
+:    setlocal display=uhex
+:    echom "hexed"
+:  endif
+:endfunction
+
 " ===Command Execution Functions===
 :function! EnsurePreviousArgsDict()
 :   if ! exists('b:previous_args_dict')
