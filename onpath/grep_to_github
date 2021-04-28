@@ -36,7 +36,9 @@ function path_colon_line_to_github_url() {
   local local_org
   local local_repo
   local repo_path
+  local url_prefix
   local url
+  local previous_file_path
 
   use_master=${1:-0}
   shift
@@ -106,98 +108,106 @@ function path_colon_line_to_github_url() {
       remainder="${BASH_REMATCH[3]}"
       verbose "File path: ${file_path}. File directory: ${file_directory}. Line ${line_number}. Remainder: ${remainder}" >&2
 
-      # Read the branch from the file-system, and optionally discover the remote url
-      IFS=',' read -r use_branch use_url< <(
-        cd "${file_directory}"
+      if [ "${file_path}" != "${previous_file_path}" ]
+      then
+        verbose "New file: ${file_path}"
 
-        remote_url=''
-        if git rev-parse --git-dir &>/dev/null 
-        then
-          first_remote="$(git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1)"
-          remote_url="$(git config --get "remote.${first_remote}.url")"
-          remote_url="${remote_url/megithub/github}"
-          remote_url="${remote_url/publicgithub/github}"
-
-          if [ "${remote_url%%.git*}" != "${remote_url}" ]
+        # Read the branch from the file-system, and optionally discover the remote url
+        IFS=',' read -r use_branch use_url< <(
+          cd "${file_directory}"
+  
+          remote_url=''
+          if git rev-parse --git-dir &>/dev/null 
           then
-            remote_url="${remote_url%%.git*}/blob/"
-          fi
-          if [ ! "${remote_url:0:4}" == 'http' ]
-          then
-            remote_url="${remote_url/://}"
-            if [ "${remote_url#*@}" != "${remote_url}" ]
+            first_remote="$(git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1)"
+            remote_url="$(git config --get "remote.${first_remote}.url")"
+            remote_url="${remote_url/megithub/github}"
+            remote_url="${remote_url/publicgithub/github}"
+  
+            if [ "${remote_url%%.git*}" != "${remote_url}" ]
             then
-             remote_url="https://${remote_url#*@}"
-            fi 
-          fi
-        fi
-
-        if [ -n "${the_branch}" ]
-        then
-          branch="${the_branch}"
-        elif [ ${use_master} -eq 0 ] && branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
-        then
-          verbose "got branch: ${branch}"
-        else
-          for try_branch in master main develop
-          do
-            if git show-ref --verify --quiet "refs/heads/${try_branch}"
-            then
-              verbose "try branch: ${try_branch}"
-              branch="${try_branch}"
-              break
+              remote_url="${remote_url%%.git*}/blob/"
             fi
-          done
+            if [ ! "${remote_url:0:4}" == 'http' ]
+            then
+              remote_url="${remote_url/://}"
+              if [ "${remote_url#*@}" != "${remote_url}" ]
+              then
+               remote_url="https://${remote_url#*@}"
+              fi 
+            fi
+          fi
+  
+          if [ -n "${the_branch}" ]
+          then
+            branch="${the_branch}"
+          elif [ ${use_master} -eq 0 ] && branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)"
+          then
+            verbose "got branch: ${branch}"
+          else
+            for try_branch in master main develop
+            do
+              if git show-ref --verify --quiet "refs/heads/${try_branch}"
+              then
+                verbose "try branch: ${try_branch}"
+                branch="${try_branch}"
+                break
+              fi
+            done
+          fi
+    
+          if [ -z "${branch}" ]
+          then
+            echo "Unable to find branch for ${file_directory}" >&2
+            branch='master'
+          fi
+  
+          if [ -n "${remote_url}" ]
+          then
+            remote_url="${remote_url}${branch}"
+          fi
+          echo "${branch},${remote_url}"
+        )
+        verbose "use_branch: ${use_branch}. use_url: ${use_url}"
+  
+        # Either use the org and repo discovered locally at the start, or try to work them out from the grep file path.
+        if [ -z "${the_org}" ]
+        then
+          if [ -z "${the_repo}" ]
+          then
+            IFS='/' read -r -d$'\n' local_org local_repo repo_path <<<"${file_path}"
+          else
+            # This is weird. Been able to determine the repo, but not the org.
+            # Assume it's all in the path, and override the repo and the path.
+            IFS='/' read -r -d$'\n' local_org local_repo repo_path <<<"${file_path}"
+            local_repo="${the_repo}"
+            repo_path="${file_path}"
+          fi
+        else
+          if [ -z "${the_repo}" ]
+          then
+            IFS='/' read -r -d$'\n' local_repo repo_path <<<"${file_path}"
+          else
+            local_repo="${the_repo}"
+            repo_path="${file_path}"
+          fi
+  
+          local_org="${the_org}"
         fi
   
-        if [ -z "${branch}" ]
+        verbose "local_org: ${local_org}. local_repo: ${local_repo}. repo_path: ${repo_path}" >&2
+  
+        # If no url discovered, use the various collected variables to construct one.
+        if [ -z "${use_url}" ]
         then
-          echo "Unable to find branch for ${file_directory}" >&2
-          branch='master'
+          use_url="https://${github_host}/${local_org}/${repo}/blob/${use_branch}"
         fi
+  
+        url_prefix="${use_url}/${repo_path}"
+        previous_file_path="${file_path}"
+      fi # file_path != previous_file_path
 
-        if [ -n "${remote_url}" ]
-        then
-          remote_url="${remote_url}${branch}"
-        fi
-        echo "${branch},${remote_url}"
-      )
-      verbose "use_branch: ${use_branch}. use_url: ${use_url}"
-
-      # Either use the org and repo discovered locally at the start, or try to work them out from the grep file path.
-      if [ -z "${the_org}" ]
-      then
-        if [ -z "${the_repo}" ]
-        then
-          IFS='/' read -r -d$'\n' local_org local_repo repo_path <<<"${file_path}"
-        else
-          # This is weird. Been able to determine the repo, but not the org.
-          # Assume it's all in the path, and override the repo and the path.
-          IFS='/' read -r -d$'\n' local_org local_repo repo_path <<<"${file_path}"
-          local_repo="${the_repo}"
-          repo_path="${file_path}"
-        fi
-      else
-        if [ -z "${the_repo}" ]
-        then
-          IFS='/' read -r -d$'\n' local_repo repo_path <<<"${file_path}"
-        else
-          local_repo="${the_repo}"
-          repo_path="${file_path}"
-        fi
-
-        local_org="${the_org}"
-      fi
-
-      verbose "local_org: ${local_org}. local_repo: ${local_repo}. repo_path: ${repo_path}" >&2
-
-      # If no url discovered, use the various collected variables to construct one.
-      if [ -z "${use_url}" ]
-      then
-        use_url="https://${github_host}/${local_org}/${repo}/blob/${use_branch}"
-      fi
-
-      url="${use_url}/${repo_path}#L${line_number}"
+      url="${url_prefix}#L${line_number}"
       verbose "url: ${url}"  
       echo "${url}${remainder}"
     fi
