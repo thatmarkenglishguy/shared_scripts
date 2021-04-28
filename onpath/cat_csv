@@ -7,6 +7,26 @@ else
   script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+# Script functions
+function do_find() {
+  local target
+  local extra_args
+
+  target="${1}"
+  declare -a extra_args
+  extra_args=( "${@:2}" )
+
+  case "$(uname -a | tr '[:upper:]' '[:lower:]')" in
+    *darwin*)
+      find -s "${target}" "${extra_args[@]}"
+      ;;
+    *)
+      find "${target}" "${extra_args[@]}"
+      ;;
+  esac
+}
+
+# Command line processing
 declare -a args
 args=( "${@}" )
 declare -a extra_args
@@ -21,15 +41,15 @@ function usage() {
   program_name="$(basename "${0}")"
 
   cat <<-EOF
-${program_name} [--output OUTPUT_FILE] [TARGET_DIR] [FIND_PARAMETERS...]
+${program_name} [-o|--output OUTPUT_FILE] [TARGET_DIR] [FIND_PARAMETERS...]
 cat all the first file, and remove first line of remaining files.
 If specified write output to OUTPUT_FILE and exclude it from parsing.
 
 Parameters:
-  --output OUTPUT_FILE If specified, don't write to stdout. Write to specified file.
-                       Excludes file as potential input.
-  TARGET_DIR           If specified search for files in directory. Defaults to '${default_target_dir}'.
-  FIND_PARAMETERS      Any other parameters are passed to find. Defaults to '${default_extra_args[@]}'.
+  -o|--output OUTPUT_FILE If specified, don't write to stdout. Write to specified file.
+                          Excludes file as potential input.
+  TARGET_DIR              If specified search for files in directory. Defaults to '${default_target_dir}'.
+  FIND_PARAMETERS         Any other parameters are passed to find. Defaults to '${default_extra_args[@]}'.
 
 e.g.
 # Find all the csv files in the current directory and output them as a single large csv file (relies on defaults)
@@ -46,7 +66,7 @@ for ((i=0; i<${#args[@]}; ++i))
 do
   arg="${args[${i}]}"
   case "${arg}" in
-    --output)
+    -o|--output)
       ((i++))
       if [ ${i} -ge ${#args[@]} ]
       then
@@ -106,5 +126,6 @@ do
       fi
     fi
   fi
-done < <(find -s "${target}" "${extra_args[@]}")
+done < <(do_find "${target}" "${extra_args[@]}")
+#done < <(find -s "${target}" "${extra_args[@]}")
 
