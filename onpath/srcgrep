@@ -55,9 +55,9 @@ do
         if [ -z "${search_string+x}" ]
         then
           search_string="${arg}"
-        elif [ -z "${search_dir+x}" ]
+        elif [ -z "${search_directory+x}" ]
         then
-          search_dir="${arg}"
+          search_directory="${arg}"
         elif [ -z "${search_pattern+x}" ]
         then
           search_pattern="${arg}"
