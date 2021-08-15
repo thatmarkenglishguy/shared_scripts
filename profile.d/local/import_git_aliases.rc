@@ -13,6 +13,7 @@ do
   fi
 done 
 
+alias gfr='git fetch --prune; git rebase --autostash'
 
 #for __ in "${HOME}/code/shared/shared_scripts.git/onpath" "${HOME}/code/mE/shared/shared_scripts/onpath"
 #do
