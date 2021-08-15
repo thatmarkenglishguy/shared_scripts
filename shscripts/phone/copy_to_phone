@@ -15,7 +15,7 @@ dry_run=0
 for arg in "${@}"
 do
   case "${arg}" in
-    --dry-run|--dryrrun)
+    --dry|--dry-run|--dryrrun)
       dry_run=1
       ;;
     *)
