@@ -1,0 +1,333 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+switch=1
+completed=0
+function switching_back() {
+#  verbose "completed: ${completed}"
+#  verbose "switch: ${switch}"
+  if [ ${completed} -eq 0 ] || [ ${switch} -eq 0 ]
+  then
+    return 0
+  fi
+  return 1
+}
+
+original_configuration="$(gcloud config configurations list --filter="is_active=True" --format="get(name)")"
+original_kubectl_context="$(kubectl config current-context)"
+trap "{
+  flush_actions; 
+  if switching_back; 
+  then
+    [ -n '${original_configuration}' ] && _do_ gcloud config configurations activate '${original_configuration}'; 
+    [ -n '${original_kubectl_context}' ] && _do_ kubectl config use-context '${original_kubectl_context}';
+    flush_actions;
+  fi;
+}" EXIT
+
+declare -a args
+args=( "${@}" )
+args_length=${#args[@]}
+declare -a dry_run_actions
+dry_run_actions=()
+ok_exit_code=0
+always=0
+
+configuration=''
+project=''
+email=''
+kubectl=1
+verbose=0
+dry_run=0
+
+function verbose() {
+  case ${verbose} in
+    0)
+      :
+      ;;
+    *)
+      echo "# ${@}" >&2
+      ;;
+  esac
+}
+
+function _do_() {
+  local arg_strings
+  local space_regex
+  local arg
+  declare -a arg_strings
+  if [ ${dry_run} -ne 0 ] || [ ${verbose} -ne 0 ]
+  then
+    arg_strings=()
+    space_regex='[[:space:]]'
+    for arg in "${@}"
+    do
+      if [[ "${arg}" =~ ${space_regex} ]]
+      then
+        arg_strings+=( "\"${arg}\"" )
+      else
+        arg_strings+=( "${arg}" )
+      fi
+    done
+    dry_run_actions+=( "${arg_strings[*]}" )
+  fi
+
+  if [ ${dry_run} -eq 0 ]
+  then
+    if [ ${verbose} -ne 0 ]
+    then
+      flush_actions
+    fi
+    "${@}"
+  fi
+}
+
+function flush_actions() {
+  if [ ${#dry_run_actions[@]} -ne 0 ]
+  then
+    for action in "${dry_run_actions[@]}"
+    do
+      echo "${action}"
+    done
+    dry_run_actions=()
+  fi
+}
+
+function _flush_do_() {
+  _do_ "${@}"
+  flush_actions
+}
+
+function take_an_argument() {
+  # Globals:
+  #  i [in/out]            - Current argument index.
+  #  ok_exit_code [in/out] - Current exit code.
+  #  args[in]              - Array of command line arguments.
+  #  args_length[in]       - Number of command line arguments.
+  # Parameters:
+  #  1 - Name of variable to set.
+  #  2 - Parameter name in use.
+  local var_name
+  local param_name
+  local current_value
+
+  var_name="${1}"
+  param_name="${2}"
+  current_value="${!var_name}"
+
+  if [ -n "${current_value}" ]
+  then
+    echo "${param_name} already set to '${current_value}'" >&2
+    (( ++ok_exit_code ))
+  else
+    (( i++ ))
+    if (( i < args_length ))
+    then
+      eval ${var_name}=${args[${i}]}
+    else
+      echo "${param_name} parameter expects an argument." >&2
+      (( ++ok_exit_code ))
+    fi
+  fi
+}
+
+
+function usage() {
+  local program_name
+  program_name="$(basename "${0}")"
+
+  cat <<-EOF
+${program_name} [-c|--configuration] CONFIGURATION [-e|--email] EMAIL [[-p|--project] PROJECT] [--no-kubectl] [--no-switch]
+  [--yes] [--dry-run] [--verbose]
+Configure gcloud for the specified configuration.
+
+  -c|--configuration CONFIGURATION  Configuration name to create.
+  -e|--email EMAIL                  Account email to use.
+  -p|--project PROJECT              Project name. If not specified, defaults to configuration name.
+  --no-kubectl                      Do not retrieve kubectl credentials.
+  --no-switch                       Do not switch to the configuration.
+  --yes                             If specified, any queries are automatically executed.
+  --dry-run                         If specified, don't execute commands, just show output.
+  -v|--verbose                      Increase verbosity.
+EOF
+}
+
+for (( i=0; i<args_length; ++i))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    -c|--config|--configuration)
+      take_an_argument configuration "${arg}"
+      ;;
+
+    -e|--email) 
+      take_an_argument email "${arg}"
+      ;;
+    --no-kube|--no-kubectl)
+      kubectl=0
+      ;;
+    --noswitch|--no-switch)
+      switch=0
+      ;;
+    --yes|--always)
+      always=1
+      ;;
+    --dry|--dryrun|--dry-run)
+      dry_run=1
+      ;;
+    -v|--verbose)
+      (( ++verbose ))
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      if [ "${configuration}" ]
+      then
+        configuration="${arg}"
+      elif [ -z "${email}" ]
+      then
+        email="${arg}"
+      elif [ -z "${project}" ]
+      then
+        project="${arg}"
+      else
+        echo "Unrecognised argument '${arg}'" >&2
+        (( ++ok_exit_code ))
+      fi
+      ;;
+  esac
+done
+
+if [ -n "${project}" ]
+then
+  use_project="${project}"
+fi
+
+if [ -z "${configuration}" ]
+then
+  echo 'No configuration specified' >&2
+  (( ++ok_exit_code ))
+elif [ -z "${use_project}" ]
+then
+  use_project="${configuration}"
+fi
+
+if [ -z "${email}" ]
+then
+  echo 'No account email specified' >&2
+  (( ++ok_exit_code ))
+fi
+
+if [ ${ok_exit_code} -ne 0 ]
+then
+  exit ${ok_exit_code}
+fi
+
+if [ ${dry_run} -ne 0 ]
+then
+  always=1
+fi
+
+verbose "original gcloud configuration: '${original_configuration}'"
+verbose "original kubectl context: '${original_kubectl_context}'"
+verbose "gcloud configuration: '${configuration}'"
+verbose "gcloud account email: '${email}'"
+verbose "gcloud project: '${use_project}'"
+
+# Setup gcloud configuration
+set_configuration=0
+
+if gcloud config configurations describe "${configuration}" &>/dev/null
+then
+  echo "gcloud configuration '${configuration}' already defined." >&2
+
+  if [ ${always} -eq 0 ]
+  then
+    read -p 'Overwrite existing gcloud configuration [Y/n]? ' response </dev/tty
+    response="$(echo "${response}" | tr [:upper:] [:lower:])"
+    case "${response}" in
+      y|yes|*)
+        set_configuration=1
+        ;;  
+    esac
+  else
+    set_configuration=1
+  fi
+else
+  _do_ gcloud config configurations create "${configuration}"
+  set_configuration=1
+fi
+
+_do_ gcloud config configurations activate "${configuration}"
+
+if [ ${set_configuration} -eq 1 ]
+then
+  _do_ gcloud config set --configuration "${configuration}" account "${email}"
+  _do_ gcloud config set --configuration "${configuration}" project "${use_project}"
+fi
+
+# Setup kubectl context
+if [ ${kubectl} -ne 0 ]
+then
+  flush_actions
+
+  kubectl_project="$(gcloud config configurations list --format="get(properties.core.project)" --filter="name=${configuration}")"
+  if [ -z "${kubectl_project}" ]
+  then
+    kubectl_project="${use_project}"
+  fi
+
+  read cluster1 location1 <<<"$(gcloud container clusters list --project="${kubectl_project}" --format="get(name, location)" | head -n 1)"
+
+  expected_kubectl_context="${kubectl_project}_${location1}_${cluster1}"
+
+  verbose "gcloud cluster: '${cluster1}'"
+  verbose "gcloud location: '${location1}'"
+  verbose "gcloud configuration project: '${kubectl_project}'"
+  verbose "kubectl expected context: '${expected_kubectl_context}'"
+
+  declare -a matching_kubectl_contexts
+
+  matching_kubectl_contexts=( "$(kubectl config get-contexts -o name | grep "${expected_kubectl_context}\$" )" )
+  verbose "matching kubectl contexts: ${matching_kubectl_contexts[@]}"
+  get_credentials=0
+
+  if [ ${#matching_kubectl_contexts} -eq 0 ]
+  then
+    get_credentials=1
+  else
+    echo "There already seems to be a kubectl config context for '${kubectl_project}'" >&2
+    for context in "${matching_kubectl_contexts[@]}"
+    do
+      verbose "${context}"
+    done
+
+    if [ ${always} -eq 0 ]
+    then
+      read -p 'Overwrite existing entry [Y/n]? ' response </dev/tty
+      response="$(echo "${response}" | tr [:upper:] [:lower:])"
+      case "${response}" in
+        y|yes|*)
+          get_credentials=1
+          ;;  
+      esac
+    else
+      get_credentials=1
+    fi
+  fi
+
+  if [ ${get_credentials} -eq 1 ]
+  then
+    _do_ gcloud container clusters get-credentials "${cluster1}" --region "${location1}" --project "${kubectl_project}"
+  fi
+fi
+
+completed=1
