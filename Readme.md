@@ -75,6 +75,21 @@ command='./somescript' dir_prefix='somedir/someprefix-' tmux_command project1 pr
 dry_run=1 command='./somescript' dir_prefix='somedir/someprefix-' tmux_command project1 project2
 ```
 
+### doq
+Pipe in another command and use it to execute commands with `{}` placeholder. Queries before each command execution.  
+E.g. Query removing each file altered in git working tree:  
+```bash
+git status --porcelain | cut -c 4- | doq rm {}
+```
+
+E.g. Create a script removing only those files respond with "y" to:  
+```bash
+git status --porcelain | cut -c 4- | doq echo rm {} | tee -a removal_script
+# Each file you say yes to adds a `rm ...` line to removal_script
+chmod 755 ./removal_script
+./removal_script
+```
+
 ## [testing](testing)
 
 
