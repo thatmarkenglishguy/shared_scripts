@@ -82,11 +82,14 @@ then
   dq='"'
   sq="'"
   latest_gradle_url=$(echo "${release_page}" | grep -oh "href=[${sq}${dq}][a-zA-Z://.-]\+gradle-[0-9.]\+-all.zip" | cut -c 7- | sort -r | head -n 1)
+  latest_gradle6_url=$(echo "${release_page}" | grep -oh "href=[${sq}${dq}][a-zA-Z://.-]\+gradle-6.[0-9.]\+-all.zip" | cut -c 7- | sort -t'.' -k4n | tail -n 1)
   latest_gradle4_url=$(echo "${release_page}" | grep -oh "href=[${sq}${dq}][a-zA-Z://.-]\+gradle-4.[0-9.]\+-all.zip" | cut -c 7- | sort -t'.' -k4n | tail -n 1)
   echo "latest_gradle_url: '${latest_gradle_url}'"
+  echo "latest_gradle6_url: '${latest_gradle6_url}'"
   echo "latest_gradle4_url: '${latest_gradle4_url}'"
 
   check_download_and_install "${latest_gradle_url}"
+  check_download_and_install "${latest_gradle6_url}"
   check_download_and_install "${latest_gradle4_url}"
 fi
 
