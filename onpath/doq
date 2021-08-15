@@ -1,0 +1,278 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+## Script functions
+function string_to_array() {
+  local string
+  local array
+
+  string="${1}"
+  declare -a array
+  read -a array <<<"${string}"
+  echo "${array[@]}"
+}
+
+function verbose() {
+  if [ ${verbose} -ne 0 ]
+  then
+    echo "${@}" >&2
+  fi
+}
+
+## Command line
+default_response='y'
+dry_run=0
+run_all=0
+verbose=0
+declare -a args
+args=( "${@}" )
+declare -a command_template
+
+function usage() {
+  local program
+
+  program="$(basename "${0}")"
+  cat <<-EOF
+${program} [-d|--default DEFAULT] COMMAND [COMMAND_ARG1 [COMMAND_ARGN...]]
+
+Parameters:
+  -d|--default - Default reponse. Default value is '${default_response}'.
+  COMMAND      - Command to execute. 
+  COMMAND_ARG  - Argument to pass through to command. {} is substituted with a line of input.
+                 Use {{}} to escape {}.
+
+E.g.
+# Get all the new files in a git repo and ask if you want to remove them. 
+git status --porcelain | grep '^??' | cut -c 4- | ${program} rm {}
+EOF
+}
+
+ok_exit_code=0
+
+for (( i=0; i<${#args[@]}; ++i ))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    -d|--default)
+      (( ++i ))
+      if [ ${i} -lt ${#args[@]} ]
+      then
+        arg="${args[${i}]}"
+        case "${arg}" in
+          y|n)
+            default_response="${arg}"
+            ;;
+          *)
+            echo "Unrecognised default option: ${arg}" >&2
+            (( ++ok_exit_code ))
+            ;;
+        esac
+      else
+        echo "'${arg}' option expects parameter." >&2
+        (( ++ok_exit_code ))
+      fi
+      ;;
+    -v|--verbose)
+      if [ ${verbose} -eq 0 ]
+      then
+        verbose=1
+      else
+        command_template+=( "${arg}" )
+      fi
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      command_template+=( "${arg}" )
+      ;;
+  esac
+done
+
+if [ ${ok_exit_code} -ne 0 ]
+then
+  exit ${ok_exit_code}
+fi
+
+# Or something like this...
+function replace_command_token() {
+  local command
+  local reply
+  local prefix
+  local suffix
+  local next_prefix
+
+  command="${1}"
+  reply="${2}"
+  verbose "replace tokens in command: '${command}'"
+  verbose "replace tokens with reply: '${reply}'"
+
+  # hi {} {} foo
+  # Iteration  | Prefix           | NextPrefix         |  Suffix
+  # 0          | ''               | ''                 |  'hi {} {} foo'
+  # 1          | 'hi '            | 'hi '              |  '} {} foo'
+  # 2          | 'hi X '          | ' '                |  '} foo'
+  # 3          | 'hi X X'         | ' foo'             |  ' foo'
+  # 4          | 'hi X X foo'     |                    |  ''
+
+  # hi {} {{}} foo
+  # Iteration  | Prefix           | NextPrefix         |  Suffix
+  # 0          | ''               | ''                 |  'hi {} {{}} foo'
+  # 1          | 'hi '            | 'hi '              |  '} {{}} foo'
+  # 2          | 'hi X '          | ' '                |  '{}} foo'
+  # 3          | 'hi X {'         | ''                 |  '}} foo'
+  # 4          | 'hi X {} foo'    | '} foo'            |  ''
+
+  # hi {} {{{}}} foo
+  # Iteration  | Prefix           | NextPrefix         |  Suffix
+  # 0          | ''               | ''                 |  'hi {} {{{}}} foo'
+  # 1          | 'hi '            | 'hi '              |  '} {{{}}} foo'
+  # 2          | 'hi X '          | ' '                |  '{{}}} foo'
+  # 3          | 'hi X {'         | ''                 |  '{}}} foo'
+  # 4          | 'hi X {X'        | ''                 |  '}} foo'
+  # 5          | 'hi X {X} foo'   | ' foo'             |  ''
+
+  prefix=''
+  suffix="${command}"
+
+  # First iteration unrolled
+  next_prefix="${suffix%%\{*}"
+  suffix="${suffix:${#next_prefix}+1}"
+
+  while [ -n "${suffix}" ]
+  do
+    verbose ''
+    verbose "START   prefix='${prefix}'. next_prefix='${next_prefix}'. suffix='${suffix}'"
+
+    case "${suffix:0:1}" in
+      {)
+        verbose "DOUBLE{"
+        prefix="${prefix}${next_prefix}{"
+        suffix="${suffix:1}"
+        case "${suffix:0:2}" in
+          \}\})
+            verbose "DOUBLE}"
+            prefix="${prefix}}"
+            suffix="${suffix:2}"
+            ;;
+        esac
+        ;;
+      \})
+        verbose "MATCHING}"
+        prefix="${prefix}${next_prefix}${reply}"
+        suffix="${suffix:1}"
+        ;;
+      *)
+        verbose "CHAR='${suffix:0:1}'"
+        prefix="${prefix}${next_prefix}{"
+        ;;
+    esac
+
+    verbose "PREITER prefix='${prefix}'. next_prefix='${next_prefix}'. suffix='${suffix}'"
+
+    next_prefix="${suffix%%\{*}"
+    suffix="${suffix:${#next_prefix}+1}"
+
+    verbose "END     prefix='${prefix}'. next_prefix='${next_prefix}'. suffix='${suffix}'"
+  done
+
+  verbose ''
+
+  # We are now done matching opening braces
+  close_brace='}'
+
+  verbose "PREFINAL  prefix='${prefix}'. next_prefix='${next_prefix}'. suffix='${suffix}'"
+
+  next_prefix="${next_prefix//\}\}/${close_brace}}"
+  prefix="${prefix}${next_prefix}"
+
+  verbose "FINAL     prefix='${prefix}'. next_prefix='${next_prefix}'. suffix='${suffix}'"
+  verbose ''
+
+  echo "${prefix}"
+}
+
+while read
+do
+  declare -a command
+  command=()
+  for command_arg in "${command_template[@]}"
+  do
+    escaped_reply="${REPLY//\//\\/}"
+    read -d '' -r sed_command <<-EOCOMMAND
+s/\([^{]\){}\([^}]\)\{0,1\}/\1${escaped_reply}\2/g
+EOCOMMAND
+    command_arg="$(replace_command_token "${command_arg}" "${REPLY}")"
+    verbose "command_arg: '${command_arg}'"
+    command+=( "${command_arg}" )
+  done
+
+  # If asking
+  if [ ${run_all} -eq 0 ]
+  then
+    # Ask
+    quote='"'
+    declare -a command_description
+    command_description=( "${command[0]}" )
+
+    for command_arg in "${command[@]:1}"
+    do
+      if [ "${command_arg##* }" == "${command_arg}" ]
+      then
+        command_description+=( "${command_arg}" )
+      else
+        command_description+=( "${quote}${command_arg}${quote}" )
+      fi
+    done
+
+    read -r -p "${command_description[@]} (Y[es]/n[o]/a[ll]/q[uit]) [${default_response}]? " response remainder </dev/tty
+    if [ -z "${response}" ]
+    then
+      response="${default_response}"
+    fi
+    response_lower="$(echo "${response}" | tr '[:upper:]' '[:lower:]')"
+  else
+    # Don't ask - default
+    response_lower="${default_response}"
+  fi
+
+  # Determine all-ness
+  case "${response_lower}" in
+    a|all)
+      run_all=1
+      response="${default_response}"
+      response_lower="${default_response}"
+      ;;
+  esac
+
+  case "${response_lower}" in
+    ''|y|yes)
+      if [ ${dry_run} -ne 0 ]
+      then
+        echo "${command[@]}"
+      else
+        if [ ${verbose} -ne 0 ]
+        then
+          echo "${command[@]}"
+        fi
+        "${command[@]}"
+      fi # Ends else not dry run
+      ;;
+    n|no)
+      :
+      ;;
+    q|quit)
+      break
+      ;;
+    *)
+      echo "Unexpected response '${response}'. Skipping..." >&2
+      ;;
+  esac # response_lower
+done
