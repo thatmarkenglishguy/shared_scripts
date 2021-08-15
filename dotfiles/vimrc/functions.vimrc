@@ -16,10 +16,8 @@ endfunction
 :  if &display == "uhex"
 :    if ! exists('b:prev_display')
 :      setlocal display=
-:      echom "unhexed"
 :    else
 :      setlocal display="&b:prev_display"
-:      echom "unhexed with: '" . &display . "'"
 :    endif
 :  else
 :    let b:prev_display=&display
