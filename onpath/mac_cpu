@@ -1,3 +1,7 @@
 #!/usr/bin/env sh
 
 pmset -g thermlog
+
+echo 'Try
+sudo powermetrics --samplers smc -i1 -n1
+'
