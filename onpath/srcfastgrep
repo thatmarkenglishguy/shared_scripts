@@ -1,0 +1,135 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+# Parameters:
+# 1- Search string
+# 2- Search directory (defaults to .)
+# 3- Search include pattern (defaults to all)
+# --color|--no-color
+# --case
+# All other parameters passed to grep
+
+# Examples:
+# Search for 'containerBuildPub' in current directory including all files giving context of 5 lines.
+# srcgrep containerBuildPub . '*' -C5
+
+# --binary-file=without-match means ignore binary files
+declare -a args
+declare -a extra_args
+
+args=( "${@}" )
+extra_args=()
+color=1
+case_sensitive=0
+
+function usage() {
+  local program
+  program="${0##*/}"
+  cat <<EOF
+${program} SEARCH_STRING SEARCH_DIRECTORY SEARCH_PATTERN [--no-color] [EXTRA_ARGS...]
+  Search source code for the specified search string (required).
+  Start search in specified SEARCH_DIRECTORY, matching files with specified SEARCH_PATTERN.
+ 
+Parameters:
+  SEARCH_STRING    String to search for.
+  SEARCH_DIRECTORY Directory to start search in. Defaults to .
+  SEARCH_PATTERN   Pattern to match files against. Default is all files (*).
+  --no-color       If specified, don't colourize output. Useful if piping.
+  --color=COLOR    Overrides the default color=always with the specified setting.
+  --case           If specfied, grep with case sensitivity.
+  EXTRA_ARGS       All additional args passed to grep.
+EOF
+}
+
+for ((i=0; i<${#args[@]}; ++i))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    --nocolor|--no-color)
+      color=0
+      ;;
+    --color=*)
+      extra_args=( "${arg}" "${extra_args[@]}" )
+      color=0
+      ;;
+    --case)
+      case_sensitive=1
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
+      ;;
+    *)
+        if [ -z "${search_string+x}" ]
+        then
+          search_string="${arg}"
+        elif [ -z "${search_directory+x}" ]
+        then
+          search_directory="${arg}"
+        elif [ -z "${search_pattern+x}" ]
+        then
+          search_pattern="${arg}"
+        else
+          extra_args+=( "${arg}" )
+        fi
+      ;;
+  esac
+done
+#args=( "${@:4}" )
+#
+#for arg in "${args[@]}"
+#do
+#  case "${arg}" in
+#    --nocolor|--no-color)
+#      color=0
+#      ;;
+#    *)
+#      extra_args+=( "${arg}" )
+#      ;;
+#  esac
+#done
+#
+#if [ -t 0 ]
+if [ ${color} -ne 0 ]
+then
+  extra_args=( '--color=always' "${extra_args[@]}" )
+fi
+
+if [ ${case_sensitive} -eq 0 ]
+then
+  extra_args+=( '--ignore-case' )
+fi
+
+# -H Always include file name
+srcfind "${search_directory}" -type f -print0 | xargs -0 -n1 -P8 grep \
+  "${search_string:?Must specific search string}" \
+  --binary-file=without-match \
+  --line-number \
+  -H \
+  --include "${search_pattern:-*}" \
+  --exclude 'gradlew.bat' \
+  --exclude 'gradle' \
+  "${extra_args[@]}"
+
+
+#  --exclude-dir '.git' \
+#  --exclude-dir 'build' \
+#  --exclude-dir 'output' \
+#  --exclude-dir 'out' \
+#  --exclude-dir 'bin' \
+#  --exclude-dir 'intermediate' \
+#  --exclude-dir 'node_modules' \
+#  --exclude-dir '.env' \
+#  --exclude-dir '.idea' \
+#  --exclude-dir '.gradle' \
+#  --exclude-dir '.metadata' \
+#  --exclude-dir '.plugins' \
+#  --exclude-dir 'build-intellij' \
+#  --exclude-dir 'target' \
+ 
