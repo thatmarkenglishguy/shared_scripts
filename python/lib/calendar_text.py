@@ -5,6 +5,8 @@ from __future__ import print_function
 import sys       # argv, exit()
 import textwrap  # fill()
 import datetime  # now(), timedelta()
+from io import StringIO
+
 
 # ==============================================================================
 # Logging
@@ -123,12 +125,112 @@ def move_date_to_monday(start_date):
   return start_date
 
 
-def gen_do_run_calendar_text(weekdays, weeks, start_date):
+class DateVisitor(object):
+  """Does things with dates.
+  """
+  def __init__(self):
+    super().__init__()
+
+
+class SummaryDateVisitor(DateVisitor):
+  """Summaries dates. Outputs month each time cross month line.
+  """
+  def __init__(self):
+    super().__init__()
+    self.output = StringIO()
+    self.line_output = StringIO()
+    self.lines = []
+
+  def _append(self, item):
+    self.output.write(item + ' ')
+
+  def _line_item(self, item):
+    self.line_output.write(item + ' ')
+
+  def _line_finish(self, item):
+    self.line_output.write(item)
+
+  def _finish(self, item):
+    self.output.write(item)
+
+  def start_with_month(self, date):
+    self._append(date.strftime('%b'))
+
+  def start_year(self, date):
+    self._line_item(date.strftime('%Y'))
+
+  def start_month(self, date):
+    self._line_item(date.strftime('%b'))
+
+  def add_day(self, date):
+    self._line_finish(date.strftime('%d'))
+    self.lines.append(self.line_output.getvalue())
+    self.line_output = StringIO()
+
+  def finish_days(self):
+    days = ', '.join(self.lines)
+    self.lines = []
+    self._finish(days)
+
+  def consume(self):
+    result = self.output.getvalue()
+    self.output = StringIO()
+    return result
+
+class PollDateVisitor(DateVisitor):
+  """Poll consisting of dates. 
+  """
+  def __init__(self, poll):
+    super().__init__()
+    self.current_month = None
+    self.output = StringIO()
+    self.output.write(f'"{poll}" ')
+    self.line_output = StringIO()
+    self.lines = []
+
+  def _append(self, item):
+    self.output.write(item + ' ')
+
+  def _line_item(self, item):
+    self.line_output.write(item + ' ')
+
+  def _line_finish(self, item):
+    self.line_output.write(item)
+
+  def _finish(self, item):
+    self.output.write(item)
+
+  def start_with_month(self, date):
+    self.current_month = date.strftime('%b')
+
+  def start_year(self, date):
+    self._line_item(date.strftime('%Y'))
+
+  def start_month(self, date):
+    self.current_month = date.strftime('%b')
+
+  def add_day(self, date):
+    self._line_finish(f'"{date.strftime("%a")} {self.current_month} {date.strftime("%d")}"')
+    self.lines.append(self.line_output.getvalue())
+    self.line_output = StringIO()
+
+  def finish_days(self):
+    days = ' '.join(self.lines)
+    self.lines = []
+    self._finish(days)
+
+  def consume(self):
+    result = self.output.getvalue()
+    self.output = StringIO()
+    return result
+
+def gen_do_run_calendar_text(weekdays, weeks, start_date, date_visitor):
   """Do actual activity performed by this module.
     Parameters:
       :param weekdays: Sequence of weekdays between 1(Monday) and 7(Sunday).
       :param weeks: Number of weeks to produce output for.
       :param start_date: Date to start from (defaults to now).
+      :param date_visitor: Handles dates.
       :return Sequence of date strings containing specified weekdays.
   """
   log.info('Running CalendarText')
@@ -146,37 +248,35 @@ def gen_do_run_calendar_text(weekdays, weeks, start_date):
 
   while week_counter < weeks:
     weekday_datetime = date_iterator + weekday_deltas[0]
-    output = weekday_datetime.strftime('%b ')  # Month abbreviated
-    weekday_output = []
+    date_visitor.start_with_month(weekday_datetime)
     for weekday_delta in weekday_deltas:
       previous_weekday_datetime = weekday_datetime
       weekday_datetime = date_iterator + weekday_delta
-      output_string = ''
 
       if weekday_datetime.year != previous_weekday_datetime.year:
-        output_string += weekday_datetime.strftime('%Y ')  # New Year
+        date_visitor.start_year(weekday_datetime)
 
       if weekday_datetime.month != previous_weekday_datetime.month:
-        output_string += weekday_datetime.strftime('%b ')  # New Month abbreviation
+        date_visitor.start_month(weekday_datetime)
 
-      output_string += weekday_datetime.strftime('%d')  # Day of month
-      weekday_output.append(output_string)
-    output += str.join(', ', weekday_output)
-    yield output
+      date_visitor.add_day(weekday_datetime)
+    date_visitor.finish_days()
+    yield date_visitor.consume()
     date_iterator += week_delta
     week_counter += 1
 
 
-def do_run_calendar_text(weekdays, weeks, start_date):
+def do_run_calendar_text(weekdays, weeks, start_date, date_visitor):
   """Do actual activity performed by this module.
     Parameters:
       :param weekdays: Sequence of weekdays between 1(Monday) and 7(Sunday).
       :param weeks: Number of weeks to produce output for.
       :param start_date: Date to start from (defaults to now).
+      :param date_visitor: Handles dates.
       :return Sequence of date strings containing specified weekdays.
   """
   log.info('Running CalendarText')
-  return tuple(gen_do_run_calendar_text(weekdays, weeks, start_date))
+  return tuple(gen_do_run_calendar_text(weekdays, weeks, start_date, date_visitor))
 
 
 # ==============================================================================
@@ -259,8 +359,7 @@ def run_calendar_text(argv=None):
   HelpFormatterPreserveDoubleNewlines = \
     create_formatter_class_to_preserve_double_newlines(argparse.HelpFormatter)
   # noinspection PyTypeChecker
-  parser_run = argparse.ArgumentParser(description=r"""Description of what CalendarText
-actually does.
+  parser_run = argparse.ArgumentParser(description=r"""Output calendar dates.
 
 For example: %(prog)s SomeFile.xml -e SomeElement -a SomeAttribute=foo""",
     formatter_class=HelpFormatterPreserveDoubleNewlines
@@ -282,6 +381,16 @@ For example: %(prog)s SomeFile.xml -e SomeElement -a SomeAttribute=foo""",
       dest='Start',
       help='Start date in format "<Month Titlecase 3 letter abbreviation> <day as number> <year as 4 digit number>". '
            'Defaults to today.'),
+    parser_run.add_argument(
+      '--summary',
+      dest='Format',
+      action='store_const',
+      const=SummaryDateVisitor,
+      help='Output in summary format.'),
+    parser_run.add_argument(
+      '-p', '--poll',
+      dest='Poll',
+      help='Output in summary format.'),
     parser_run.add_argument(
       '--showtime',
       dest='Showtime',
@@ -321,20 +430,30 @@ For example: %(prog)s SomeFile.xml -e SomeElement -a SomeAttribute=foo""",
   else:
     start_date = datetime.datetime.strptime(vals_parse.Start, '%b %d %Y')
 
+  end_of_line_delim = '\n'
+  if vals_parse.Format is None:
+    if vals_parse.Poll:
+      date_visitor = PollDateVisitor(vals_parse.Poll)
+      end_of_line_delim = ' '
+    else:
+      date_visitor = SummaryDateVisitor()
+  else:
+    date_visitor = vals_parse.Format()
+
   if ok_to_continue:  # If OK to run
     time_start = None
     if vals_parse.Showtime:
       time_start = time.clock()
 
-    calendar_strings = do_run_calendar_text(weekdays, weeks, start_date)
+    calendar_strings = do_run_calendar_text(weekdays, weeks, start_date, date_visitor)
 
     time_stop = None
     if vals_parse.Showtime:
       time_stop = time.clock()
     # Finish up
     for calendar_string in calendar_strings:
-        stream_out.write(calendar_string)
-        stream_out.write('\n')
+      stream_out.write(calendar_string)
+      stream_out.write(f'{end_of_line_delim}')
     # Show time
     if vals_parse.Showtime:  # If showing time
       sys.stderr.write('That took: %.04f\n' % (time_stop - time_start))
