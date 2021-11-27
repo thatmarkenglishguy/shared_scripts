@@ -5,21 +5,21 @@ filetype plugin indent on
 " Read Vagrantfile as a ruby file
 " https://github.com/hashicorp/vagrant/blob/master/contrib/vim/vagrantfile.vim
 augroup vagrant
-  au!
-  au BufRead,BufNewFile Vagrantfile set filetype=ruby
+  autocmd!
+  autocmd BufRead,BufNewFile Vagrantfile set filetype=ruby
 augroup END
 
 " Edit .rc file as shell file
 augroup rc_file
   autocmd!
-  au BufRead,BufNewFile *.rc set filetype=sh
-  au BufRead,BufNewFile *.bashrc set filetype=sh
+  autocmd BufRead,BufNewFile *.rc set filetype=sh
+  autocmd BufRead,BufNewFile *.bashrc set filetype=sh
 augroup END
 
 " Antlr plugin fork for Antlr4 support
 Plug 'dylon/vim-antlr'
-au BufRead,BufNewFile *.g set filetype=antlr3
-au BufRead,BufNewFile *.g4 set filetype=antlr4
+autocmd BufRead,BufNewFile *.g set filetype=antlr3
+autocmd BufRead,BufNewFile *.g4 set filetype=antlr4
 
 " Elixir
 augroup elixir
@@ -28,6 +28,11 @@ augroup elixir
   autocmd FileType elixir noremap <F6> :!clear & elixir %<CR>
 augroup END
 
+" Jenkinsfile
+augroup Jenkinsfile
+  autocmd!
+  autocmd BufRead,BufNewFile Jenkinsfile set filetype=Groovy
+augroup END
 
 " Python
 augroup python
@@ -40,22 +45,6 @@ augroup java
   autocmd!
   autocmd FileType java noremap <F5> :!clear & gradle test %<cr>
 augroup END
-
-" Generic functions
-:function! SurroundLineWithDelimiter(delimiter)
-:  call setline('.', a:delimiter . getline('.') . a:delimiter)
-:endfunction
-
-:function! SurroundWithDelimiter(delimiter)
-: let currentcol=col('.') - 1
-: if currentcol == 0
-:   call SurroundLineWithDelimiter(a:delimiter)
-: else
-:   let currentline=getline('.')
-:   let newline = currentline[0:currentcol-1] . a:delimiter . currentline[currentcol:] . a:delimiter
-:   call setline('.', newline)
-: endif
-:endfunction
 
 " Markdown
 augroup markdown
