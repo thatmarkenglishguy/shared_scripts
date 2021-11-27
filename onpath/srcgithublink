@@ -1,0 +1,3 @@
+#!/usr/bin/env sh
+
+srcgrep "${1}" | grep_to_github | head -n1 | cut -d' ' -f1 | pbcopy

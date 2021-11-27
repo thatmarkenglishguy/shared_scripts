@@ -1,0 +1,19 @@
+#!/usr/bin/env sh
+
+function extensions() {
+  local line
+  local last_ext_line
+
+  while read
+  do
+    line="${REPLY##*/}"
+    last_ext_line="${line##*.}"
+    if [ ${#last_ext_line} -ne ${#line} ]
+    then
+      line=".${last_ext_line}"
+    fi
+    echo "${line}"
+  done
+}
+
+extensions | sort | uniq -ci | sort -k1rn -k2f

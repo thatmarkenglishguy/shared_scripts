@@ -1,0 +1,6 @@
+#!/usr/bin/env sh
+
+rev | while read
+do
+  echo "${REPLY}" | rev
+done

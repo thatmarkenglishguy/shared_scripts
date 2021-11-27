@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+source "${script_dir}/srcfindcommon"
+#declare -a extensions
+#extensions=()
+extensions=''
+
+# extension="ext1:count1 ext2:count2"
+while read -r sourcefile remainder
+do
+#  set -x
+  extension="${sourcefile##*.}"
+  extension_search="${extension}:"
+
+  # Search for remainder after extension
+  remainder="${extensions#*${extension_search}}"
+
+  if [ ${#remainder} -eq ${#extensions} ] # If extension not present
+  then
+    if [ -n "${extensions}" ]
+    then
+      extensions="${extensions}"$'\n'
+    fi
+    extensions="${extensions}${extension}:1"$'\n'
+  else
+    (( prefix_length=${#extensions}-${#remainder}-${#extension_search} ))
+    prefix="${extensions:0:${prefix_length}}"
+    read -r -d ' ' count remainder <<<"${remainder}"
+    (( ++count ))
+    extensions="${prefix}${extension}:${count}"$'\n'"${remainder}"
+  fi
+#  set +x
+#  read -p continue...  </dev/tty
+done < <(find_source ! \( -type d \) "${@}")
+#Drop the final newline
+extensions="${extensions:0:${#extensions}-1}"
+echo "${extensions}" | sort
