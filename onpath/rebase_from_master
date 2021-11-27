@@ -11,7 +11,7 @@ function there_and_back() {
   git rebase
   git checkout "${branch}"
   git stash pop
-  git rebase "${target_branch}"
+  git rebase "${target_branch}" --autostash
 }
 
 source read_repos "${@}" >/dev/null
