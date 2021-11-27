@@ -46,7 +46,7 @@ fi
 
 
 # Global variables
-Script_vimrcpath="${script_dir}"/root.vimrc
+script_vimrcpath="${script_dir}"/root.vimrc
 home_vimrcpath=~/.vimrc
 actual_home_vimrcpath=$home_vimrcpath
 backup_home_vimrcpath=${home_vimrcpath}.old
@@ -71,6 +71,12 @@ function _grab_plug_commands() {
   _grab_singleline_plug_commands "${1}" 
 }
 
+function _plug_command() {
+  local vim_quit_command
+  vim_quit_command="${1}"
+  vim "${@:2}" "${vim_quit_command}" -u "${script_dir}/vimrctemp_vimplug"
+}
+
 # Internal functions
 _pluginUp() {
   local do_vundle
@@ -83,10 +89,12 @@ _pluginUp() {
   do_plug=${2:-1}
   do_quit_vim=${3:-1}
   do_delete_tempfile=${4:-1}
-  vim_quit_command='+qall'
+  vim_quit='qall'
+  vim_quit_command="+${vim_quit}"
 
   if [ ${do_quit_vim} -eq 0 ]
   then
+    vim_quit=''
     vim_quit_command=''
   fi
 
@@ -153,22 +161,30 @@ EOF
   then
     rm -f "${script_dir}/vimrctemp_vimplug"
     cat <<EOF >>"${script_dir}"/vimrctemp_vimplug
-" vim-plug
 set nocompatible              " be iMproved, required
-filetype off                  " required
-
-" set rtp+=~/.vim/autoload/plug.vim
-call plug#begin('~/.vim/plugged')
+let path = expand('<sfile>:h')
+exec 'source' path . '/platform.vimrc'
+exec 'source' path . '/settings.vimrc'
+exec 'source' path . '/plugins.vimrc'
 EOF
-    _grab_plug_commands "${script_dir}/plugins.vimrc" >> "${script_dir}/vimrctemp_vimplug"
-#    sed -n "s/\(.*Plug '[^']*'\).*/\1/p" "${script_dir}/plugins.vimrc" >> "${script_dir}"/vimrctemp_vimplug
-    if [ -f "${backup_home_vimrcpath}" ]
-    then
-      _grab_plug_commands "${backup_home_vimrcpath}" >> "${script_dir}/vimrctemp_vimplug"
-      #sed -n "s/\(.*Plug '[^']*'\).*/\1/p" "${backup_home_vimrcpath}" >> "${script_dir}"/vimrctemp_vimplug
-    fi
-    echo 'call plug#end()
-' >> "${script_dir}"/vimrctemp_vimplug
+#    cat <<EOF >>"${script_dir}"/vimrctemp_vimplug
+#
+#" vim-plug
+#set nocompatible              " be iMproved, required
+#filetype off                  " required
+#
+#" set rtp+=~/.vim/autoload/plug.vim
+#call plug#begin('~/.vim/plugged')
+#EOF
+#    _grab_plug_commands "${script_dir}/plugins.vimrc" >> "${script_dir}/vimrctemp_vimplug"
+##    sed -n "s/\(.*Plug '[^']*'\).*/\1/p" "${script_dir}/plugins.vimrc" >> "${script_dir}"/vimrctemp_vimplug
+#    if [ -f "${backup_home_vimrcpath}" ]
+#    then
+#      _grab_plug_commands "${backup_home_vimrcpath}" >> "${script_dir}/vimrctemp_vimplug"
+#      #sed -n "s/\(.*Plug '[^']*'\).*/\1/p" "${backup_home_vimrcpath}" >> "${script_dir}"/vimrctemp_vimplug
+#    fi
+#    echo 'call plug#end()
+#' >> "${script_dir}"/vimrctemp_vimplug
   fi
 
   if [ ${do_vundle} -ne 0 ]
@@ -178,7 +194,15 @@ EOF
 
   if [ ${do_plug} -ne 0 ]
   then
-    vim +PlugUpdate "${vim_quit_command}" -u "${script_dir}/vimrctemp_vimplug"
+    _plug_command "${vim_quit_command}" +PlugUpdate +'CocUpdate' 
+
+    # coc-pyright seems really expensive to check up on...
+    if [ ! -d "${HOME}/.config/coc/extensions/node_modules/coc-pyright" ]
+    then
+      _plug_command "${vim_quit_command}" +'CocInstall coc-pyright'
+    fi
+    # The other lighter-weight plugins
+    _plug_command "${vim_quit_command}" +'CocInstall coc-rust-analyze|CocInstall coc-rust-rls'
   fi
 
   if [ ${do_delete_tempfile} -ne 0 ]
@@ -287,6 +311,12 @@ do_plug=1
 do_quit_vim=1
 do_delete_tempfile=1
 do_setup_ycm=1
+
+case "${platform}" in
+  darwin)
+    do_setup_ycm=0
+    ;;
+esac
 
 function usage() {
   cat <<EOF >&2

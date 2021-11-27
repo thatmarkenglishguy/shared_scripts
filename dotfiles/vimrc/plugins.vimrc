@@ -22,6 +22,9 @@ Plug 'rust-lang/rust.vim'
 "     \ }
 Plug 'junegunn/fzf.vim'
 
+if g:use_coc != 0
+  Plug 'neoclide/coc.nvim', {'branch': 'release'}
+endif
 call plug#end()
 
 " For fzf-plugin
@@ -48,4 +51,5 @@ set hidden
 "       \ 'rust': ['~/.cargo/bin/rustup', 'run', 'stable', 'rls'],
 "       \ }
 " endif
+
 

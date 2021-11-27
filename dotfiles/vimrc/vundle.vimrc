@@ -7,7 +7,7 @@ set rtp+=~/.vim/bundle/Vundle.vim
 call vundle#begin()
 
 Plugin 'VundleVim/Vundle.vim'
-if g:platform != "cygwin" && g:platform != "msys"
+if g:use_ycm == 1
   Plugin 'Valloric/YouCompleteMe'
 endif
 call vundle#end()            " required
@@ -27,6 +27,8 @@ if g:platform != "cygwin" && g:platform != "msys"
   " Rust seems to require this.
   " https://github.com/ycm-core/YouCompleteMe#the-gycm_disable_signature_help-option
   let g:ycm_disable_signature_help = 1
+
+  " let g:ycm_clangd_binary_path='clangd'
 else
   let g:ycm_server_python_interpreter = system("cygpath \"$(py -c \"import sys; print(sys.executable)\")\" | tr -d '\n'")
 "  echo "ycm python interpreter is: ".g:ycm_server_python_interpreter
