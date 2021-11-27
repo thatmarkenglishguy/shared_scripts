@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+python3 -m pip install --upgrade pip
+pip3 list --outdated --format=freeze | cut -d'=' -f1 | xargs pip3 install -U
+pip3 list --outdated
