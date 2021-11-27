@@ -12,6 +12,16 @@ start_directory="${1:-.}"
 declare -a args
 args=( "${@:2}" )
 
+raw_print=0
+for arg in "${args[@]}"
+do
+  case "${arg}" in
+    -print0)
+      raw_print=1
+      ;;
+  esac
+done
+
 function find_source() {
 # -o means or
   find "${start_directory}" \
@@ -74,15 +84,19 @@ function find_source() {
 #      -path 'gradle' \
 
 function find_filtered_source() {
-  while read -r line
-  do
-    # Try to filter out binaries.
-    #if [ ! -x "${line}" ] || [ -d "${line}" ] || file "${line}" | grep 'text executable' >/dev/null
-    if [ ! -x "${line}" ] || [ -d "${line}" ] || file "${line}" | grep 'text executable' >/dev/null
-    then
-      echo "${line}"
-    fi
-  done < <(find_source)
+  if [ ${raw_print} -ne 0 ]
+  then
+    find_source
+  else
+    while read -r line
+    do
+      # Try to filter out binaries.
+      if [ ! -x "${line}" ] || [ -d "${line}" ] || file "${line}" | grep 'text executable' >/dev/null
+      then
+        echo "${line}"
+      fi
+    done < <(find_source)
+  fi
 }
 
 function find_script_source() {
