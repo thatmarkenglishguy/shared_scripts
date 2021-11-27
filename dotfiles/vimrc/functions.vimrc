@@ -26,6 +26,23 @@ endfunction
 :  endif
 :endfunction
 
+" ===Line manipulation functions===
+:function! SurroundLineWithDelimiter(delimiter)
+:  call setline('.', a:delimiter . getline('.') . a:delimiter)
+:endfunction
+
+:function! SurroundWithDelimiter(delimiter)
+: let currentcol=col('.') - 1
+: echom 'currentcol=' . currentcol
+: if currentcol == 0
+:   call SurroundLineWithDelimiter(a:delimiter)
+: else
+:   let currentline=getline('.')
+:   let newline = currentline[0:currentcol-1] . a:delimiter . currentline[currentcol:] . a:delimiter
+:   call setline('.', newline)
+: endif
+:endfunction
+
 " ===Command Execution Functions===
 :function! EnsurePreviousArgsDict()
 :   if ! exists('b:previous_args_dict')
