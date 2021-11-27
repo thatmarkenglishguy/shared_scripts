@@ -4,6 +4,8 @@
 # 1- Search string
 # 2- Search directory (defaults to .)
 # 3- Search include pattern (defaults to all)
+# --color|--no-color
+# --case
 # All other parameters passed to grep
 
 # Examples:
@@ -17,6 +19,7 @@ declare -a extra_args
 args=( "${@}" )
 extra_args=()
 color=1
+case_sensitive=0
 
 function usage() {
   local program
@@ -32,6 +35,7 @@ Parameters:
   SEARCH_PATTERN   Pattern to match files against. Default is all files (*).
   --no-color       If specified, don't colourize output. Useful if piping.
   --color=COLOR    Overrides the default color=always with the specified setting.
+  --case           If specfied, grep with case sensitivity.
   EXTRA_ARGS       All additional args passed to grep.
 EOF
 }
@@ -46,6 +50,9 @@ do
     --color=*)
       extra_args=( "${arg}" "${extra_args[@]}" )
       color=0
+      ;;
+    --case)
+      case_sensitive=1
       ;;
     -h|--help|/?)
       usage
@@ -87,8 +94,12 @@ then
   extra_args=( '--color=always' "${extra_args[@]}" )
 fi
 
+if [ ${case_sensitive} -eq 0 ]
+then
+  extra_args+=( '--ignore-case' )
+fi
+
 grep --recursive \
-  --ignore-case \
   "${search_string:?Must specific search string}" \
   "${search_directory:-.}" \
   --binary-file=without-match \
@@ -99,6 +110,7 @@ grep --recursive \
   --exclude-dir 'output' \
   --exclude-dir 'out' \
   --exclude-dir 'bin' \
+  --exclude-dir 'intermediate' \
   --exclude-dir 'node_modules' \
   --exclude-dir '.env' \
   --exclude-dir '.idea' \
