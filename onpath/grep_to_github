@@ -209,7 +209,7 @@ function path_colon_line_to_github_url() {
 
       url="${url_prefix}#L${line_number}"
       verbose "url: ${url}"  
-      echo "${url}${remainder}"
+      echo "${url} ${remainder}"
     fi
   done
 }
