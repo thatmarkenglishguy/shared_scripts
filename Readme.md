@@ -62,7 +62,7 @@ mkdir -p somedir/someprefix-project1
 echo '#!/usr/bin/env sh' >somedir/someprefix-project1/somescript
 echo 'pwd' >>somedir/someprefix-project1/somescript
 echo '#!/usr/bin/env sh' >somedir/someprefix-project2/somescript
-echo 'Project 2 !' >>somedir/someprefix-project2/somescript
+echo 'echo "Project 2 !"' >>somedir/someprefix-project2/somescript
 echo 'pwd' >>somedir/someprefix-project2/somescript
 chmod 755 somedir/someprefix-project1/somescript
 chmod 755 somedir/someprefix-project2/somescript
