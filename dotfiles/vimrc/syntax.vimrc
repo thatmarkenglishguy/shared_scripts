@@ -10,6 +10,23 @@ syntax on
 " Note: syntax enable resets the syntax
 " filetype plugin indent on
 " syntax enable
+
+" CoC ccls settings taken from https://chmanie.com/post/2020/07/17/modern-c-development-in-neovim/
+" c++ syntax highlighting
+if g:use_coc != 0
+  " Syntax highlighting
+"  let g:cpp_class_scope_highlight = 1
+"  let g:cpp_member_variable_highlight = 1
+"  let g:cpp_class_decl_highlight = 1
+  let g:syntastic_cpp_checkers = ['cpplint']
+  let g:syntastic_c_checkers = ['cpplint']
+  let g:syntastic_cpp_cpplint_exec = 'cpplint'
+  " Linting with syntastic
+  " The following two lines are optional. Configure it to your liking!
+  let g:syntastic_check_on_open = 1
+"  let g:syntastic_check_on_wq = 0
+endif
+
 " Italic/bold look like white background on Mac iterm2 :(
 " See http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
 " The number specified as hex is the number to use below if the colour name
