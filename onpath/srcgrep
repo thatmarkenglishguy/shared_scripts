@@ -20,12 +20,13 @@ args=( "${@}" )
 extra_args=()
 color=1
 case_sensitive=0
+pattern=0
 
 function usage() {
   local program
   program="${0##*/}"
   cat <<EOF
-${program} SEARCH_STRING SEARCH_DIRECTORY SEARCH_PATTERN [--no-color] [EXTRA_ARGS...]
+${program} [-P|--pattern] SEARCH_STRING SEARCH_DIRECTORY SEARCH_PATTERN [--no-color] [EXTRA_ARGS...]
   Search source code for the specified search string (required).
   Start search in specified SEARCH_DIRECTORY, matching files with specified SEARCH_PATTERN.
  
@@ -57,6 +58,9 @@ do
     -h|--help|/?)
       usage
       exit 1
+      ;;
+    -P|--pattern)
+      pattern=1
       ;;
     *)
         if [ -z "${search_string+x}" ]
@@ -99,8 +103,25 @@ then
   extra_args+=( '--ignore-case' )
 fi
 
+declare -a pattern_args
+pattern_args=()
+if [ ${pattern} -ne 0 ]
+then
+  case "$(uname -a | tr [:upper:] [:lower:])" in
+    *darwin*)
+      echo "It's Darwin baby."
+      pattern_args+=( '--extended-regexp' )
+      ;;
+    *)
+      pattern_args+=( '-P' )
+      ;;
+  esac
+fi
+
+pattern_args+=( "${search_string:?Must specific search string}" )
+
 grep --recursive \
-  "${search_string:?Must specific search string}" \
+  "${pattern_args[@]}" \
   "${search_directory:-.}" \
   --binary-file=without-match \
   --line-number \
