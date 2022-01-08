@@ -24,6 +24,12 @@ Plug 'junegunn/fzf.vim'
 
 if g:use_coc != 0
   Plug 'neoclide/coc.nvim', {'branch': 'release'}
+  Plug 'jackguo380/vim-lsp-cxx-highlight'
+  " Linting for CoC using ALE
+  " (see https://chmanie.com/post/2020/07/17/modern-c-development-in-neovim/)
+  Plug 'vim-syntastic/syntastic'
+  " File formatting
+"  Plug 'rhysd/vim-clang-format'
 endif
 call plug#end()
 
