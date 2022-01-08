@@ -70,14 +70,22 @@ then
   exit ${ok_to_continue}
 fi
 
+function check_ok() {
+  if [ ${ok_to_continue} -ne 0 ]
+  then
+    echo "Something bad happened. Bailing..." >&2
+    exit ${ok_to_continue}
+  fi
+}
+
 thirdparty_dir="${thirdparty_dir}/thirdparty"
 
 ccls_root_dir="${thirdparty_dir}/ccls"
 ccls_git_dir="${ccls_root_dir}/ccls.git"
-llvm_prefix="$(brew --prefix llvm)"
 
 function build_ccls() {
   echo '# Building ccls'
+  check_ok
   if [ ! -d "${ccls_git_dir}" ]
   then
     mkdir -p "${ccls_root_dir}"
@@ -90,10 +98,40 @@ function build_ccls() {
 
   case "${platform}" in
     darwin)
+      llvm_prefix="$(brew --prefix llvm)"
       cd "${ccls_git_dir}"
       cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${llvm_prefix}/lib/cmake"
       cmake --build Release
       cd -
+      ;;
+    msys)
+      if ! command -v clang
+      then
+        echo "I can't find clang" >&2
+        (( ++ok_to_continue ))
+      else
+        cd "${ccls_git_dir}"
+        #cmake -H. -BRelease -G Ninja -DCMAKE_CXX_FLAGS=-D__STDC_FORMAT_MACROS
+        #pacman -Sy --needed --noconfirm \
+        pacman -Sy --needed --noconfirm \
+          mingw-w64-x86_64-clang \
+          mingw-w64-x86_64-clang-tools-extra \
+          mingw-w64-x86_64-clang-analyzer \
+          mingw64/mingw-w64-x86_64-polly \
+          mingw-w64-x86_64-cmake \
+          mingw-w64-x86_64-jq \
+          mingw-w64-x86_64-ninja \
+          mingw-w64-x86_64-ncurses \
+          mingw-w64-x86_64-rapidjson \
+          mingw-w64-x86_64-mlir
+        cmake -H. -BRelease -G Ninja
+        windows_user="$(cmd /c "echo %COMPUTERNAME%/%USERNAME%")"
+        echo "windows user: ${windows_user}"
+        runas "${windows_user}" ninja -C Release
+        #cmake -H. -GNinja -BRelease -DCMAKE_BUILD_TYPE=Release
+        #cmake --build Release
+        cd -
+      fi
       ;;
     *)
       echo "I don't know how to compile ccls on '${platform}'" >&2
@@ -103,12 +141,28 @@ function build_ccls() {
 }
 
 function install_ccls() {
+  local win_ccls_git_dir
+  local win_cmake_path
+
   echo '# Installing ccls'
+  check_ok
   case "${platform}" in
     darwin)
       cd "${ccls_git_dir}"
       cmake --build Release --target install
       cd -
+      ;;
+    msys)
+      win_ccls_git_dir="$(cygpath -w "${ccls_git_dir}")"
+      win_cmake_path="$(cygpath -w "$(which cmake)")"
+      cat <<-EOF >&2
+Many apologies but you may have to open a command prompt with administrator priviliges to install ccls.exe :-(
+I can't find a way to elevate from msys cleanly.
+To install ccls...
+* Run an elevated command prompt (right click on the command prompt icon and click "Run as administrator")
+* cd ${win_ccls_git_dir}
+* ${win_cmake_path} --build Release --target install
+EOF
       ;;
     *)
       echo "I don't know how to install ccls on '${platform}'" >&2
@@ -121,6 +175,7 @@ ccls_config_path="${ccls_config_dir}/coc-settings.json"
 
 function configure_ccls() {
   echo '# Configuring CCLS'
+  check_ok
   if [ -f "${ccls_config_path}" ]
   then
     echo "${ccls_config_path} already exists. I won't overwrite it." >&2
