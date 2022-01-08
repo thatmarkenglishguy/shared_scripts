@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+
+# Run from same directory as root of build.
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+if [ -z ${GITHUB_HOST+x} ]
+then
+  echo 'Expected global environment variable GITHUB_HOST to be defined' >&2
+  exit 1
+fi
+
+warnings_file="${1:-Warnings file expected}"
+# Could be improved by using current branch or allowing branch to be specified on command line.
+remote_url="$(git config --get remote.origin.url)"
+org_regex='.*:([[:alnum:]]+)/(.*)'
+if [[ "${remote_url}" =~ ${org_regex} ]]
+then
+  org="${BASH_REMATCH[1]}"
+else
+  echo "Unable to work out org from '${remote_url}'" >&2
+  exit 2
+fi
+
+repo_name="$(basename "$(pwd)")"
+replace_path_command='s!'"$(pwd)"'/\([^:]*\):\([[:digit:]][[:digit:]]*\)!https://'"${GITHUB_HOST}"'/'"${org}"'/'"${repo_name}"'/blob/master/\1#L\2!g'
+
+sed -e "${replace_path_command}" "${warnings_file}"
