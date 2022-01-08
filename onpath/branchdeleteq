@@ -7,6 +7,60 @@ else
   script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+## Helper functions
+function branches() {
+  # Globals:
+  #  pattern [in]  - Pattern to grep branches with, if any.
+  local command
+
+  declare -a command
+  command=( git branch )
+  if [ -n "${pattern}" ]
+  then
+    "${command[@]}" | grep "${pattern}"
+  else
+    "${command[@]}"
+  fi
+}
+
+## Command line
+declare -a args
+args=( "${@}" )
+args_length=${#args[@]}
+
+function take_an_argument() {
+  # Globals:
+  #  i [in/out]            - Current argument index.
+  #  ok_exit_code [in/out] - Current exit code.
+  #  args[in]              - Array of command line arguments.
+  #  args_length[in]       - Number of command line arguments.
+  # Parameters:
+  #  1 - Name of variable to set.
+  #  2 - Parameter name in use.
+  local var_name
+  local param_name
+  local current_value
+
+  var_name="${1}"
+  param_name="${2}"
+  current_value="${!var_name}"
+
+  if [ -n "${current_value}" ]
+  then
+    echo "${param_name} already set to '${current_value}'" >&2
+    (( ++ok_exit_code ))
+  else
+    (( i++ ))
+    if (( i < args_length ))
+    then
+      eval ${var_name}=${args[${i}]}
+    else
+      echo "${param_name} parameter expects an argument." >&2
+      (( ++ok_exit_code ))
+    fi
+  fi
+}
+
 force=0
 dry_run=0
 default_response='n'
@@ -32,21 +86,23 @@ function usage() {
   esac
 
   cat <<-EOF
-${program_name} [-f|--force] [--dry-run] [--run] [-n|--no] [-y|--yes]
+${program_name} [-f|--force] [--dry-run] [--run] [-n|--no] [-y|--yes] [[-p|--pattern] PATTERN]
 Ask the user if they want to delete all the git branches.
 
 Parameters:
-  -f|--force   If specified, force the branch deletion.
-  --run        Don't ask questions, just run.
-  -v|--verbose If specified, show commands.
-  --dry-run    If specified, just output the commands rather than executing them.
-  -n|--no      Set default response to no${n_is_default}.
-  -y|--yes     Set the default response to yes${y_is_default}.
+  -f|--force            If specified, force the branch deletion.
+  --run                 Don't ask questions, just run.
+  -v|--verbose          If specified, show commands.
+  --dry-run             If specified, just output the commands rather than executing them.
+  -n|--no               Set default response to no${n_is_default}.
+  -y|--yes              Set the default response to yes${y_is_default}.
+  -p|--pattern PATTERN  If specified, search for this pattern in branch names.
 EOF
 }
 
-for arg in "${@}"
+for (( i=0; i<args_length; ++i ))
 do
+  arg="${args[${i}]}"
   case "${arg}" in
     -f|--force)
       force=1
@@ -66,12 +122,26 @@ do
     -y|--yes)
       default_response='y'
       ;;
+    -p|--pattern)
+      take_an_argument pattern "${arg}"
+      ;;
     -h|--help|/?)
       usage
       exit 1
+      ;;
+    *)
+      if [ -z "${pattern}" ]
+      then
+        pattern="${arg}"
+      else
+        echo "Unexpected argument '${arg}'" >&2
+        exit 2
+      fi
+      ;;
   esac
 done
 
+## Run the script
 current_branch=$(git rev-parse --abbrev-ref HEAD)
 
 while read -r branch
@@ -161,7 +231,7 @@ do
                     echo "Unexpected response '${retry_response}'. Skipping..." >&2
                     ;;
                 esac # retry_reponse_lower
-              ;;
+                ;;
             esac # action
           fi # Ends if branch still exists
         fi # Ends else not dry run
@@ -177,6 +247,5 @@ do
         ;;
     esac # response_lower
   fi
-done < <(git branch | cut -c 3-)
+done < <(branches | cut -c 3-)
 
- 
