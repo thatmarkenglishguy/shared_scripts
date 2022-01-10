@@ -153,9 +153,15 @@ function install_ccls() {
       cd -
       ;;
     msys)
+      # TODO Install with CMAKE_INSTALL_PREFIX of /usr/local so it ends up in /usr/local/bin
+      # I've tried -DCMAKE_INSTALL_PREFIX which doesn't work
+      # I've tried --install-prefix /usr/local which doesn't work
+      # I am not enjoying CMake
+      cmake -DCMAKE_INSTALL_PREFIX= --build Release --target install
       win_ccls_git_dir="$(cygpath -w "${ccls_git_dir}")"
       win_cmake_path="$(cygpath -w "$(which cmake)")"
       cat <<-EOF >&2
+If you want to install into standard windows program files directory (which won't be on the path) then...
 Many apologies but you may have to open a command prompt with administrator priviliges to install ccls.exe :-(
 I can't find a way to elevate from msys cleanly.
 To install ccls...
