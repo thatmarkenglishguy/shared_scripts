@@ -6,7 +6,7 @@ then
   git clone git@github.com:gradle/gradle-completion.git "${target_dir}"
 else
   pushd "${target_dir}"
-  git fetch
+  git fetch --prune
   git rebase
   popd
 fi
