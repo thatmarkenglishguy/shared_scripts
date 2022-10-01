@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+#Deduce this script's directory
+if [ -z ${BASH_SOURCE} ]; then
+  script_dir=$(readlink -f $(dirname "${0}"))
+else
+  script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+fi
+
+intel_homebrew='intel_homebrew'
+download_dir="${HOME}/Downloads"
+homebrew_download_dir="${download_dir}/${intel_homebrew}"
+mkdir -p "${homebrew_download_dir}"
+cd "${download_dir}"
+curl -L https://github.com/Homebrew/brew/tarball/master | tar xz --strip 1 -C "${intel_homebrew}"
+sudo mv "${intel_homebrew}" /opt/
+
+

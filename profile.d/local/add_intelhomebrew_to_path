@@ -1,0 +1,10 @@
+# :vim ft=shell
+#if [ -d /opt/intel-homebrew ]
+#then
+#  pathprepend '/opt/intel-homebrew'
+#fi
+
+# for intel x86_64 brew
+alias axbrew='arch -x86_64 /opt/intel_homebrew/bin/brew'
+
+
