@@ -1,4 +1,7 @@
 #!/usr/bin/env sh
+#echo fish
+declare -a args
+args=( "${@}" )
 
 for source in "${@}"
 do
@@ -8,6 +11,35 @@ do
       ;;
     *.toml)
       source-highlight --failsafe -f esc --lang-def=tml.lang --style-file=esc.style -i "${source}"
+      ;;
+    ''|-)
+      _lang=''
+      if [ -n "${SRCLANG}" ]
+      then
+        _lang="${SRCLANG}"
+      elif [ -n "${LANG}" ]
+      then
+        _lang="${LANG}"
+      elif [ -n "${lang}" ]
+      then
+        _lang="${lang}"
+      fi
+
+      if [ -n "${_lang}" ]
+      then
+        # Cribbed from https://unix.stackexchange.com/a/470518/49416
+        # Sadly can't redirect stdin, so have to capture it and then pipe that in.
+        # TODO: Surely there's a better way to wire up stdin ?
+        # The docs for source-highlight mention "default is stdin" but no idea how to make that work.
+        # Sending -i '' and -o 'STDOUT' generates nada (but doesn't create an error either)
+        OLD_IFS="${IFS}"
+        IFS= file="$(cat)"
+        IFS="${OLD_IFS}"
+        echo "${file}" |source-highlight --failsafe --src-lang="${_lang}" -f esc --style-file=esc.style
+#        echo "LANGY" >&2
+      else
+        src-hilite-lesspipe.sh "${@}"
+      fi
       ;;
     *)
       src-hilite-lesspipe.sh "${@}"
