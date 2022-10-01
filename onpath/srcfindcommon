@@ -36,6 +36,9 @@ function find_source() {
       -path '*.tlog' -o \
       -path '*.idb' -o \
       -path '*.obj' -o \
+      -path '*.o' -o \
+      -path '*.pyc' -o \
+      -path '*.beam' -o \
       -path '*/Debug' -o \
       -path '*/Debug/*' -o \
       -path '*/Release' -o \
@@ -50,6 +53,10 @@ function find_source() {
       -path '*/.git/*' -o \
       -path '*/build' -o \
       -path '*/build/*' -o \
+      -path '*/_build' -o \
+      -path '*/_build/*' -o \
+      -path '*/deps' -o \
+      -path '*/deps/*' -o \
       -path '*/output' -o \
       -path '*/output/*' -o \
       -path '*/out' -o \
@@ -58,8 +65,12 @@ function find_source() {
       -path '*/bin/*' -o \
       -path '*/node_modules' -o \
       -path '*/node_modules/*' -o \
+      -path '*/__pycache__/*' -o \
+      -path '*/.DS_Store/*' -o \
       -path '*/.env' -o \
       -path '*/.env/*' -o \
+      -path '*/env/lib/python*' -o \
+      -path '*/env/lib/python*/' -o \
       -path '*/.idea' -o \
       -path '*/.idea/*' -o \
       -path '*/.gradle' -o \
