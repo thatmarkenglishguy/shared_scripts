@@ -182,7 +182,15 @@ then
 fi
 
 first_link=''
-first_link="$(curl -u "${github_user}":$(cat "${github_token_file}") "${github_host}/api/v3/orgs/${github_org}/repos" -sS -I | grep '^Link: ')"
+#first_page="$(curl -u "${github_user}":$(cat "${github_token_file}") "${github_host}/api/v3/orgs/${github_org}/repos" -sS -I)"
+#cat <<EOF
+#first page:
+#${first_page}
+#EOF
+#exit 1
+
+#set -x
+first_link="$(curl -u "${github_user}":$(cat "${github_token_file}") "${github_host}/api/v3/orgs/${github_org}/repos" -sS -I | grep -i '^Link: ')"
 
 curl -sS -u "${github_user}":$(cat "${github_token_file}") "${github_host}/api/v3/orgs/${github_org}/repos" -o >(jq -r '.[].name')
 
@@ -191,22 +199,22 @@ then
   read -d '' sed_url_next_link_pattern <<-END_OF_SED
     s!.*<\\\\(${github_host}[^>]*\\\\)>; rel="next".*!\\\\1!p
 END_OF_SED
-#echo "first link....'${first_link}'"
-#echo "sed pattern...'${sed_url_next_link_pattern}'"
-next_link=$(echo "${first_link}" | sed -n "${sed_url_next_link_pattern}")
-if [ -z "${next_link}" ]
-then
-  echo "Unable to parse next link url: '${first_link}'" >&2
-  exit 1
+  #echo "first link....'${first_link}'"
+  #echo "sed pattern...'${sed_url_next_link_pattern}'"
+  next_link=$(echo "${first_link}" | sed -n "${sed_url_next_link_pattern}")
+  if [ -z "${next_link}" ]
+  then
+    echo "Unable to parse next link url: '${first_link}'" >&2
+    exit 1
+  fi
+  
+  while [ -n "${next_link}" ]
+  do
+    curl -sS -u "${github_user}":$(cat "${github_token_file}") "${next_link}" | jq -r '.[].name'
+    next_link="$(curl -sS -u "${github_user}":$(cat "${github_token_file}") "${next_link}" -I | grep -i '^Link: ')"
+    #echo "next_link updated to: '${next_link}'"
+    next_link="$(echo ${next_link} | sed -n "${sed_url_next_link_pattern}")"
+    #echo "next_link further updated to: '${next_link}'"
+  done
 fi
-
-while [ -n "${next_link}" ]
-do
-  curl -sS -u "${github_user}":$(cat "${github_token_file}") "${next_link}" | jq -r '.[].name'
-  next_link="$(curl -sS -u "${github_user}":$(cat "${github_token_file}") "${next_link}" -I | grep '^Link: ')"
-  #echo "next_link updated to: '${next_link}'"
-  next_link="$(echo ${next_link} | sed -n "${sed_url_next_link_pattern}")"
-  #echo "next_link further updated to: '${next_link}'"
-done
-fi
-
+#set +x
