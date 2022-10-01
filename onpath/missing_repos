@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-for repo in $(gitget)
+for repo in $(git_get)
 do
   if [ ! -d "${repo}" ]
   then
