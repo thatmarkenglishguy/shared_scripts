@@ -83,12 +83,14 @@ _pluginUp() {
   local do_plug
   local do_quit_vim
   local do_delete_tempfile
+  local do_plugins
   local vim_quit_command
 
   do_vundle=${1:-1}
   do_plug=${2:-1}
   do_quit_vim=${3:-1}
   do_delete_tempfile=${4:-1}
+  do_plugins=${5:-1}
   vim_quit='qall'
   vim_quit_command="+${vim_quit}"
 
@@ -205,6 +207,8 @@ EOF
     _plug_command "${vim_quit_command}" +'CocInstall coc-rust-analyze|CocInstall coc-rust-rls'
   fi
 
+  setup_native_plugins ${do_plugins}
+
   if [ ${do_delete_tempfile} -ne 0 ]
   then
     rm -f "${script_dir}/vimrctemp_vundle"
@@ -223,6 +227,13 @@ function setup_directories() {
   then
     mkdir "${HOME}/.vim/bundle"
   fi
+
+  # Note 'pack' is mandatory. 'plugins' is an optional name I picked after reading
+  # https://github.com/udalov/kotlin-vim
+  if [ ! -d "${HOME}/.vim/pack/plugins" ]
+  then
+    mkdir -p "${HOME}/.vim/pack/plugins"
+  fi
 }
 
 function setup_external_files() {
@@ -239,11 +250,13 @@ function setup_vimrc() {
   local do_plug
   local do_quit_vim
   local do_delete_tempfile
+  local do_plugins
 
   do_vundle=${1:-1}
   do_plug=${2:-1}
   do_quit_vim=${3:-1}
   do_delete_tempfile=${4:-1}
+  do_plugins=${5:-1}
 
   if [ ! "${actual_home_vimrcpath}" -ef "${script_vimrcpath}" ]
   then
@@ -253,7 +266,7 @@ function setup_vimrc() {
 EOF
   if [ ! -f "${home_vimrcpath}" -o \( -L "${home_vimrcpath}" -a ! -f "${actual_home_vimrcpath}" \) ]
   then
-    _pluginUp ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile}
+    _pluginUp ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile} ${do_plugins}
     echo 'Creating new '"${home_vimrcpath}"' file.'
     rm "${home_vimrcpath}" 2>/dev/null
     echo "${source_lines}" >"${home_vimrcpath}"
@@ -271,13 +284,13 @@ EOF
           cp "${home_vimrcpath}" "${backup_home_vimrcpath}"
         fi
   
-        _pluginUp ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile}
+        _pluginUp ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile} ${do_plugins}
         echo 'Updating .vimrc'
         echo "${source_lines}" | cat - "${backup_home_vimrcpath}" > "${actual_home_vimrcpath}"
       else
         echo 'Your .vimrc appears to source the repository .vimrc file already.'
         echo 'Installing plugins...'
-        _pluginUp ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile}
+        _pluginUp ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile} ${do_plugins}
       fi
     else
       echo 'Your .vimrc file is identical to the one in this git repository.'
@@ -305,9 +318,28 @@ function setup_youcompleteme() {
   fi
 }
 
+function setup_native_plugins() {
+  local do_setup_plugins
+
+  do_setup_plugins=${1:-1}
+  if [ ${do_setup_plugins} -ne 0 ]
+  then
+    if [ ! -d "${HOME}/.vim/pack/plugins/start/kotlin-vim/.git" ]
+    then
+      git clone https://github.com/udalov/kotlin-vim.git "${HOME}/.vim/pack/plugins/start/kotlin-vim"
+    else
+      pushd "${HOME}/.vim/pack/plugins/start/kotlin-vim" &>/dev/null
+      git fetch --prune
+      git rebase
+      popd &>/dev/null
+    fi
+  fi
+}
+
 # Command line
 do_vundle=1
 do_plug=1
+do_plugins=1
 do_quit_vim=1
 do_delete_tempfile=1
 do_setup_ycm=1
@@ -324,6 +356,7 @@ $(basename "${0}") [--no-vundle] [--no-plug] [--no-quit-vim] [--no-ycm] [--help]
 
   --no-vundle          - Do not install vundle plugins.
   --no-plug            - Do not install plug plugins.
+  --no-plugins         - Do not install vim native plugins.
   --no-quit-vim        - Do not quit vim after installing plugins.
   --no-ycm             - Do not setup youcompleteme.
   --no-delete-tempfile - Do not delete temporary files after setup.
@@ -345,6 +378,9 @@ do
       ;;
     --no-plug)
       do_plug=0
+      ;;
+    --no-plugins)
+      do_plugins=0
       ;;
     --no-quit-vim)
       do_quit_vim=0
@@ -373,6 +409,6 @@ fi
 
 setup_directories
 setup_external_files
-setup_vimrc ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile}
+setup_vimrc ${do_vundle} ${do_plug} ${do_quit_vim} ${do_delete_tempfile} ${do_plugins}
 setup_youcompleteme ${do_setup_ycm}
 
