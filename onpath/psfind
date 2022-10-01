@@ -1,3 +1,3 @@
 #!/usr/bin/env sh
-
+ps -ef | head -n1
 ps -ef | grep -i "${1}" | grep -v 'grep\|psfind'
