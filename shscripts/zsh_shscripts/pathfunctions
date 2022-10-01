@@ -1,0 +1,110 @@
+# vim: ft=zsh
+
+# TODO: Work with PYTHONPATH which is currently a messed up array of stringy bits
+# typeset -p PYTHONPATH
+
+## The old bash functions
+
+string_pathremove () {
+  local NEWPATH
+  local DIR
+  local PATHVARIABLE=${2:-PATH}
+  local PATHVALUE=$(eval echo -n \$${PATHVARIABLE})
+  local OLDIFS="${IFS}"
+  local IFS=':'
+  for DIR in ${PATHVALUE}
+  do
+    if [ ! -z "${DIR}" ] && [ "$DIR" != "$1" ]
+    then
+      if [ -z "${NEWPATH}" ]
+      then
+        NEWPATH="${DIR}"
+      else
+        NEWPATH="${NEWPATH}"':'"${DIR}"
+      fi
+    fi
+  done
+  export $PATHVARIABLE="${NEWPATH}"
+  IFS="${OLDIFS}"
+}
+
+string_pathprepend () {
+  string_pathremove $1 $2
+  local PATHVARIABLE=${2:-PATH}
+  local PATHVALUE
+  local delim
+  PATHVALUE=$(eval echo -n \$${PATHVARIABLE})
+
+  delim=''
+  if [ ! -z "${PATHVALUE}" ]
+  then
+    delim=':'
+  fi
+
+  export $PATHVARIABLE="${1}${delim}${PATHVALUE}"
+}
+
+string_pathappend () {
+  string_pathremove $1 $2
+  local PATHVARIABLE=${2:-PATH}
+  local PATHVALUE
+  local delim
+  PATHVALUE=$(eval echo -n \$${PATHVARIABLE})
+
+  delim=''
+  if [ ! -z "${PATHVALUE}" ]
+  then
+    delim=':'
+  fi
+
+  export $PATHVARIABLE="${PATHVALUE}${delim}${1}"
+}
+
+## The new zsh functions
+pathremove () {
+  local path_variable
+
+  set -x
+  path_variable=${2:-PATH}
+  case "${(tP)path_variable}" in
+    scalar-tied|scalar-tied-export-special|scalarfg|scalar-export) # e.g. a string
+      string_pathremove "${1}" "${2}"
+      ;;
+    '') # empty
+      ;;
+    *) # e.g. scalar-tied-export-special
+      eval "${path_variable}=(\"\${(@)${path_variable}:#${1}}\")"
+      ;;
+  esac
+  set +x
+}
+
+pathprepend () {
+  local path_variable
+
+  path_variable=${2:-PATH}
+  case "${(tP)path_variable}" in
+    scalar-tied|scalar-tied-export-special|scalarfg|scalar-export) # e.g. a string
+      string_pathprepend "${1}" "${2}"
+      ;;
+    *) # e.g. scalar-tied-export-special
+      pathremove ${1} ${2}
+      eval "${path_variable}[1,0]=${1}"
+      ;;
+  esac
+}
+
+pathappend () {
+  local path_variable
+
+  path_variable=${2:-PATH}
+  case "${(tP)path_variable}" in
+    scalar-tied|scalar-tied-export-special|scalarfg|scalar-export) # e.g. a string
+      string_pathappend "${1}" "${2}"
+      ;;
+    *) # e.g. scalar-tied-export-special
+      pathremove ${1} ${2}
+      eval "${path_variable}+=${1}"
+      ;;
+  esac
+}
