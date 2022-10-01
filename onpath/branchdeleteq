@@ -175,13 +175,14 @@ do
             run_all=1
             ;;
         esac
+        default_response='y'
         response="${default_response}"
         response_lower="${default_response}"
         ;;
       f|force)
         action='force'
         force_this=1
-        response_lower="${default_response}"
+        response_lower='y'
         ;;
     esac
 
