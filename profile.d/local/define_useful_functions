@@ -1,3 +1,5 @@
+# vim: ft=sh
+
 function recgrep() {
   # E.g. recgrep '*.gradle' byte-buddy
   grep -nr "${2}" "${3:-.}" --include "${1}"

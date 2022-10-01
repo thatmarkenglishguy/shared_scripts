@@ -1,3 +1,5 @@
+# vim: ft=sh
+
 if [ -d /usr/local/opt/llvm/bin ]
 then
   pathprepend '/usr/local/opt/llvm/bin' PATH

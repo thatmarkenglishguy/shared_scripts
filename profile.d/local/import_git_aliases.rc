@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+# vim: ft=sh
 
 for __ in $([ -d "${HOME}/code/shared/shared_scripts.git/onpath" ] && echo "${HOME}/code/shared/shared_scripts.git/onpath" || [ -d "${HOME}/code/mE/shared/shared_scripts/onpath" ] && echo "${HOME}/code/mE/shared/shared_scripts/onpath")
 do
