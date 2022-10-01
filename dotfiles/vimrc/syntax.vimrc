@@ -78,8 +78,14 @@ hi vimBracket ctermfg=LightYellow guifg=LightYellow
 " hi cPreCondit ctermfg=Cyan guifg=DodgerBlue3 " cterm=bold gui=bold
 hi cPreCondit ctermfg=39 guifg=Cyan " cterm=bold gui=bold
 
+" Diff
+hi diffAdded ctermfg=DarkGreen
+hi diffRemoved ctermfg=DarkRed
+" hi diffChanged ctermfg=DarkYellow
+
 " Enormous list of colours:
 " See http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
+" :help cterm-colors
 " The cut'n'pasted version of the linked file is....
 " hi x016_Grey0 ctermfg=16 guifg=#000000 "rgb=0,0,0
 " hi x017_NavyBlue ctermfg=17 guifg=#00005f "rgb=0,0,95
