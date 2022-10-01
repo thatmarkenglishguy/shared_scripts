@@ -9,6 +9,7 @@ Plug 'altercation/vim-colors-solarized'
 Plug '~/.fzf'
 Plug 'dylon/vim-antlr'
 Plug 'gyim/vim-boxdraw'
+Plug 'mtdl9/vim-log-highlighting' " log syntax highlighting. We shall see (01/10/2022)
 Plug 'rust-lang/rust.vim'
 " Language servers (notably Rust)
 " This looks like one guy having a go
