@@ -28,6 +28,12 @@ augroup elixir
   autocmd FileType elixir noremap <F6> :!clear & elixir %<CR>
 augroup END
 
+" Gradle/Kotlin
+augroup Kotlin
+  autocmd!
+  autocmd BufRead,BufNewFile *.kts set filetype=Kotlin
+augroup END
+
 " Jenkinsfile
 augroup Jenkinsfile
   autocmd!
