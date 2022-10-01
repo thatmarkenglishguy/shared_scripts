@@ -1,0 +1,145 @@
+# vim: ft=zsh
+
+## Setup git completion for zsh. This is probably a zsh shell module...
+## See https://git-scm.com/book/en/v2/Appendix-A%3A-Git-in-Other-Environments-Git-in-Zsh
+autoload -Uz vcs_info
+precmd_vcs_info() { vcs_info }
+precmd_functions+=( precmd_vcs_info )
+setopt prompt_subst
+## Set the floaty on the right prompt...
+#RPROMPT='${vcs_info_msg_0_}'
+
+# PROMPT='${vcs_info_msg_0_}%# '
+#zstyle ':vcs_info:git:*' formats '%b' hooks git-untracked
+#zstyle ':vcs_info:git:*+set-message:*' formats '%b' hooks git-untracked
+#zstyle ':vcs_info:*+*:*' debug true
+zstyle ':vcs_info:*+*:*' debug false
+
+# Turn on the git info in the prompt
+# %b - branch info
+# %c - staged
+#zstyle ':vcs_info:git*:*' formats ' (%b)' # Just the branch is pretty quick
+zstyle ':vcs_info:git*:*' formats ' (%b%c)' # Branch and status is slower
+zstyle ':vcs_info:git*+set-message:*' hooks git-untracked
+
+# To turn off the info in the existing prompts
+#zstyle ':vcs_info:git*+set-message:*' formats
+#zstyle ':vcs_info:git*+set-message:*' hooks
+
+##https://git-scm.com/book/en/v1/Git-Basics-Tips-and-Tricks
+#source ~/.git-completion.zsh
+#
+## Setup GITAWAREPROMPT
+
+#if [ -z "${NOGITAWAREPROMPT}" ] || [ ${NOGITAWAREPROMPT} -ne 1 ]
+#then
+#  GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
+#  #export GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
+#  source "${GITAWAREPROMPT}/main.sh"
+#fi
+#
+## Setup PS1
+## This is probably oh my zsh
+## Original Prompt
+## PROMPT="%n@%m %1~ %#"
+## Like the bash prompt
+PROMPT='%F{069}%1~%f%F{cyan}${vcs_info_msg_0_}%f %# '
+#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+
+function +vi-git-untracked() {
+  local seen_unadded
+  local seen_added
+  local seen_deleted
+  local seen_altered_added
+  local seen_altered_unadded
+  local seen_it_all
+  if [[ $(git rev-parse --is-inside-work-tree 2> /dev/null) == 'true' ]]
+  then
+    seen_unadded=0
+    seen_added=0
+    seen_deleted=0
+    seen_altered_added=0
+    seen_altered_unadded=0
+    seen_it_all=0
+    git status --porcelain | while IFS= read
+      do
+        case "${REPLY}" in
+          \?\?*)
+            if [ ${seen_unadded} -eq 0 ]
+            then
+              seen_unadded=1
+              ((++seen_it_all))
+            fi
+            ;;
+          \ M*)
+            if [ ${seen_altered_unadded} -eq 0 ]
+            then
+              seen_altered_unadded=1
+              ((++seen_it_all))
+            fi
+            ;;
+          M*)
+            if [ ${seen_altered_added} -eq 0 ]
+            then
+              seen_altered_added=1
+              ((++seen_it_all))
+            fi
+            ;;
+          A*)
+            if [ ${seen_added} -eq 0 ]
+            then
+              seen_added=1
+              ((++seen_it_all))
+            fi
+            ;;
+          D*)
+            if [ ${seen_deleted} -eq 0 ]
+            then
+              seen_deleted=1
+              ((++seen_it_all))
+            fi
+            ;;
+        esac
+
+        if [ ${seen_it_all} -eq 5 ]
+        then
+          break
+        fi
+      done
+
+      if [ ${seen_altered_unadded} -ne 0 ]
+      then
+        hook_com[staged]+='~'
+      fi
+
+      if [ ${seen_altered_added} -ne 0 ]
+      then
+        hook_com[staged]+='*'
+      fi
+
+      if [ ${seen_added} -ne 0 ]
+      then
+        hook_com[staged]+='+'
+      fi
+
+      if [ ${seen_deleted} -ne 0 ]
+      then
+        hook_com[staged]+='-'
+      fi
+
+      if [ ${seen_unadded} -ne 0 ]
+      then
+        hook_com[staged]+='?'
+      fi
+
+      #git status --porcelain | grep '??' &> /dev/null ; then
+      # This will show the marker if there are any untracked files in repo.
+      # If instead you want to show the marker only if there are untracked
+      # files in $PWD, use:
+      #[[ -n $(git ls-files --others --exclude-standard) ]] ; then
+      #hook_com[staged]+='*'
+  fi
+}
+
+
+

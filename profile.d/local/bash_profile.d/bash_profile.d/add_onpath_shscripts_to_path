@@ -1,0 +1,7 @@
+#!/usr/bin/env sh
+case $(uname -a | tr '[:upper:]' '[:lower:]') in
+  *)
+    pathappend "$(dirname $(dirname $(dirname $(dirname ${BASH_SOURCE}))))/onpath" PATH
+    ;;
+esac
+

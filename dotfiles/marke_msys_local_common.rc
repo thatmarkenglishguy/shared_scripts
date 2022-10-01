@@ -1,0 +1,234 @@
+# 12 Apr 2022 Support for zsh
+
+# Expect argument one to be script root directory
+marke_local_common_script_dir="${1}"
+#echo "marke_local_common_script_dir: '${marke_local_common_script_dir}'"
+os_name='unknown'
+case $(uname -a | tr '[:upper:]' '[:lower:]') in
+  *mingw64*)
+    os_name='msys'
+    ;;
+  *cygwin*)
+    os_name='cygwin'
+    ;;
+  *darwin*)
+    os_name='darwin'
+    ;;
+esac
+
+## New things (we're going to add pathfunctions here, even though we might need it system wide too).
+#if [ ! -f "${marke_local_common_script_dir}/shscripts/pathfunctions" ]
+#then
+#  echo "${marke_local_common_script_dir}/shscripts/pathfunctions not found" >&2
+#else
+#  source "${marke_local_common_script_dir}/shscripts/pathfunctions"
+#fi
+
+# Go to the shared directory
+function shared() {
+  pushd "${marke_local_common_script_dir}"
+}
+
+# Go to directory on path containing file
+function pushfiled() {
+  if [ -z "${1}" ]
+  then
+    echo 'No filename specified' >&2
+  else
+    pushd $(dirname $(which "${1}"))
+  fi
+}
+alias pfd=pushfiled
+
+# Aliases defined before we protect alias...
+__opencmd='No open command'
+case "${os_name}" in
+  darwin)
+    __open_cmd='open'
+    ;;
+  msys|cygwin)
+    __open_cmd='chrome'
+    ;;
+esac
+
+alias gop='(url=$(git httpsurl); ${__open_cmd} "${url/publicgithub/github}")'
+alias gopr='(url=$(git httpsrawurl); ${__open_cmd} "${url/publicgithub/github}/pulls")'
+
+# source the stuff in profile.d
+#  needs shared_scripts
+for f in "${marke_local_common_script_dir}/profile.d/local"/*
+do
+  if [ -f "${f}" ]
+  then
+    . "${f}"
+  fi
+done
+
+
+# Run check_ssh_agent/run-sshagent/~/temp/ssh-agent.sh
+if [ -f "${marke_local_common_script_dir}/onpath/check_ssh_agent" ]
+then
+  if ! "${marke_local_common_script_dir}/onpath/check_ssh_agent"
+  then
+    if [ -f "${marke_local_common_script_dir}/onpath/run_ssh_agent" ]
+    then
+      "${marke_local_common_script_dir}/onpath/run_ssh_agent" 1>/dev/null
+    fi
+  fi
+
+  if "${marke_local_common_script_dir}/onpath/check_ssh_agent"
+  then
+    . ~/temp/ssh-agent.sh >/dev/null
+  fi
+fi
+
+
+
+# Setup LS_COLORS
+#prompt colours
+# 35 - purple
+# 36 - cyan
+# 93 - yellow
+LS_COLORS=${LS_COLORS}:'di=0;35:ln=0;36:ex=0;93'
+export LS_COLORS
+if [ -z "${LSCOLORS}" ] || [ "${LSCOLORS}" = 'Gxfxcxdxbxegedabagacad' ] # Check for zsh iTerm2 default
+then
+  #LSCOLORS=fa
+  #LSCOLORS=fagacadabaegedabagacad
+  LSCOLORS=faGacadaDaegedabagacad
+  export LSCOLORS
+fi
+
+# Setup LESSPIPE
+LESSPIPE="${marke_local_common_script_dir}/shscripts/src_highlight_wrapper"
+#LESSPIPE=`which src-hilite-lesspipe.sh`
+#export LESSOPEN="| ${LESSPIPE} %s"
+# |- to read from stdin as well as from files
+export LESSOPEN="|- ${LESSPIPE} %s"
+        #source-highlight --failsafe --src-lang="${_lang}" -f esc --style-file=esc.style
+export LESS="-R -X -F ${LESS}"
+
+
+#Extra python script functions
+# Create function wrappers for the python scripts
+for f in `ls "${marke_local_common_script_dir}/scripts"/*.py | rev | cut -d/ -f 1 | rev | cut -d. -f 1`
+do
+  #echo Creating ${f}
+  scripty="
+  ${f} () {
+  ~/code/mE/shared/shared_scripts/scripts/${f}.py \"\${@}\"
+}
+"
+#  echo "${scripty}"
+#    read -r -d '' scripty << EOF
+#  function ${f} () {
+#    ${f}.py "\${@}"
+#  }
+#EOF
+
+  eval "${scripty}"
+done
+
+# Source the stuff in ~/.profile.d
+# External .profile.d sourcing
+if [ -d ~/.profile.d ]
+then
+  for f in ~/.profile.d/*
+  do
+    if [ -f "${f}" ]
+    then
+      source "${f}"
+    fi
+  done
+fi
+
+# GITHUB_USER setup
+export GITHUB_USER=wafflesouffle@github.com
+#function gitget() { curl -u "${GITHUB_USER}":$(cat ~/.tokens/githubread) "https://${GITHUB_HOST:-github.com}/api/v3/${@}" ; }
+function gitget() { git_get ; }
+
+# checkout_org_repos function
+#  Is this still needed ?
+# Nope - moved to a script
+#function checkout_org_repos() {
+#  org=${1:-$(basename $(pwd))}
+#  while read -r repo
+#  do
+#    echo "${repo}"
+#    if [ -d "${repo}" ] || [ -d "${repo}.git" ]
+#    then
+#      echo 'Already present.'
+#    else
+#      git clone "git@${GITHUB_HOST:-github.com}:${org}/${repo}.git"
+#    fi
+#  done < <(git_get --org "${org}")
+#  #done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
+#}
+
+# Choose a gradle
+if type gradle6 &>/dev/null
+then
+  if ! which gradle 1>/dev/null 2>&1
+  then
+    gradle6 1>/dev/null 2>&1
+  fi
+fi
+
+# Some grep prettiness
+alias grep='grep --color'
+
+## Gradle Dependencies
+alias gdl='gradle --console plain --info'
+
+alias gdeps='gradle --console plain --info dependencyInsight --configuration compileClasspath --dependency'
+alias grefdeps='gradle --console plain --info --write-locks resolveAllProjects --refresh-dependencies'
+alias gprojects='gradle -q projects'
+alias gconfigs="gradle --console plain dependencies | fgrep ' - '"
+function grepjs() {
+  grep --color -ri "${1}" "${2:-.}" --exclude-dir 'node_modules' --exclude-dir '.git' --exclude 'gradlew' --exclude 'yarn.lock'
+}
+alias gjs=grepjs
+
+# Development stuffs
+alias gcb=git_commit_branch
+
+function aliases() {
+  local alias_file
+  alias_file="${1:-./aliases}"
+  if [ -f "${alias_file}" ]
+  then
+    source "${alias_file}"
+  fi
+}
+
+# JSON magic
+function jqit() {
+  jq --raw-input --raw-output '. as $raw | try fromjson catch $raw | .? '"${@}"
+}
+
+# Terminal stuffs
+# Set up functions for title/dirtitle
+function title {
+  local tty
+  tty="$(tty)"
+  tty="${tty##*/}"
+  echo -ne "\033]0;"$*" (${tty})\007"
+}
+
+function dirtitle {
+  title $(basename $(pwd)) "${@}"
+}
+
+
+# What we have now based on mac...
+
+# Default to Java 11
+if [ -z "${JAVA_HOME}" ]
+then
+  if type j11 &>/dev/null
+  then
+    j11 2>/dev/null
+  fi
+fi
+
+

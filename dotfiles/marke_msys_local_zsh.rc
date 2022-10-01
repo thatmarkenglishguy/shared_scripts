@@ -1,0 +1,85 @@
+# vim: ft=zsh
+# 10 Apr 2020 Not currently used, but a starting point.
+# 29 Apr 2020 Ready for usage, Darwin and msys.
+
+marke_local_zsh_script_dir="${0:A:h:h}"
+
+# New things (we're going to add pathfunctions here, even though we might need it system wide too).
+if [ ! -f "${marke_local_zsh_script_dir}/shscripts/zsh_shscripts/pathfunctions" ]
+then
+  echo "${marke_local_zsh_script_dir}/shscripts/zsh_shscripts/pathfunctions not found" >&2
+else
+  source "${marke_local_zsh_script_dir}/shscripts/zsh_shscripts/pathfunctions"
+fi
+
+source "${marke_local_zsh_script_dir}/dotfiles/marke_msys_local_common.rc" "${marke_local_zsh_script_dir}"
+
+# source the stuff in profile.d/zsh_profile.d
+for f in "${marke_local_zsh_script_dir}/profile.d/local/zsh_profile.d"/*
+do
+  if [ -f "${f}" ]
+  then
+    . "${f}"
+  fi
+done
+
+# iTerm2 title is not the happy haps
+# This Oh My Zsh setting stops interference
+DISABLE_AUTO_TITLE="true"
+
+# TODO - ALL THE STUFF BELOW FOR ZSH
+
+###Off the web
+##export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+###Still lots of info
+##export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[0;32m\]\h\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+###Paired back
+#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+#
+#
+# Source gradle completion (?)
+#source ~/code/thirdparty/shscripts/gradle-completion.git/gradle-completion.plugin.zsh
+
+
+## Aliases for java_sys_properties, tempstore, and gdl
+#case "${os_name}" in
+#  darwin)
+#    # Source fzf (not a good idea on msys)
+#    [ -f ~/.fzf.bash ] && source ~/.fzf.bash
+#
+#    __=$(brew --prefix)
+#    # docker completion copied from https://docs.docker.com/docker-for-mac#install-shell-completion
+#    [ ! -L ${__}/etc/bash_completion.d/docker ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker.bash-completion ${__}/etc/bash_completion.d/docker
+#    [ ! -L ${__}/etc/bash_completion.d/docker-machine ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker-machine.bash-completion ${__}/etc/bash_completion.d/docker-machine
+#    [ ! -L ${__}/etc/bash_completion.d/docker-compose ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker-compose.bash-completion ${__}/etc/bash_completion.d/docker-compose
+#
+#    if [ -f ${__}/etc/bash_completion ]
+#    then
+#      . ${__}/etc/bash_completion
+#    fi
+#   ;;
+#esac
+#
+
+## The next line updates PATH for the Google Cloud SDK.
+#if [ -f "${HOME}/google-cloud-sdk/path.bash.inc" ]; then . "${HOME}/google-cloud-sdk/path.bash.inc"; fi
+#
+## The next line enables shell command completion for gcloud.
+#if [ -f "${HOME}/google-cloud-sdk/completion.bash.inc" ]; then . "${HOME}/google-cloud-sdk/completion.bash.inc"; fi
+#
+## Kubectl completion
+#if which kubectl &>/dev/null
+#then
+#  source /dev/stdin <<<"$(kubectl completion bash)"
+#  # $((( #vim syntax higlighter is having a bit of a conniption which is why this is at the bottom of the file...
+#  complete -f __start_kubectl k
+#  alias k='kubectl'
+#fi
+
+# Flamegraph completion
+#if command -v flamegraph &>/dev/null
+#then
+#  :
+#  source "${HOME}/.flamegraph-completion.zsh"
+#fi
+

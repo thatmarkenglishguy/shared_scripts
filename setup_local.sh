@@ -2,7 +2,7 @@
 
 os_name='unknown'
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
-  *mingw64*)
+  *msys*|*mingw64*)
     os_name='msys'
     ;;
   *cygwin*)
@@ -47,6 +47,14 @@ then
   echo
 fi
 
+if [ -f "${script_dir}/dotfiles/setup_local_zshrc.sh" ]
+then
+  echo 'Setting up zshrc.' >&2
+  "${script_dir}/dotfiles/setup_local_zshrc.sh"
+  echo >&2
+  echo
+fi
+
 if [ -f "${script_dir}/dotfiles/vimrc/setup_vimrc.sh" ]
 then
   echo 'Setting up vimrc.' >&2
@@ -54,3 +62,10 @@ then
   echo >&2
 fi
 
+if [ -f "${script_dir}/dotfiles/setup_local_gitconfig.sh" ]
+then
+  echo 'Setting up .gitconfig.' >&2
+  "${script_dir}/dotfiles/setup_local_gitconfig.sh"
+  echo >&2
+  echo
+fi

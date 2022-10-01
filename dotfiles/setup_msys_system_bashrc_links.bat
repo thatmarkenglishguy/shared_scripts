@@ -19,7 +19,7 @@
 
 @echo Creating links
 @mklink c:\msys64\etc\markebash.rc %~d0\code\shscripts\markebash.rc
-@mklink c:\msys64\etc\markebash.rc %~d0\code\shscripts\pathfunctions
+@mklink c:\msys64\etc\markebash.rc %~d0\code\shscripts\bash_shscripts\pathfunctions
 ::/etc/
 ::#lrwxrwxrwx 1 mark None    30 Feb 15  2017 markebash.rc -> /c/code/shscripts/markebash.rc
 ::#rwxrwxrwx 1 mark None    31 Feb 15  2017 pathfunctions -> /c/code/shscripts/pathfunctions

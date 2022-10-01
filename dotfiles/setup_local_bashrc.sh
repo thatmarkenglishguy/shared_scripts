@@ -11,6 +11,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *mingw64*)
     os_name='msys'
     ;;
+  *msys*)
+    os_name='msys'
+    ;;
   *cygwin*)
     os_name='cygwin'
     ;;
@@ -21,7 +24,8 @@ esac
 
 _got_readlink=0
 which readlink >/dev/null
-if [ $? -eq 0 ]; then
+if [ $? -eq 0 ]
+then
   _got_readlink=1
 fi
 
@@ -37,7 +41,7 @@ _do_readlink() {
 }
 
 #Deduce this script's directory
-if [ ${_got_readlink} -eq 1 ] && [ -z ${BASH_SOURCE} ]
+if [ ${_got_readlink} -eq 1 ] && [ -z "${BASH_SOURCE}" ]
 then
   setup_script_dir=$(_do_readlink $(dirname "${0}"))
 else
@@ -80,6 +84,7 @@ case "${os_name}" in
 #    :
 #    ;;
 esac
+
 function _add_to_file() {
   local source_line
   local target
@@ -93,6 +98,7 @@ function _add_to_file() {
   fi
 }
 
+_add_to_file "source \"${HOME}/.commonrc\"" "${HOME}/.bashrc"
 case "${os_name}" in
   darwin)
     _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
@@ -129,6 +135,16 @@ esac
 #  esac
 #fi
 
+# Bash completion
+if [ -f $(brew --prefix)/etc/bash_completion ]; then
+  . $(brew --prefix)/etc/bash_completion
+fi
+
+# kubectl completion
+which kubectl >/dev/null && source /dev/stdin <<<"$(kubectl completion bash)"
+complete -F __start_kubectl k
+alias k='kubectl'
+
 # Sort out git completion
 if [ ! -f "${HOME}/.git-completion.bash" ]
 then
@@ -142,6 +158,18 @@ then
     echo 'Unable to find wget or curl. Going to be hard to install git completion...' >&2
   fi
 fi
+
+# Sort out flamegraph
+if ! command -v flamegraph &>/dev/null
+then
+  cargo install flamegraph
+fi
+
+if command -v flamegraph &>/dev/null
+then
+  flamegraph --completions bash > "${HOME}/.flamegraph-completion.bash"
+fi
+
 
 #add_git=0
 #

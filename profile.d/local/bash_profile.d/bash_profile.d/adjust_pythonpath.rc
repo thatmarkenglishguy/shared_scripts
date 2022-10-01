@@ -1,0 +1,2 @@
+pathappend $(cd $(dirname "${BASH_SOURCE}")/../../../python/lib; pwd) PYTHONPATH
+
