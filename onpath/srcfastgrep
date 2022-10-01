@@ -23,11 +23,13 @@ fi
 declare -a args
 declare -a extra_args
 
+UNSET_COLOR=2
 args=( "${@}" )
 extra_args=()
-color=1
+color=${UNSET_COLOR}
 case_sensitive=0
 pattern=0
+use_vim=0
 
 function usage() {
   local program
@@ -44,6 +46,7 @@ Parameters:
   --no-color       If specified, don't colourize output. Useful if piping.
   --color=COLOR    Overrides the default color=always with the specified setting.
   --case           If specfied, grep with case sensitivity.
+  --vim            Pipe the output into vim and search for the search string.
   -P|--pattern     Treat SEARCH_STRING as a pattern.
   EXTRA_ARGS       All additional args passed to grep.
 EOF
@@ -66,6 +69,9 @@ do
     -P|--pattern)
       pattern=1
       ;;
+    --vim|--Vim|--VIM)
+      use_vim=1
+      ;;
     -h|--help|/?)
       usage
       exit 1
@@ -86,21 +92,17 @@ do
       ;;
   esac
 done
-#args=( "${@:4}" )
-#
-#for arg in "${args[@]}"
-#do
-#  case "${arg}" in
-#    --nocolor|--no-color)
-#      color=0
-#      ;;
-#    *)
-#      extra_args+=( "${arg}" )
-#      ;;
-#  esac
-#done
-#
-#if [ -t 0 ]
+
+if [ ${color} -eq ${UNSET_COLOR} ]
+then
+  if [ ${use_vim} -ne 0 ]
+  then
+    color=0
+  else
+    color=1
+  fi
+fi
+
 if [ ${color} -ne 0 ]
 then
   extra_args=( '--color=always' "${extra_args[@]}" )
@@ -128,6 +130,7 @@ fi
 
 pattern_args+=( "${search_string:?Must specific search string}" )
 
+function search_like_crazy() {
 # -H Always include file name
 srcfind "${search_directory}" -type f -print0 | xargs -0 -n1 -P8 grep \
   "${pattern_args[@]}" \
@@ -138,7 +141,20 @@ srcfind "${search_directory}" -type f -print0 | xargs -0 -n1 -P8 grep \
   --exclude 'gradlew.bat' \
   --exclude 'gradle' \
   "${extra_args[@]}"
+}
 
+if [ ${use_vim} -eq 0 ]
+then
+  search_like_crazy
+else
+  vim_case_arg=''
+  if [ ${case_sensitive} -ne 0 ]
+  then
+    vim_case_arg='\c'
+  fi
+  # \c Case insensitive
+  search_like_crazy | vim -R - -c "silent! /${search_string}${vim_case_arg}"
+fi
 #  --exclude-dir '.git' \
 #  --exclude-dir 'build' \
 #  --exclude-dir 'output' \
