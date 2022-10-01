@@ -100,7 +100,11 @@ augroup Rust
   autocmd FileType Rust noremap <leader>t :CargoTestWithPreviousArgs<cr>
   autocmd FileType Rust noremap <leader>t<Space> :CargoTestClearPreviousArgs<Space>
 
-  autocmd FileType Rust noremap <F12> :YcmCompleter GoToDefinition<cr>
+  if g:use_coc == 0
+    if g:use_ycm != 0
+      autocmd FileType Rust noremap <F12> :YcmCompleter GoToDefinition<cr>
+    endif
+  endif
 augroup END
 
 " Makefile
