@@ -70,7 +70,6 @@ function find_source() {
       -path '*/.env' -o \
       -path '*/.env/*' -o \
       -path '*/env/lib/python*' -o \
-      -path '*/env/lib/python*/' -o \
       -path '*/.idea' -o \
       -path '*/.idea/*' -o \
       -path '*/.gradle' -o \
@@ -91,6 +90,7 @@ function find_source() {
     "${@}"
 }
 
+#      -path '*/env/lib/python*/' -o \
 #      -path 'gradlew.bat' -o \
 #      -path 'gradle' \
 
