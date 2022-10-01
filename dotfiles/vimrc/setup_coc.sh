@@ -259,6 +259,73 @@ function finish_up() {
   echo '# Done'
 }
 
+function usage() {
+  cat <<-EOF
+First attempt at building/setting up coc for vim.
+EOF
+}
+
+## Command line
+verbose=0
+dry_run=0
+declare -a args
+args=( "${@}" )
+args_length=${#args[@]}
+
+function take_an_argument() {
+  # Globals:
+  #  i [in/out]            - Current argument index.
+  #  ok_exit_code [in/out] - Current exit code.
+  #  args[in]              - Array of command line arguments.
+  #  args_length[in]       - Number of command line arguments.
+  # Parameters:
+  #  1 - Name of variable to set.
+  #  2 - Parameter name in use.
+  local var_name
+  local param_name
+  local current_value
+
+  var_name="${1}"
+  param_name="${2}"
+  current_value="${!var_name}"
+
+  if [ -n "${current_value}" ]
+  then
+    echo "${param_name} already set to '${current_value}'" >&2
+    (( ++ok_exit_code ))
+  else
+    (( i++ ))
+    if (( i < args_length ))
+    then
+      eval ${var_name}=${args[${i}]}
+    else
+      echo "${param_name} parameter expects an argument." >&2
+      (( ++ok_exit_code ))
+    fi
+  fi
+}
+
+for (( i=0; i<args_length; ++i ))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    -v|--verbose)
+      verbose=1
+      ;;
+    --dry|--dryrun|--dry-run)
+      dry_run=1
+      ;;
+    -h|--help|/?)
+      usage
+      exit 1
+      ;;
+    *)
+      echo "Unexpected argument '${arg}'" >&2
+      exit 2
+      ;;
+  esac
+done
+
 build_ccls
 install_ccls
 configure_ccls
