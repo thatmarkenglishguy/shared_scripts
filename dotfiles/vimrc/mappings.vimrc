@@ -20,17 +20,20 @@ cabbr <expr> %% expand('%:p:h')
 " Show hex
 :nnoremap <leader>x :call ToggleHex()<cr>
 
-" mE YouCompleteMe
-" IntelliJ uses Command+B and Alt+Command+B.
-" Let's do the same, and also leader...
-:nnoremap <leader>b :YcmCompleter GoToDeclaration<cr>
-" This doesn't seem to work on Mac for mapping Alt
-:nnoremap <leader><A-b> :YcmCompleter GoToDefinition<cr>
-:nnoremap <leader>∫ :YcmCompleter GoToDefinition<cr>
-:nnoremap <leader>v :YcmCompleter GoToDefinition<cr>
-:nnoremap <leader>f :YcmCompleter FixIt<cr>
-:nnoremap <leader>i :YcmCompleter GoToInclude<cr>
-:nnoremap <F2> :YcmCompleter RefactorRename<Space>
+if g:use_ycm != 0
+  " mE YouCompleteMe
+  " IntelliJ uses Command+B and Alt+Command+B.
+  " Let's do the same, and also leader...
+  :nnoremap <leader>b :YcmCompleter GoToDeclaration<cr>
+  " This doesn't seem to work on Mac for mapping Alt
+  :nnoremap <leader><A-b> :YcmCompleter GoToDefinition<cr>
+  :nnoremap <leader>∫ :YcmCompleter GoToDefinition<cr>
+  :nnoremap <leader>v :YcmCompleter GoToDefinition<cr>
+  :nnoremap <leader>f :YcmCompleter FixIt<cr>
+  :nnoremap <leader>i :YcmCompleter GoToInclude<cr>
+  :nnoremap <F2> :YcmCompleter RefactorRename<Space>
+endif
+
 " Note, C-k in Insert mode will let you see the key code.
 set <S-F6>=[1;2Q
 " On Mac, open Keyboard/Shortcuts/Keyboard and turn off all the F key
@@ -55,20 +58,36 @@ if g:use_coc != 0
   " set signcolumn=yes
   " Use tab for trigger completion with characters ahead and navigate.
   " Use command ':verbose imap <tab>' to make sure tab is not mapped by other plugin.
-  inoremap <silent><expr> <TAB>
-        \ pumvisible() ? "\<C-n>" :
-        \ <SID>check_back_space() ? "\<TAB>" :
-        \ coc#refresh()
-  inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
   function! s:check_back_space() abort
     let col = col('.') - 1
     return !col || getline('.')[col - 1]  =~# '\s'
   endfunction
+  " TODO Remove these once a better alternative is found.
+  " See https://www.reddit.com/r/neovim/comments/weydql/comment/iiwoxae/
+  " inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+  " inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+  " inoremap <silent><expr> <TAB>
+  "       \ pumvisible() ? "\<C-n>" :
+  "       \ <SID>check_back_space() ? "\<TAB>" :
+  "       \ coc#refresh()
+  " Use <tab> for select selections ranges, needs server support, like: coc-tsserver, coc-python
+  " Warning: For some reason this disables the standard <C-i> shortcut 
+  " (at least on Mac)
+  " nmap <silent> <TAB> <Plug>(coc-range-select)
+  " Warning: Ends
+  " TODO Ends section to remove
+
+  " remap for complete to use tab and <cr>
+  inoremap <silent><expr> <TAB>
+    \ coc#pum#visible() ? coc#pum#next(1):
+    \ <SID>check_back_space() ? "\<Tab>" :
+    \ coc#refresh()
   " Use <c-space> to trigger completion.
   inoremap <silent><expr> <c-space> coc#refresh()
   " Use <cr> to confirm completion, `<C-g>u` means break undo chain at current position.
   " Coc only does snippet and additional edit on confirm.
-  inoremap <expr> <cr> pumvisible() ? "\<C-y>" : "\<C-g>u\<CR>"
+  inoremap <silent><expr> <cr> coc#pum#visible() ? coc#pum#confirm() : "\<C-g>u\<cr>\<c-r>=coc#on_enter()\<cr>"
+  inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
   " Use `[c` and `]c` to navigate diagnostics
   nmap <silent> [c <Plug>(coc-diagnostic-prev)
   nmap <silent> ]c <Plug>(coc-diagnostic-next)
@@ -89,7 +108,8 @@ if g:use_coc != 0
   " Highlight symbol under cursor on CursorHold
   autocmd CursorHold * silent call CocActionAsync('highlight')
   " Remap for rename current word
-  nmap <leader>rn <Plug>(coc-rename)
+"  nmap <leader>rn <Plug>(coc-rename)
+  nmap <S-F6> <Plug>(coc-rename)
   " Remap for format selected region
   xmap <leader>f  <Plug>(coc-format-selected)
   nmap <leader>f  <Plug>(coc-format-selected)
@@ -107,8 +127,7 @@ if g:use_coc != 0
   nmap <leader>ac  <Plug>(coc-codeaction)
   " Fix autofix problem of current line
   nmap <leader>qf  <Plug>(coc-fix-current)
-  " Use <tab> for select selections ranges, needs server support, like: coc-tsserver, coc-python
-  nmap <silent> <TAB> <Plug>(coc-range-select)
+
   xmap <silent> <TAB> <Plug>(coc-range-select)
   xmap <silent> <S-TAB> <Plug>(coc-range-select-backword)
   " Use `:Format` to format current buffer
@@ -151,7 +170,9 @@ nnoremap <S-F8> :lN<cr>
 "  However, subsequently changing left-Alt in Iterm2 disables Alt in general, and totally breaks the
 "  escape key, so we've turned it off.
 " set <a-cr>=
+" if g:use_ycm != 0
 " :nnoremap <a-cr> :YcmCompleter FixIt<cr>
+" endif
 
 :command! -nargs=* RunCurrentWithPreviousVarArgs call ClearScreenRunExternalCommandWithPreviousVarArgs(expand('%:p'), <f-args>)
 :command! -nargs=* RunCurrentClearPreviousVarArgs call ClearPreviousClearScreenRunExternalCommandWithVarArgs(expand('%:p'), <f-args>)
