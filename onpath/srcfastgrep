@@ -131,8 +131,8 @@ fi
 pattern_args+=( "${search_string:?Must specific search string}" )
 
 function search_like_crazy() {
-  # -H Always include file name
-  srcfind "${search_directory}" -type f -print0 | xargs -0 -n1 -P8 grep \
+# -H Always include file name
+srcfind "${search_directory}" -type f -print0 | xargs -0 -n1 -P8 grep \
   "${pattern_args[@]}" \
   --binary-file=without-match \
   --line-number \
