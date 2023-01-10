@@ -14,6 +14,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *darwin*)
     os_name='darwin'
     ;;
+  *linuxkit*)
+    os_name='linux_kit'
+    ;;
 esac
 
 ## New things (we're going to add pathfunctions here, even though we might need it system wide too).
@@ -28,6 +31,25 @@ esac
 function shared() {
   pushd "${marke_local_common_script_dir}"
 }
+
+add_alias() {
+  local a
+  a=$(alias "${1}" 2>/dev/null)
+  if [ ${?} -ne 0 ]
+  then
+    alias "${1}=${2}"
+  fi
+}
+
+case "${os_name}" in
+  darwin)
+    add_alias ls "ls -G"
+    ;;
+  *)
+    add_alias ls "ls --color=auto"
+    add_alias lsc "ls --color=always"
+    ;;
+esac
 
 # Go to directory on path containing file
 function pushfiled() {
@@ -230,5 +252,3 @@ then
     j11 2>/dev/null
   fi
 fi
-
-
