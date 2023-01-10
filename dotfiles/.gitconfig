@@ -50,6 +50,7 @@
   httpsurl = httpsurlbranch
   diffl = "!_diffl() { git diff \"${@}\" -- ':(exclude)*.lockfile'; }; _diffl"
   diffdevl = diffl origin/develop
+  changes = "log -p -M --follow --source --stat --"
 
 [color]
   diff = auto
