@@ -40,5 +40,5 @@ do
   esac
 
   echo "${script_dir}/copy_to_phone" "${@}" "$(pwd)/${line:3}" '"${@}"'
-done < <(git status --porcelain)
+done < <(git status --porcelain --untracked-files)
 
