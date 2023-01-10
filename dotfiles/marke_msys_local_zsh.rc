@@ -38,7 +38,7 @@ DISABLE_AUTO_TITLE="true"
 #
 #
 # Source gradle completion (?)
-#source ~/code/thirdparty/shscripts/gradle-completion.git/gradle-completion.plugin.zsh
+source ~/code/thirdparty/shscripts/gradle-completion.git/gradle-completion.plugin.zsh
 
 
 ## Aliases for java_sys_properties, tempstore, and gdl
@@ -67,19 +67,25 @@ DISABLE_AUTO_TITLE="true"
 ## The next line enables shell command completion for gcloud.
 #if [ -f "${HOME}/google-cloud-sdk/completion.bash.inc" ]; then . "${HOME}/google-cloud-sdk/completion.bash.inc"; fi
 #
+# Zsh completion
+case "${os_name}" in
+  darwin)
+    if [ -f $(brew --prefix)/etc/zsh_completion ]; then
+      source $(brew --prefix)/etc/zsh_completion
+    fi
+    ;;
+esac
+
+
 ## Kubectl completion
-#if which kubectl &>/dev/null
-#then
-#  source /dev/stdin <<<"$(kubectl completion bash)"
-#  # $((( #vim syntax higlighter is having a bit of a conniption which is why this is at the bottom of the file...
-#  complete -f __start_kubectl k
-#  alias k='kubectl'
-#fi
+if command -v kubectl &>/dev/null
+then
+  alias k='kubectl'
+  source <(kubectl completion zsh)
+fi
 
-# Flamegraph completion
-#if command -v flamegraph &>/dev/null
-#then
-#  :
-#  source "${HOME}/.flamegraph-completion.zsh"
-#fi
+# Flamegraph completion is auto-loaded from "${HOME}/.zsh/.flamegraph-completion.zsh"
+# TODO check this is actually working
 
+# History
+HISTORY_IGNORE="(ls|mutt|bg|fg|exit|cd ..)"
