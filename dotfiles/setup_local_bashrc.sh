@@ -20,6 +20,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *darwin*)
     os_name='darwin'
     ;;
+  *linuxkit*)
+    os_name='linux_kit'
+    ;;
 esac
 
 _got_readlink=0
@@ -48,6 +51,39 @@ else
   setup_script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+# Command line
+do_global_installs=1
+do_user_installs=1
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    --global-installs)
+      do_global_installs=1
+      ;;
+    --no-global-installs)
+      do_global_installs=0
+      ;;
+    --global-installs)
+      do_global_installs=1
+      ;;
+    --no-global-installs)
+      do_global_installs=0
+      ;;
+    *)
+      echo "Ignoring unexpected setup_local_bashrc.sh arg ${arg}" >&2
+      ;;
+  esac
+done
+
+if [ ${do_global_installs} -eq 0 ]
+then
+  global_installs_arg='--no-global-installs'
+else
+  global_installs_arg='--global-installs'
+fi
+
+# End Command line
 #set -x
 # Do the basic minimum to get .bashrc loaded
 add_to_profile=0
@@ -64,13 +100,15 @@ fi
 
 if [ ${add_to_profile} -eq 1 ]; then
   echo '# Get the aliases and functions
-if [ -f ~/.bashrc ]; then
-    . ~/.bashrc
+if [ -f ~/.bashrc ]
+then
+  . ~/.bashrc
 fi' >>"${HOME}/.bash_profile"
 fi
 
+echo "os name: ${os_name}"
 case "${os_name}" in
-  msys|cygwin)
+  msys|cygwin|linux_kit)
     _setup_local_dir="${HOME}/code/onpath"
     _setup_shscripts_dir="${HOME}/code/shscripts"
 #    source_line='source "${HOME}/code/shscripts/marke_mac_bash.rc"'
@@ -85,16 +123,33 @@ case "${os_name}" in
 #    ;;
 esac
 
+function _github_repo_address() {
+  local input
+  input="${1}"
+
+  if [ -z "${input}" ]
+  then
+    echo 'Expected input for _github_repo_address' >&2
+    return 1
+  elif [ -d "${HOME}/.ssh" ] && find "${HOME}/.ssh" -name '*.pub' | grep --quiet '.'
+  then
+    echo "git@github.com:${input}"
+  else
+    echo "https://github.com/${input}"
+  fi
+}
+
 function _add_to_file() {
   local source_line
   local target
+  local write_source_line
   source_line="${1}"
-  target="${2:-${HOME}/.bashrc}"
+  target="${2:-${HOME}/.zshrc}"
+  write_source_line=$(eval echo "${source_line}")
 
   if ! grep "${source_line}" "${target}" 2>&1 1>/dev/null
   then
-    echo "${source_line}" | cat - "${target}" | dd conv=notrunc of="${target}" &>/dev/null
-#    echo "${source_line}" >> "${target}"
+    echo "${write_source_line}" >> "${target}"
   fi
 }
 
@@ -102,10 +157,10 @@ _add_to_file "source \"${HOME}/.commonrc\"" "${HOME}/.bashrc"
 case "${os_name}" in
   darwin)
     _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
-    _add_to_file "source \"${_setup_shscripts_dir}/marke_mac_bash.rc\"" "${HOME}/.bashrc"
+    _add_to_file "if \[ -f \"${_setup_shscripts_dir}/marke_mac_bash.rc\" \]\; then source \"${_setup_shscripts_dir}/marke_mac_bash.rc\" \; fi" "${HOME}/.bashrc"
     ;;
-  msys|cygwin)
-    _add_to_file "source \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\"" "${HOME}/.bashrc"
+  msys|cygwin|linux_kit)
+    _add_to_file "if \[ -f \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\" \]\; then source \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\" \; fi" "${HOME}/.bashrc"
     _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
     ;;
 esac
@@ -135,23 +190,13 @@ esac
 #  esac
 #fi
 
-# Bash completion
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  . $(brew --prefix)/etc/bash_completion
-fi
-
-# kubectl completion
-which kubectl >/dev/null && source /dev/stdin <<<"$(kubectl completion bash)"
-complete -F __start_kubectl k
-alias k='kubectl'
-
 # Sort out git completion
 if [ ! -f "${HOME}/.git-completion.bash" ]
 then
-  if which wget 1>/dev/null
+  if command -v wget 1>/dev/null
   then
     wget -O "${HOME}/.git-completion.bash" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
-  elif which curl 1>/dev/null
+  elif command -v curl 1>/dev/null
   then
     curl -o "${HOME}/.git-completion.bash" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
   else
@@ -160,11 +205,6 @@ then
 fi
 
 # Sort out flamegraph
-if ! command -v flamegraph &>/dev/null
-then
-  cargo install flamegraph
-fi
-
 if command -v flamegraph &>/dev/null
 then
   flamegraph --completions bash > "${HOME}/.flamegraph-completion.bash"
@@ -195,29 +235,44 @@ fi
 if [ ! -d "${HOME}/code/thirdparty/shscripts/git-aware-prompt.git" ]
 then
   mkdir -p "${HOME}/code/thirdparty/shscripts"
-  git clone git@github.com:jimeh/git-aware-prompt.git "${HOME}/code/thirdparty/shscripts/git-aware-prompt.git"
+  git clone "$(_github_repo_address jimeh/git-aware-prompt.git)" "${HOME}/code/thirdparty/shscripts/git-aware-prompt.git"
+else
+  pushd "${HOME}/code/thirdparty/shscripts/git-aware-prompt.git" &>/dev/null
+  git fetch --prune
+  git rebase
+  popd &>/dev/null
 fi
 
 if [ ! -d "${HOME}/code/thirdparty/shscripts/gradle-completion.git" ]
 then
   mkdir -p "${HOME}/code/thirdparty/shscripts"
-  git clone git@github.com:gradle/gradle-completion.git "${HOME}/code/thirdparty/shscripts/gradle-completion.git"
+  git clone "$(_github_repo_address gradle/gradle-completion.git)" "${HOME}/code/thirdparty/shscripts/gradle-completion.git"
+else
+  pushd "${HOME}/code/thirdparty/shscripts/gradle-completion.git" &>/dev/null
+  git fetch --prune
+  git rebase
+  popd &>/dev/null
 fi
 
 if [ -f "${setup_script_dir}/setup_dotfiles.sh" ]
 then
-  "${setup_script_dir}/setup_dotfiles.sh"
+  "${setup_script_dir}/setup_dotfiles.sh" "${global_installs_arg}"
 fi
 
-if ! which src-hilite-lesspipe.sh 1>/dev/null 2>&1
+if [ ${do_global_installs} -ne 0 ]
 then
-  case ${os_name} in
-    darwin)
-      brew install source-highlight
-      ;;
-    msys)
-      pacman --noconfirm -S mingw-w64-x86_64-source-highlight
-      ;;
-  esac
+  if ! command -v src-hilite-lesspipe.sh 1>/dev/null 2>&1
+  then
+    case "${os_name}" in
+      darwin)
+        brew install source-highlight
+        ;;
+      msys)
+        pacman --noconfirm -S mingw-w64-x86_64-source-highlight
+        ;;
+      *)
+        echo "Don't know how to install source-highlight on '${os_name}'" >&2
+        ;;
+    esac
+  fi
 fi
-

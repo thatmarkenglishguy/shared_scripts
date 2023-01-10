@@ -13,9 +13,38 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *darwin*)
     os_name='darwin'
     ;;
+  *linuxkit*)
+    os_name='linux_kit'
+    ;;
 esac
 
 setup_script_dir="${0:A:h}"
+# Command line
+do_global_installs=1
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    --global-installs)
+      do_global_installs=1
+      ;;
+    --no-global-installs)
+      do_global_installs=0
+      ;;
+    *)
+      echo "Ignoring unexpected setup_local_zshrc.sh arg ${arg}" >&2
+      ;;
+  esac
+done
+
+if [ ${do_global_installs} -eq 0 ]
+then
+  global_installs_arg='--no-global-installs'
+else
+  global_installs_arg='--global-installs'
+fi
+# End Command line
+
 # Do the basic minimum to get .zshrc loaded
 add_to_profile=0
 
@@ -37,7 +66,7 @@ fi
 #fi
 
 case "${os_name}" in
-  msys|cygwin)
+  msys|cygwin|linux_kit)
     _setup_local_dir="${HOME}/code/onpath"
     _setup_shscripts_dir="${HOME}/code/shscripts"
 #    source_line='source "${HOME}/code/shscripts/marke_mac_zsh.rc"'
@@ -52,28 +81,56 @@ case "${os_name}" in
 #    ;;
 esac
 
+function _github_repo_address() {
+  local input
+  input="${1}"
+
+  if [ -z "${input}" ]
+  then
+    echo 'Expected input for _github_repo_address' >&2
+    return 1
+  elif [ -d "${HOME}/.ssh" ] && find "${HOME}/.ssh" -name '*.pub' | grep --quiet '.'
+  then
+    echo "git@github.com:${input}"
+  else
+    echo "https://github.com/${input}"
+  fi
+}
+
 function _add_to_file() {
   local source_line
   local target
+  local write_source_line
   source_line="${1}"
   target="${2:-${HOME}/.zshrc}"
+  write_source_line=$(eval echo "${source_line}")
 
   if ! grep "${source_line}" "${target}" 2>&1 1>/dev/null
   then
-    echo "${source_line}" >> "${target}"
+    echo "${write_source_line}" >> "${target}"
   fi
 }
 
 function _prepend_to_file() {
   local source_line
   local target
+  local cat_args
+  local write_source_line
   source_line="${1}"
-  target="${2:-${HOME}/.zshrc}"
+  target="${2:-${HOME}/.gitconfig}"
+  declare -a cat_args
+  cat_args=( '-' )
 
-  if ! grep "${source_line}" "${target}" 2>&1 1>/dev/null
+  if [ -f "${target}" ]
   then
-    echo "${source_line}" | cat - "${target}" | dd conv=notrunc of="${target}" &>/dev/null
-#    echo "${source_line}" >> "${target}"
+    cat_args+=( "${target}" )
+  fi
+
+  if [ ! -f "${target}" ] || ! grep "${source_line}" "${target}" 2>&1 1>/dev/null
+  then
+    #echo "${source_line}" | cat - "${target}" | dd conv=notrunc of="${target}" &>/dev/null
+    write_source_line=$(eval echo "${source_line}")
+    echo "${write_source_line}" | cat "${cat_args[@]}" | dd conv=notrunc of="${target}" &>/dev/null
   fi
 }
 
@@ -128,10 +185,10 @@ _add_to_file "source \"${HOME}/.commonrc\"" "${HOME}/.zshrc"
 ## This requires the bash git-completion...
 if [ ! -f "${HOME}/.git-completion.bash" ]
 then
-  if which wget 1>/dev/null
+  if command -v wget 1>/dev/null
   then
     wget -O "${HOME}/.git-completion.bash" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
-  elif which curl 1>/dev/null
+  elif command -v curl 1>/dev/null
   then
     curl -o "${HOME}/.git-completion.bash" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.bash
   else
@@ -148,10 +205,10 @@ fi
 if [ ! -f "${HOME}/.zsh/.git-completion.zsh" ]
 then
 
-  if which wget 1>/dev/null
+  if command -v wget 1>/dev/null
   then
     wget -O "${HOME}/.zsh/.git-completion.zsh" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.zsh
-  elif which curl 1>/dev/null
+  elif command -v curl 1>/dev/null
   then
     curl -o "${HOME}/.zsh/.git-completion.zsh" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.zsh
   else
@@ -159,54 +216,20 @@ then
   fi
 fi
 
-#if [ ! -f "${HOME}/.git-completion.zsh" ]
-#then
-#  if which wget 1>/dev/null
-#  then
-#    wget -O "${HOME}/.git-completion.zsh" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.zsh
-#  elif which curl 1>/dev/null
-#  then
-#    curl -o "${HOME}/.git-completion.zsh" https://raw.githubusercontent.com/git/git/master/contrib/completion/git-completion.zsh
-#  else
-#    echo 'Unable to find wget or curl. Going to be hard to install git completion...' >&2
-#  fi
-#fi
+# Note: No git aware prompt repo for zsh. Use a plugin and/or your own homegrown config.
 
-#add_git=0
-#
-#if [ -f ~/.git-completion.zsh ]
-#then
-#  if [ ! -f ~/.zshrc ]
-#  then
-#    add_git=1
-#  else
-#    if [ ! grep '.git-completion.zsh' ~/.zshrc >/dev/null ]
-#    then
-#      add_git=1
-#    fi
-#  fi
-#fi
-#
-#if [ ${add_git} -eq 1 ]
-#then
-#  echo '#https://git-scm.com/book/en/v1/Git-Basics-Tips-and-Tricks
-#source ~/.git-completion.zsh' >>~/.zshrc
-#fi
-
-# Note: No git aware prompt repo for zsh. Use a plugin.
 if [ ! -d "${HOME}/code/thirdparty/shscripts/gradle-completion.git" ]
 then
   mkdir -p "${HOME}/code/thirdparty/shscripts"
-  git clone git@github.com:gradle/gradle-completion.git "${HOME}/code/thirdparty/shscripts/gradle-completion.git"
+  git clone "$(_github_repo_address gradle/gradle-completion.git)" "${HOME}/code/thirdparty/shscripts/gradle-completion.git"
+else
+  pushd "${HOME}/code/thirdparty/shscripts/gradle-completion.git" &>/dev/null
+  git fetch --prune
+  git rebase
+  popd &>/dev/null
 fi
 
 # Sort out flamegraph
-
-if ! command -v flamegraph &>/dev/null
-then
-  cargo install flamegraph
-fi
-
 if command -v flamegraph &>/dev/null
 then
   flamegraph --completions zsh > "${HOME}/.zsh/.flamegraph-completion.zsh"
