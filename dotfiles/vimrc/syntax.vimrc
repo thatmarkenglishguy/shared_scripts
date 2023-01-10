@@ -25,7 +25,17 @@ if g:use_coc != 0
   " The following two lines are optional. Configure it to your liking!
   let g:syntastic_check_on_open = 1
 "  let g:syntastic_check_on_wq = 0
+
+  " Inlay colours
+  " 232 is black, and up from there is progressively lighter
+  " (i.e. 233 and beyond)
+  hi CocInlayHint ctermfg=239 ctermbg=233
 endif
+
+" The default filetype plugin configures
+	" setlocal expandtab shiftwidth=4 softtabstop=4 tabstop=8
+" which is disabled with the following
+let g:python_recommended_style = 0
 
 " Italic/bold look like white background on Mac iterm2 :(
 " See http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
@@ -82,6 +92,7 @@ hi cPreCondit ctermfg=39 guifg=Cyan " cterm=bold gui=bold
 hi diffAdded ctermfg=DarkGreen
 hi diffRemoved ctermfg=DarkRed
 " hi diffChanged ctermfg=DarkYellow
+
 
 " Enormous list of colours:
 " See http://vim.wikia.com/wiki/Xterm256_color_names_for_console_Vim
