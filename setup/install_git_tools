@@ -3,7 +3,14 @@ target_dir="${HOME}/code/thirdparty/shscripts/git-aware-prompt.git"
 
 if [ ! -d "${target_dir}/.git" ]
 then
-  git clone git://github.com/jimeh/git-aware-prompt.git "${target_dir}"
+  url='jimeh/git-aware-prompt.git'
+  if [ -d "${HOME}/.ssh" ] && find "${HOME}/.ssh" -name '*.pub' | grep --quiet '.'
+  then
+    url="git://github.com/${url}"
+  else
+    url="https://github/com/${url}"
+  fi
+  git clone "${url}" "${target_dir}"
 else
   pushd "${target_dir}"
   git fetch --prune
