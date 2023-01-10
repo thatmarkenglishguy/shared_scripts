@@ -3,6 +3,7 @@
 if !exists("g:use_ycm")
   if g:platform != "cygwin" && g:platform != "msys"
       \ && g:platform != "darwin"
+      \ && g:platform != "linux_kit"
     let g:use_ycm=1
     let g:use_coc=0
   else
