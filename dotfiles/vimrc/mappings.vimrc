@@ -32,7 +32,7 @@ if g:use_ycm != 0
   :nnoremap <leader>f :YcmCompleter FixIt<cr>
   :nnoremap <leader>i :YcmCompleter GoToInclude<cr>
   :nnoremap <F2> :YcmCompleter RefactorRename<Space>
-endif
+endif " g:use_ycm
 
 " Note, C-k in Insert mode will let you see the key code.
 set <S-F6>=[1;2Q
@@ -86,7 +86,7 @@ if g:use_coc != 0
   inoremap <silent><expr> <c-space> coc#refresh()
   " Use <cr> to confirm completion, `<C-g>u` means break undo chain at current position.
   " Coc only does snippet and additional edit on confirm.
-"  inoremap <silent><expr> <cr> coc#pum#visible() ? coc#pum#confirm() : "\<C-g>u\<cr>\<c-r>=coc#on_enter()\<cr>"
+  inoremap <silent><expr> <cr> coc#pum#visible() ? coc#pum#confirm() : "\<C-g>u\<cr>\<c-r>=coc#on_enter()\<cr>"
   inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
   " Use `[c` and `]c` to navigate diagnostics
   nmap <silent> [c <Plug>(coc-diagnostic-prev)
@@ -123,8 +123,8 @@ if g:use_coc != 0
   " Remap for do codeAction of selected region, ex: `<leader>aap` for current paragraph
   xmap <leader>a  <Plug>(coc-codeaction-selected)
   nmap <leader>a  <Plug>(coc-codeaction-selected)
-  " Remap for do codeAction of current line
-  nmap <leader>ac  <Plug>(coc-codeaction)
+  " Remap for do codeAction of where cursor is
+  nmap <leader>ac  <Plug>(coc-codeaction-cursor)
   " Fix autofix problem of current line
   nmap <leader>qf  <Plug>(coc-fix-current)
 
@@ -157,7 +157,7 @@ if g:use_coc != 0
   nnoremap <silent> <space>p  :<C-u>CocListResume<CR>
 
 "  :nnoremap <leader>f :<c-u>ClangFormat<cr>
-endif
+endif "g:use_coc
 
 " F8 because that's what VSCode uses on Windows and Linux and the Mac mappings
 " are too difficult to emulate.
@@ -181,9 +181,15 @@ nnoremap <S-F8> :lN<cr>
 :nnoremap <leader>r :RunCurrentWithPreviousVarArgs<cr>
 :nnoremap <leader>r<Space> :RunCurrentClearPreviousVarArgs<Space>
 
+" Testing
+:nnoremap <silent> <leader>t :TestNearest<cr>
+:nnoremap <silent> <leader>T :TestFile<cr>
+:nnoremap <silent> <leader>ta :TestSuite<cr>
+:nnoremap <silent> <leader>tl :TestLast<cr>
+:nnoremap <silent> <leader>tg :TestVisit<cr>
+
 " :command! Yay  echom 'Yay ' . <f-args>
 " :command! -nargs=* Yay call RunCommandWithPreviousArgs('!' . expand('%:p'), <f-args>)
-
 
 "nnoremap <C-X> :echom "hi"<cr>
 
