@@ -20,6 +20,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *msys*|*mingw*)
     platform=msys
     ;;
+  *linuxkit*)
+    platform=linux_kit
+    ;;
   *)
     echo 'Unrecognised platform ' >&2
     uname -a
@@ -82,8 +85,47 @@ thirdparty_dir="${thirdparty_dir}/thirdparty"
 
 ccls_root_dir="${thirdparty_dir}/ccls"
 ccls_git_dir="${ccls_root_dir}/ccls.git"
+do_global_installs=1
+do_user_installs=1
+
+case "${platform}" in
+  linux_kit)
+    if [ $(whoami) = 'root' ]
+    then
+      do_global_installs=1
+      do_user_installs=0
+    else
+      do_global_installs=0
+      do_user_installs=1
+    fi
+    ;;
+esac
 
 function build_ccls() {
+  # Global Parameters
+  # ccls_git_dir [in] Directory to check-out ccls
+  # 1 - If 0, do not do global installation.
+  local do_build_ccls
+  local do_global_installs
+  local do_user_installs
+  local llvm_prefix
+
+  do_build_ccls=${1:-1}
+  do_global_installs=${2:-1}
+  do_user_installs=${3:-1}
+
+  if [ ${do_build_ccls} -eq 0 ]
+  then
+    echo "Skipping ccls build (ccls switched off)..." >&2
+    return 0
+  fi
+
+  if [ ${do_global_installs} -eq 0 ]
+  then
+    echo "Skipping ccls build (global installs switched off)..." >&2
+    return 0
+  fi
+
   echo '# Building ccls'
   check_ok
   if [ ! -d "${ccls_git_dir}" ]
@@ -103,6 +145,25 @@ function build_ccls() {
       cmake -H. -BRelease -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH="${llvm_prefix}/lib/cmake"
       cmake --build Release
       cd -
+      ;;
+    linux_kit)
+      if ! command -v clang >/dev/null
+      then
+        echo "Unable to find clang..." >&2
+        (( ++ok_to_continue ))
+      elif ! llvm_prefix="$(clang -print-resource-dir)"
+      then
+        echo "Unable to determine clang location..." >&2
+        (( ok_to_continue+=2 ))
+      fi
+
+      if [ ${ok_to_continue} -eq 0 ]
+      then
+        cd "${ccls_git_dir}"
+        cmake -H. -BRelease
+        cmake --build Release
+        cd -
+      fi
       ;;
     msys)
       if ! command -v clang
@@ -141,13 +202,37 @@ function build_ccls() {
 }
 
 function install_ccls() {
+  local do_build_ccls
+  local do_global_installs
+  local do_user_installs
   local win_ccls_git_dir
   local win_cmake_path
+
+  do_build_ccls=${1:-1}
+  do_global_installs=${2:-1}
+  do_user_installs=${3:-1}
+
+  if [ ${do_build_ccls} -eq 0 ]
+  then
+    echo "Skipping ccls install (ccls switched off)..." >&2
+    return 0
+  fi
+
+  if [ ${do_global_installs} -eq 0 ]
+  then
+    echo "Skipping ccls installation (global installs switched off)..." >&2
+    return 0
+  fi
 
   echo '# Installing ccls'
   check_ok
   case "${platform}" in
     darwin)
+      cd "${ccls_git_dir}"
+      cmake --build Release --target install
+      cd -
+      ;;
+    linux_kit)
       cd "${ccls_git_dir}"
       cmake --build Release --target install
       cd -
@@ -180,6 +265,10 @@ ccls_config_dir="${HOME}/.vim"
 ccls_config_path="${ccls_config_dir}/coc-settings.json"
 
 function configure_ccls() {
+  if [ ${1:-1} -eq 0 ]; then return; fi
+  if [ ${2:-1} -eq 0 ]; then return; fi
+  if [ ${3:-1} -eq 0 ]; then return; fi
+
   echo '# Configuring CCLS'
   check_ok
   if [ -f "${ccls_config_path}" ]
@@ -215,6 +304,17 @@ EOF
 }
 
 function install_linting() {
+  local do_global_installs
+  local do_user_installs
+  do_global_installs=${1:-1}
+  do_user_installs=${2:-1}
+
+  if [ ${do_global_installs} -eq 0 ]
+  then
+    echo "Skipping c++ linting installation" >&2
+    return 0
+  fi
+
   echo '# Installing Linting'
   pip3 install cpplint
 }
@@ -224,6 +324,10 @@ ccls_config_dir="${HOME}/.config/ccls"
 # TODO I have no idea. There must be a global setting for this
 ccls_header_path="${ccls_config_dir}/.ccls"
 function make_ccls_header_file() {
+  if [ ${1:-1} -eq 0 ]; then return; fi
+  if [ ${2:-1} -eq 0 ]; then return; fi
+  if [ ${3:-1} -eq 0 ]; then return; fi
+
   if [ ! -f "${ccls_header_path}" ]
   then
     echo "# Making ccls header file '${ccls_header_path}'"
@@ -259,13 +363,8 @@ function finish_up() {
   echo '# Done'
 }
 
-function usage() {
-  cat <<-EOF
-First attempt at building/setting up coc for vim.
-EOF
-}
-
 ## Command line
+do_build_ccls=1
 verbose=0
 dry_run=0
 declare -a args
@@ -305,30 +404,60 @@ function take_an_argument() {
   fi
 }
 
+function usage() {
+  cat <<-EOF
+$(basename "${0}") [--ccls] [--no-ccls] [--global-installs] [--no-global-installs] [--help]
+
+First attempt at building/setting up coc for vim.
+  --ccls               - If specified, ensure ccls is built and installed.
+  --no-ccls            - If specified, do not build or install ccls.
+  --global-installs    - If specified, install global dependencies.
+  --no-global-installs - If specified, do not install global dependencies.
+  --help               - Show this help message.
+EOF
+}
+
 for (( i=0; i<args_length; ++i ))
 do
   arg="${args[${i}]}"
   case "${arg}" in
+    --ccls)
+      do_build_ccls=1
+      ;;
+    --no-ccls)
+      do_build_ccls=0
+      ;;
     -v|--verbose)
       verbose=1
       ;;
     --dry|--dryrun|--dry-run)
       dry_run=1
       ;;
+    --global-installs)
+      do_global_installs=1
+      ;;
+    --no-global-installs)
+      do_global_installs=0
+      ;;
+    --user-installs)
+      do_user_installs=1
+      ;;
+    --no-user-installs)
+      do_user_installs=0
+      ;;
     -h|--help|/?)
       usage
       exit 1
       ;;
     *)
-      echo "Unexpected argument '${arg}'" >&2
-      exit 2
+      echo "Ignoring setup_coc.sh unexpected argument '${arg}'" >&2
       ;;
   esac
 done
 
-build_ccls
-install_ccls
-configure_ccls
-install_linting
-make_ccls_header_file
-finish_up
+build_ccls ${do_build_ccls} ${do_global_installs} ${do_user_installs}
+install_ccls ${do_build_ccls} ${do_global_installs} ${do_user_installs}
+configure_ccls ${do_build_ccls} ${do_global_installs} ${do_user_installs}
+install_linting ${do_global_installs} ${do_user_installs}
+make_ccls_header_file ${do_build_ccls} ${do_global_installs} ${do_user_installs}
+
