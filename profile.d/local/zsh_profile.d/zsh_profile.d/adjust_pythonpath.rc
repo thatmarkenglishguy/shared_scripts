@@ -1,4 +1,0 @@
-# vim: ft=zsh
-
-pathappend "${0:A:h:h:h:h}/python/lib" PYTHONPATH
-

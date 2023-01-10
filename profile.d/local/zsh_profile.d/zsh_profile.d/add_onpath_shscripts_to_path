@@ -1,8 +1,0 @@
-# vim: ft=zsh
-
-case $(uname -a | tr '[:upper:]' '[:lower:]') in
-  *)
-    pathappend "${0:A:h:h:h:h}/onpath" PATH
-    ;;
-esac
-
