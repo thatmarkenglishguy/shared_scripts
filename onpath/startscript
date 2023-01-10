@@ -1,11 +1,41 @@
 #!/usr/bin/env bash
-scriptpath=${1}
+scriptpath=''
+shelltype=''
+
+declare -a args
+args=( "${@}" )
+do_vim=0
+
+for ((i=0; i<${#args[@]}; ++i))
+do
+  arg="${args[${i}]}"
+  case "${arg}" in
+    --vim)
+      do_vim=1
+      ;;
+    *)
+      if [ -z "${scriptpath}" ]
+      then
+        scriptpath="${arg}"
+      elif [ -z "${shelltype}" ]
+      then
+        shelltype="${arg}"
+      else
+        echo "Unexpected arguments '${arg}'" >&2
+      fi
+      ;;
+  esac
+done
+
 if [ -z "${scriptpath}" ]
 then
   echo 'Must specify path to script as first parameter.' >&2
 else
-  shift
-  shelltype=${1:-sh}
+  if [ -z "${shelltype}" ]
+  then
+    shelltype='sh'
+  fi
+
   echo \#\!/usr/bin/env "${shelltype}"'
 ' >"${scriptpath}"
   case ${shelltype} in
@@ -17,10 +47,53 @@ if [ -z \${BASH_SOURCE} ]; then
 else
   script_dir="\$(cd -P "\$(dirname "\${BASH_SOURCE[0]}")" && pwd)"
 fi
+
+
+output_file=''
+ok_exit_code=0
+declare -a args
+args=( "\${@}" )
+
+for (( i=0; i<\${#args[@]}; ++i ))
+do
+  arg="\${args[\${i}]}"
+  case "\${arg}" in
+    -o|--output)
+      (( ++i ))
+      if [ \${i} -eq \${#args[@]} ]
+      then
+        echo "Expected argument for '\${arg}'" >&2
+        (( ++ok_exit_code ))
+      else
+        output_file="\${args[\${i}]}"
+      fi
+      ;;
+    *)
+      echo "Unexpected argument '\${arg}' to \$(basename "\${0}")" >&2
+      (( ++ok_exit_code ))
+      ;;
+  esac
+done
+
+if [ -z "\${output_file}" ]
+then
+  echo "No output file specified" >&2
+  (( ++ok_exit_code ))
+fi
+
+if [ \${ok_exit_code} -ne 0 ]
+then
+  exit \${ok_exit_code}
+fi
 EOF
       ;;
   esac
 
   chmod 755 "${scriptpath}"
+
+  if [ ${do_vim} -ne 0 ]
+  then
+    vim "+normal G$" +startinsert "${scriptpath}"
+  fi
 fi
 
