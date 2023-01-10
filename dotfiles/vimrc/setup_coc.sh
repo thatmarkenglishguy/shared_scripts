@@ -7,25 +7,45 @@ else
   script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
 
+_lsb_release_os_name() {
+  if command -v lsb_release &>/dev/null
+  then
+    case $(lsb_release -d | tr '[:upper:]' '[:lower:]') in
+      *ubuntu*)
+        os_name='ubuntu'
+        return 0
+        ;;
+    esac
+  fi
+
+  return 1
+}
+
 # Where am I ?
-platform=unknown
+os_name='unknown'
 
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *darwin*)
-    platform=darwin
+    os_name='darwin'
     ;;
   *cygwin*)
-    platform=cygwin
+    os_name='cygwin'
     ;;
   *msys*|*mingw*)
-    platform=msys
+    os_name='msys'
     ;;
   *linuxkit*)
-    platform=linux_kit
+    os_name='linux_kit'
+    ;;
+  *wsl*)
+    _lsb_release_os_name
     ;;
   *)
-    echo 'Unrecognised platform ' >&2
-    uname -a
+    if ! _lsb_release_os_name
+    then
+      echo 'Unrecognised platform ' >&2
+      uname -a
+    fi
     ;;
 esac
 
@@ -37,7 +57,7 @@ then
 fi
 
 _do_readlink() {
-  case "${platform}" in
+  case "${os_name}" in
     darwin)
       readlink "${1}"
       ;;
@@ -88,7 +108,7 @@ ccls_git_dir="${ccls_root_dir}/ccls.git"
 do_global_installs=1
 do_user_installs=1
 
-case "${platform}" in
+case "${os_name}" in
   linux_kit)
     if [ $(whoami) = 'root' ]
     then
@@ -138,7 +158,7 @@ function build_ccls() {
     git rebase --autostash
   fi
 
-  case "${platform}" in
+  case "${os_name}" in
     darwin)
       llvm_prefix="$(brew --prefix llvm)"
       cd "${ccls_git_dir}"
@@ -195,7 +215,7 @@ function build_ccls() {
       fi
       ;;
     *)
-      echo "I don't know how to compile ccls on '${platform}'" >&2
+      echo "I don't know how to compile ccls on '${os_name}'" >&2
       (( ++ok_to_continue ))
       ;;
   esac
@@ -226,7 +246,7 @@ function install_ccls() {
 
   echo '# Installing ccls'
   check_ok
-  case "${platform}" in
+  case "${os_name}" in
     darwin)
       cd "${ccls_git_dir}"
       cmake --build Release --target install
@@ -256,7 +276,7 @@ To install ccls...
 EOF
       ;;
     *)
-      echo "I don't know how to install ccls on '${platform}'" >&2
+      echo "I don't know how to install ccls on '${os_name}'" >&2
       ;;
   esac
 }
@@ -332,7 +352,7 @@ function make_ccls_header_file() {
   then
     echo "# Making ccls header file '${ccls_header_path}'"
     mkdir -p "${ccls_config_dir}"
-    case "${platform}" in
+    case "${os_name}" in
       darwin)
         # TODO Some magic with g++ -E -x c++ - -v < /dev/null
         # see https://medium.com/geekculture/configuring-neovim-for-c-development-in-2021-33f86296a8b3
@@ -350,7 +370,7 @@ s/[[:space:]]*\(.*\)/\1/p
 }' > "${ccls_header_path}"
         ;;
       *)
-        echo "I don't know how to get headers on platform '${platform}' for ccls file ${ccls_header_path}" >&2
+        echo "I don't know how to get headers on platform '${os_name}' for ccls file ${ccls_header_path}" >&2
         (( ++ok_to_continue ))
         ;;
     esac

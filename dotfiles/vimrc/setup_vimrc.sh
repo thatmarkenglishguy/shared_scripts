@@ -1,24 +1,44 @@
 #!/usr/bin/env bash
 
 # Where am I ?
-platform='unknown'
+_lsb_release_os_name() {
+  if command -v lsb_release &>/dev/null
+  then
+    case $(lsb_release -d | tr '[:upper:]' '[:lower:]') in
+      *ubuntu*)
+        os_name='ubuntu'
+        return 0
+        ;;
+    esac
+  fi
+
+  return 1
+}
+
+os_name='unknown'
 
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *darwin*)
-    platform='darwin'
+    os_name='darwin'
     ;;
   *cygwin*)
-    platform='cygwin'
+    os_name='cygwin'
     ;;
   *msys*|*mingw*)
-    platform='msys'
+    os_name='msys'
     ;;
   *linuxkit*)
-    platform='linux_kit'
+    os_name='linux_kit'
     ;;
+  *wsl*)
+   _lsb_release_os_name
+   ;;
   *)
-    echo 'Unrecognised platform ' >&2
-    uname -a
+    if ! _lsb_release_os_name
+    then
+      echo 'Unrecognised platform ' >&2
+      uname -a
+    fi
     ;;
 esac
 
@@ -30,7 +50,7 @@ then
 fi
 
 _do_readlink() {
-  case "${platform}" in
+  case "${os_name}" in
     darwin)
       readlink "${1}"
       ;;
@@ -123,7 +143,7 @@ _pluginUp() {
     if ! command -v git 2>&1 1>/dev/null
     then
       echo 'git not installed. Please install git.'
-      case "${platform}" in
+      case "${os_name}" in
         darwin)
           brew install git
           ;;
@@ -141,7 +161,20 @@ _pluginUp() {
             fi
           else
             echo "Skipping global install of git" >&2
-          fi # do_global_installs
+          fi
+          ;;
+        ubuntu)
+          if [ ${do_global_installs} -ne 0 ]
+          then
+            if command -v apt-get &>/dev/null
+            then
+              sudo apt-get install --assume-yes git
+            else
+              echo 'No apt-get so not sure how to do git installation on ubuntu' >&2
+            fi
+          else
+            echo "Skipping global install of git" >&2
+          fi
           ;;
         *)
           echo 'Unknown platform for git installation.'
@@ -153,7 +186,7 @@ _pluginUp() {
     if ! command -v cmake 2>&1 1>/dev/null
     then
       echo 'cmake not installed. Please install cmake.'
-      case "${platform}" in
+      case "${os_name}" in
         darwin)
           brew install cmake
           ;;
@@ -171,7 +204,20 @@ _pluginUp() {
             fi
           else
             echo "Skipping global install of cmake" >&2
-          fi # do_global_installs
+          fi
+          ;;
+        ubuntu)
+          if [ ${do_global_installs} -ne 0 ]
+          then
+            if command -v apt-get &>/dev/null
+            then
+              sudo apt-get install --assume-yes cmake
+            else
+              echo 'No apt-get so not sure how to install cmake on ubuntu' >&2 
+            fi
+          else
+            echo "Skipping global install of cmake" >&2
+          fi
           ;;
         *)
           echo 'Unknown platform for cmake installation.'
@@ -300,7 +346,7 @@ function setup_directories() {
 }
 
 function setup_external_files() {
-  case "${platform}" in
+  case "${os_name}" in
     cygwin)
       mkdir -p ~/.vim/colors
       wget https://raw.githubusercontent.com/altercation/vim-colors-solarized/master/colors/solarized.vim -O ~/vim/colors/solarized.vim
@@ -440,7 +486,7 @@ do_setup_coc=0 # Don't want CoC and YouCompleteMe to compete
 do_global_installs=1
 do_user_installs=1
 
-case "${platform}" in
+case "${os_name}" in
   darwin)
     do_setup_ycm=0
     do_setup_coc=1
@@ -456,6 +502,10 @@ case "${platform}" in
       do_global_installs=0
       do_user_installs=1
     fi
+    ;;
+  ubuntu)
+    do_setup_ycm=0
+    do_setup_coc=1
     ;;
 esac
 

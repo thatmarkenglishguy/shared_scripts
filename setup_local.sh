@@ -1,7 +1,21 @@
 #!/usr/bin/env bash
 
+_lsb_release_os_name() {
+  if command -v lsb_release &>/dev/null
+  then
+    case $(lsb_release -d | tr '[:upper:]' '[:lower:]') in
+      *ubuntu*)
+        os_name='ubuntu'
+        return 0
+        ;;
+    esac
+  fi
+
+  return 1
+}
+
 os_name='unknown'
-#Linux f143b1d40484 5.10.124-linuxkit #1 SMP PREEMPT Thu Jun 30 08:18:26 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *msys*|*mingw64*)
     os_name='msys'
@@ -14,6 +28,12 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
     ;;
   *linuxkit*)
     os_name='linux_kit'
+    ;;
+  *wsl*)
+    _lsb_release_os_name
+    ;;
+  *)
+    _lsb_release_os_name
     ;;
 esac
 
@@ -52,7 +72,11 @@ case "${os_name}" in
   msys)
     do_global_installs=1
     ;;
+  ubuntu)
+    do_global_installs=1
+    ;;
   *)
+
     case "$(whoami)" in
       root|ROOT)
         do_global_installs=1
@@ -162,6 +186,37 @@ fi
 # Main script
 touch "${HOME}/.commonrc"
 
+# Sort out node (for some platforms).
+if ! command -v nvm &>/dev/null
+then
+  case "${os_name}" in
+    ubuntu)
+      curl -o- -sSf https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
+      export nvm_dir="$home/.nvm"
+      [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
+      # [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion      
+      nvm install stable
+      ;;
+   esac
+fi
+
+# Sort out cargo (for some platforms).
+if ! command -v cargo &>/dev/null
+then
+  if [ -f "${HOME}/.cargo/env" ]
+  then
+    source "${HOME}/.cargo/env"
+    if ! command -v cargo &>/dev/null
+    then
+      case "${os_name}" in
+        ubuntu)
+          curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+          ;;
+       esac
+     fi
+  fi
+fi
+
 # Sort out flamegraph. It can be expensive so it's on command line.
 # Note at the moment we do this whether do_global_installs is true or not.
 if [ ${do_flamegraph} -eq 0 ]
@@ -172,11 +227,14 @@ else
   # Note at the moment we do this whether do_global_installs is true or not.
   if ! command -v flamegraph &>/dev/null
   then
+    if ! command -v cc &>/dev/null
+    then
+      sudo apt --assume-yes install build-essential
+    fi
     cargo install flamegraph
   fi
 fi
 
-#set -x
 if [ -f "${script_dir}/dotfiles/setup_local_bashrc.sh" ]
 then
   echo 'Setting up bashrc.' >&2

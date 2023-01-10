@@ -1,4 +1,19 @@
 #!/usr/bin/env zsh
+
+_lsb_release_os_name() {
+  if command -v lsb_release &>/dev/null
+  then
+    case $(lsb_release -d | tr '[:upper:]' '[:lower:]') in
+      *ubuntu*)
+        os_name='ubuntu'
+        return 0
+        ;;
+    esac
+  fi
+
+  return 1
+}
+
 os_name='unknown'
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *mingw64*)
@@ -16,6 +31,11 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *linuxkit*)
     os_name='linux_kit'
     ;;
+  *wsl*)
+   _lsb_release_os_name
+   ;;
+  *)
+   _lsb_release_os_name
 esac
 
 setup_script_dir="${0:A:h}"
@@ -144,6 +164,10 @@ case "${os_name}" in
   darwin)
     _add_to_file "source \"${setup_script_dir}/marke_msys_local_zsh.rc\"" "${HOME}/.zshrc"
     _add_to_file "source \"${_setup_shscripts_dir}/marke_mac_zsh.rc\"" "${HOME}/.zshrc"
+    ;;
+  ubuntu)
+    # TODO local sourcing
+    _add_to_file "source \"${setup_script_dir}/marke_msys_local_zsh.rc\"" "${HOME}/.zshrc"
     ;;
   msys|cygwin)
     _add_to_file "source \"${_setup_local_dir}/dotfiles/marke_local_zsh.rc\"" "${HOME}/.zshrc"

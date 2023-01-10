@@ -9,7 +9,7 @@
 _lsb_release_os_name() {
   if command -v lsb_release &>/dev/null
   then
-    case $(lsb-release -d | tr '[:upper:]' '[:lower:]') in
+    case $(lsb_release -d | tr '[:upper:]' '[:lower:]') in
       *ubuntu*)
         os_name='ubuntu'
         return 0
