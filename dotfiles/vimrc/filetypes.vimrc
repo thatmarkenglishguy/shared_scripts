@@ -69,9 +69,10 @@ augroup END
 ":command! -nargs=* ExecuteEchoPwd call ClearScreenRunExternalCommandHereWithPreviousVarArgs('pwd')
 ":nnoremap <C-X> :ExecuteEchoPwd<cr>
 
-" Rust
-augroup Rust
-  autocmd!
+" Rust commands used in rust and toml
+" Not sure but looks like it has to be execute + string using a:filetype, as
+" a:filetypes doesn't get expanded automatically...
+:function! DefineRustCommands(filetype)
   " This overrides the YouCompleteMe defaults in mappings.vimrc which are
   " based on IntelliJ.
   " These mappings are mostly based on Visual Studio Code (increasingly
@@ -80,31 +81,80 @@ augroup Rust
   " versions.
   " Preferences -> <Your Profile> -> Keys -> Presets click 'xterm Defaults'
   " https://apple.stackexchange.com/questions/281033/sending-ctrlfunction-key-on-iterm2
-  autocmd FileType Rust command! -nargs=* CargoRunWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo run', <f-args>)
-  autocmd FileType Rust command! -nargs=* CargoRunClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo run', <f-args>)
-  autocmd FileType Rust noremap <C-F5> :CargoRunWithPreviousArgs<cr>
-  autocmd FileType Rust noremap <C-F5><Space> :CargoRunClearPreviousArgs<Space>
-
-  autocmd FileType Rust command! -nargs=* CargoCheckWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo check', <f-args>)
-  autocmd FileType Rust command! -nargs=* CargoCheckClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo check', <f-args>)
-  autocmd FileType Rust noremap <leader>b :CargoCheckWithPreviousArgs<cr>
-  autocmd FileType Rust noremap <leader>b<Space> :CargoCheckClearPreviousArgs<Space>
-
-  autocmd FileType Rust command! -nargs=* CargoFormatWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo fmt', <f-args>)
-  autocmd FileType Rust command! -nargs=* CargoFormatClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo fmt', <f-args>)
-  autocmd FileType Rust noremap <leader>f :CargoFormatWithPreviousArgs<cr>
-  autocmd FileType Rust noremap <leader>f<Space> :CargoFormatClearPreviousArgs<Space>
-
-  autocmd FileType Rust command! -nargs=* CargoTestWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo test', <f-args>)
-  autocmd FileType Rust command! -nargs=* CargoTestClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo test', <f-args>)
-  autocmd FileType Rust noremap <leader>t :CargoTestWithPreviousArgs<cr>
-  autocmd FileType Rust noremap <leader>t<Space> :CargoTestClearPreviousArgs<Space>
+  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoRunWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs(''cargo run'', <f-args>)'
+  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoRunClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs(''cargo run'', <f-args>)'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <C-F5> :CargoRunWithPreviousArgs<cr>'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <C-F5><Space> :CargoRunClearPreviousArgs<Space>'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <leader>r :CargoRunWithPreviousArgs<cr>'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <leader>r<Space> :CargoRunClearPreviousArgs<Space>'
+'
+  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoCheckWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs(''cargo check'', <f-args>)'
+  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoCheckClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs(''cargo check'', <f-args>)'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <leader>b :CargoCheckWithPreviousArgs<cr>'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <leader>b<Space> :CargoCheckClearPreviousArgs<Space>'
+'
+  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoFormatWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs(''cargo fmt'', <f-args>)'
+  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoFormatClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs(''cargo fmt'', <f-args>)'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <leader>f :CargoFormatWithPreviousArgs<cr>'
+  execute 'autocmd FileType ' . a:filetype . ' noremap <leader>f<Space> :CargoFormatClearPreviousArgs<Space>'
+'
+"  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoTestWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs(''cargo test'', <f-args>)'
+"  execute 'autocmd FileType ' . a:filetype . ' command! -nargs=* CargoTestClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs(''cargo test'', <f-args>)'
+"  execute 'autocmd FileType ' . a:filetype . ' noremap <leader>t :CargoTestWithPreviousArgs<cr>'
+"  execute 'autocmd FileType a:filetype noremap <leader>t<Space> :CargoTestClearPreviousArgs<Space>'
 
   if g:use_coc == 0
     if g:use_ycm != 0
-      autocmd FileType Rust noremap <F12> :YcmCompleter GoToDefinition<cr>
+      autocmd FileType a:filetype noremap <F12> :YcmCompleter GoToDefinition<cr>
     endif
   endif
+:endfunction
+
+" toml
+augroup toml
+  autocmd!
+  call DefineRustCommands('toml')
+augroup END
+
+" rust
+augroup rust
+  autocmd!
+  call DefineRustCommands('rust')
+"  " This overrides the YouCompleteMe defaults in mappings.vimrc which are
+"  " based on IntelliJ.
+"  " These mappings are mostly based on Visual Studio Code (increasingly
+"  " prefering Windows/Linux layout over Mac)..
+"  " On Mac, Ctrl+Function key not supported in iterm2 by default in older
+"  " versions.
+"  " Preferences -> <Your Profile> -> Keys -> Presets click 'xterm Defaults'
+"  " https://apple.stackexchange.com/questions/281033/sending-ctrlfunction-key-on-iterm2
+"  autocmd FileType rust command! -nargs=* CargoRunWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo run', <f-args>)
+"  autocmd FileType rust command! -nargs=* CargoRunClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo run', <f-args>)
+"  autocmd FileType rust noremap <C-F5> :CargoRunWithPreviousArgs<cr>
+"  autocmd FileType rust noremap <C-F5><Space> :CargoRunClearPreviousArgs<Space>
+"  autocmd FileType rust noremap <leader>r :CargoRunWithPreviousArgs<cr>
+"  autocmd FileType rust noremap <leader>r<Space> :CargoRunClearPreviousArgs<Space>
+"
+"  autocmd FileType rust command! -nargs=* CargoCheckWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo check', <f-args>)
+"  autocmd FileType rust command! -nargs=* CargoCheckClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo check', <f-args>)
+"  autocmd FileType rust noremap <leader>b :CargoCheckWithPreviousArgs<cr>
+"  autocmd FileType rust noremap <leader>b<Space> :CargoCheckClearPreviousArgs<Space>
+"
+"  autocmd FileType rust command! -nargs=* CargoFormatWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo fmt', <f-args>)
+"  autocmd FileType rust command! -nargs=* CargoFormatClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo fmt', <f-args>)
+"  autocmd FileType rust noremap <leader>f :CargoFormatWithPreviousArgs<cr>
+"  autocmd FileType rust noremap <leader>f<Space> :CargoFormatClearPreviousArgs<Space>
+"
+"  autocmd FileType rust command! -nargs=* CargoTestWithPreviousArgs call ClearScreenRunExternalCommandHereWithPreviousVarArgs('cargo test', <f-args>)
+"  autocmd FileType rust command! -nargs=* CargoTestClearPreviousArgs call ClearPreviousClearScreenRunExternalCommandHereWithVarArgs('cargo test', <f-args>)
+"  autocmd FileType rust noremap <leader>t :CargoTestWithPreviousArgs<cr>
+"  autocmd FileType rust noremap <leader>t<Space> :CargoTestClearPreviousArgs<Space>
+"
+"  if g:use_coc == 0
+"    if g:use_ycm != 0
+"      autocmd FileType rust noremap <F12> :YcmCompleter GoToDefinition<cr>
+"    endif
+"  endif
 augroup END
 
 " Makefile
