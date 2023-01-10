@@ -11,6 +11,14 @@
   @goto launch
 )
 
+:: Now search the default downloads directory
+@set VS_DOWNLOAD_DIR=%USERPROFILE%\Downloads\Apps\Microsoft\VisualStudio\VS2022
+@for %%e in (%VS_DOWNLOAD_DIR%\*.exe) do @(
+  @set EXE=%%e
+  @goto launch
+)
+
+
 :: Now search in the current working directory
 @for %%e in (*.exe) do @(
   @set EXE=%%e
@@ -24,10 +32,15 @@
 
 :launch
 @if not exist %VS_LAYOUT_DIR% mkdir %VS_LAYOUT_DIR%
+
+:: Microsoft.VisualStudio.Component.VC.ATLMFC
+
 %EXE% --layout %VS_LAYOUT_DIR% --lang en-US ^
+--passive ^
 --add Microsoft.VisualStudio.Workload.NativeDesktop ^
 --add Microsoft.VisualStudio.Workload.ManagedDesktop ^
 --add Microsoft.VisualStudio.Workload.NetWeb ^
+--add Microsoft.VisualStudio.Component.VC.ATLMFC ^
 --includeRecommended
 
 :end

@@ -1,5 +1,5 @@
 :: Install Visual Studio 2022 from the Layout directory
- 
+
 @for %%e in (c:\vslayout\*.exe) do @(
   @set LAYOUT_EXE=%%e
   @goto launch_layout
@@ -11,9 +11,11 @@
 
 :launch_layout
 %LAYOUT_EXE% ^
+--noWeb ^
+--passive ^
 --add Microsoft.VisualStudio.Workload.NativeDesktop ^
 --add Microsoft.VisualStudio.Workload.ManagedDesktop ^
 --add Microsoft.VisualStudio.Workload.NetWeb ^
 --includeRecommended
- 
+
 :end
