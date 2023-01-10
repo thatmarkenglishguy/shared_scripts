@@ -58,6 +58,7 @@
   upstream = bold cyan
 [core]
   autocrlf = false
+  editor = vim
 
 [merge]
   tool = kdiff3
