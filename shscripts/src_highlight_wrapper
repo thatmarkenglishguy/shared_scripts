@@ -1,49 +1,87 @@
 #!/usr/bin/env sh
-#echo fish
-declare -a args
-args=( "${@}" )
 
-for source in "${@}"
-do
-  case "${source}" in
-    *Jenkinsfile|*.gradle)
-      source-highlight --failsafe -f esc --lang-def=Groovy.lang --style-file=esc.style -i "${source}"
-      ;;
-    *.toml)
-      source-highlight --failsafe -f esc --lang-def=tml.lang --style-file=esc.style -i "${source}"
-      ;;
-    ''|-)
-      _lang=''
-      if [ -n "${SRCLANG}" ]
-      then
-        _lang="${SRCLANG}"
-      elif [ -n "${LANG}" ]
-      then
-        _lang="${LANG}"
-      elif [ -n "${lang}" ]
-      then
-        _lang="${lang}"
-      fi
+#echo "ARGS: ${@}" >&2
+#echo "SRCLANG: ${SRCLANG}" >&2
+if command -v source-highlight >/dev/null
+then
+  declare -a src_hilite_lesspipe_args
+  src_hilite_lesspipe_args=( "${@}" )
+  _lang=''
+  _lang_arg=''
 
-      if [ -n "${_lang}" ]
-      then
-        # Cribbed from https://unix.stackexchange.com/a/470518/49416
-        # Sadly can't redirect stdin, so have to capture it and then pipe that in.
-        # TODO: Surely there's a better way to wire up stdin ?
-        # The docs for source-highlight mention "default is stdin" but no idea how to make that work.
-        # Sending -i '' and -o 'STDOUT' generates nada (but doesn't create an error either)
-        OLD_IFS="${IFS}"
-        IFS= file="$(cat)"
-        IFS="${OLD_IFS}"
-        echo "${file}" |source-highlight --failsafe --src-lang="${_lang}" -f esc --style-file=esc.style
-#        echo "LANGY" >&2
-      else
-        src-hilite-lesspipe.sh "${@}"
-      fi
-      ;;
-    *)
-      src-hilite-lesspipe.sh "${@}"
-      ;;
-  esac
-done
+  # stdin is indicated by LESSOPEN starting with '|' being followed by '-'
+  # e.g. LESSOPEN="|- /somewhere/shared_scripts/shscripts/src_highlight_wrapper %s"
+  # We shouldn't pass the - indicating STDIN through because not all tools understand it
+  if [ "${src_hilite_lesspipe_args[0]}" = '-' ]
+  then
+    src_hilite_lesspipe_args=( "${src_hilite_lesspipe_args[@]:1}" )
+  fi
+
+  if [ -n "${SRCLANG}" ]
+  then
+    _lang="${SRCLANG}"
+  fi
+
+  if [ -n "${_lang}" ]
+  then
+    _lang_arg="--src-lang=${_lang}"
+  fi
+
+  function attempt_source_highlight() {
+    local source
+    local src_lang
+    local lang_def
+    local source_higlight_extra_args
+    declare -a source_higlight_extra_args
+    source="${1}"
+    src_lang="${2}"
+    lang_def="${3}"
+    source_higlight_extra_args=()
+    if [ -n "${src_lang}" ]
+    then
+      source_higlight_extra_args+=( "--src-lang=${src_lang}" )
+    elif [ -n "${lang_def}" ]
+    then
+      source_higlight_extra_args+=( "--lang-def=${lang_def}" )
+    fi
+
+    source_higlight_extra_args+=( "${@:4}" )
+#    cat <<EOF
+#    source-highlight --failsafe "${source_higlight_extra_args[@]}" -f esc --style-file=esc.style -i "${source}"
+#EOF
+    source-highlight --failsafe ${source_higlight_extra_args[@]} -f esc --style-file=esc.style -i "${source}"
+  }
+
+  for source in "${@}"
+  do
+    case "${source}" in
+      *Jenkinsfile|*.gradle)
+        attempt_source_highlight "${source}" "${_lang}" 'Groovy.lang'
+        ;;
+      *.toml)
+        attempt_source_highlight "${source}" "${_lang}" 'tml.lang'
+        #source-highlight --failsafe -f esc --lang-def=tml.lang --style-file=esc.style -i "${source}"
+        ;;
+      ''|-)
+        if [ -n "${_lang}" ]
+        then
+          # Cribbed from https://unix.stackexchange.com/a/470518/49416
+          # Sadly can't redirect stdin, so have to capture it and then pipe that in.
+          # TODO: Surely there's a better way to wire up stdin ?
+          # The docs for source-highlight mention "default is stdin" but no idea how to make that work.
+          # Sending -i '' and -o 'STDOUT' generates nada (but doesn't create an error either)
+          OLD_IFS="${IFS}"
+          IFS= file="$(cat)"
+          IFS="${OLD_IFS}"
+          echo "${file}" |source-highlight --failsafe "${_lang_arg}" -f esc --style-file=esc.style
+        else
+          src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+        fi
+        ;;
+      *)
+        src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+        ;;
+    esac
+  done
+fi
 
