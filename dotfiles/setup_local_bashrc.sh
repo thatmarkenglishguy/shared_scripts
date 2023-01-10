@@ -6,6 +6,20 @@
 #  on_mac=1
 #fi
 
+_lsb_release_os_name() {
+  if command -v lsb_release &>/dev/null
+  then
+    case $(lsb-release -d | tr '[:upper:]' '[:lower:]') in
+      *ubuntu*)
+        os_name='ubuntu'
+        return 0
+        ;;
+    esac
+  fi
+
+  return 1
+}
+
 os_name='unknown'
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *mingw64*)
@@ -23,6 +37,12 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *linuxkit*)
     os_name='linux_kit'
     ;;
+  *wsl*)
+   _lsb_release_os_name
+   ;;
+  *)
+   _lsb_release_os_name
+   ;;
 esac
 
 _got_readlink=0
@@ -163,6 +183,10 @@ case "${os_name}" in
     _add_to_file "if \[ -f \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\" \]\; then source \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\" \; fi" "${HOME}/.bashrc"
     _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
     ;;
+  ubuntu)
+    # TODO local stuff
+    _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
+    ;;
 esac
 #source_line="source \"${_setup_shscripts_dir}/marke_mac_bash.rc\""
 #if ! grep "${source_line}" ~/.bashrc 2>&1 1>/dev/null
@@ -189,6 +213,24 @@ esac
 ##      ;;
 #  esac
 #fi
+
+# Bash completion
+case "${os_name}" in
+  darwin)
+    if [ -f $(brew --prefix)/etc/bash_completion ]
+    then
+      . $(brew --prefix)/etc/bash_completion
+    fi
+    ;;
+esac
+
+# kubectl completion
+if command -v kubectl >/dev/null
+then
+  source /dev/stdin <<<"$(kubectl completion bash)"
+  complete -F __start_kubectl k
+  alias k='kubectl'
+fi
 
 # Sort out git completion
 if [ ! -f "${HOME}/.git-completion.bash" ]
@@ -269,6 +311,9 @@ then
         ;;
       msys)
         pacman --noconfirm -S mingw-w64-x86_64-source-highlight
+        ;;
+      ubuntu)
+        sudo apt-get --assume-yes install source-highlight
         ;;
       *)
         echo "Don't know how to install source-highlight on '${os_name}'" >&2
