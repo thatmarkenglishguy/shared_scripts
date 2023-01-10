@@ -29,6 +29,14 @@ then
   done
 fi
 
+# source the stuff in profile.d/bash_profile.d
+for f in "${marke_local_bash_script_dir}/profile.d/local/bash_profile.d"/*
+do
+  if [ -f "${f}" ]
+  then
+    source "${f}"
+  fi
+done
 
 # Not exactly sure why need to do this for bash given it's sourced...
 export -f gitget
@@ -78,8 +86,17 @@ if [ -f "${HOME}/google-cloud-sdk/path.bash.inc" ]; then . "${HOME}/google-cloud
 # The next line enables shell command completion for gcloud.
 if [ -f "${HOME}/google-cloud-sdk/completion.bash.inc" ]; then . "${HOME}/google-cloud-sdk/completion.bash.inc"; fi
 
+# Bash completion
+case "${os_name}" in
+  darwin)
+    if [ -f $(brew --prefix)/etc/bash_completion ]; then
+      source $(brew --prefix)/etc/bash_completion
+    fi
+    ;;
+esac
+
 # Kubectl completion
-if which kubectl &>/dev/null
+if command -v kubectl &>/dev/null
 then
   source /dev/stdin <<<"$(kubectl completion bash)"
   # $((( #vim syntax higlighter is having a bit of a conniption which is why this is at the bottom of the file...
@@ -92,4 +109,12 @@ if command -v flamegraph &>/dev/null
 then
   source "${HOME}/.flamegraph-completion.bash"
 fi
+
+# History
+# See http://www.caliban.org/bash/
+if [ -n "${HISTIGNORE}" ]
+then
+  export HISTIGNORE="${HISTIGNORE}:"
+fi
+export HISTIGNORE="${HISTIGNORE}&:ls:mutt:[bf]g:exit"
 
