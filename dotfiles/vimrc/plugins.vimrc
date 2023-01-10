@@ -10,7 +10,11 @@ Plug '~/.fzf'
 Plug 'dylon/vim-antlr'
 Plug 'gyim/vim-boxdraw'
 Plug 'mtdl9/vim-log-highlighting' " log syntax highlighting. We shall see (01/10/2022)
-Plug 'rust-lang/rust.vim'
+Plug 'vim-test/vim-test' " running tests plugin. We shall sett (08/11/2022)
+if g:use_coc == 0
+  " Assume CoC is going to handle Rust
+  Plug 'rust-lang/rust.vim'
+endif
 " Language servers (notably Rust)
 " This looks like one guy having a go
 "Plug 'prabirshrestha/async.vim'
@@ -23,8 +27,11 @@ Plug 'rust-lang/rust.vim'
 "     \ }
 Plug 'junegunn/fzf.vim'
 
-if g:use_coc != 0
+" if g:use_coc != 0
+" Actually install CoC
   Plug 'neoclide/coc.nvim', {'branch': 'release'}
+" endif
+if g:use_coc != 0
   Plug 'jackguo380/vim-lsp-cxx-highlight'
   " Linting for CoC using ALE
   " (see https://chmanie.com/post/2020/07/17/modern-c-development-in-neovim/)
@@ -32,8 +39,12 @@ if g:use_coc != 0
   " File formatting
 "  Plug 'rhysd/vim-clang-format'
 endif
+
 call plug#end()
 
+" For test plugin
+" See https://github.com/vim-test/vim-test#configuring
+"let test#strategy = "vimterminal"
 " For fzf-plugin
 " See plugin which ships with fzf instructions at:
 " https://github.com/junegunn/fzf#as-vim-plugin
