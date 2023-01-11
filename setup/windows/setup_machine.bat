@@ -1,4 +1,5 @@
 :: Setup all the things
+@set SCRIPT_DIR=%~dp0
 
 :: You might have to do this line yourself if you've checked out this repo inside WSL
 :: You might see a CreateProcessEntryCommon error but can ignore it
@@ -7,7 +8,7 @@
   @goto founduser
 )
 
-echo "No wsl user for you" >&2
+@echo "No wsl user for you" >&2
 @goto exit
 
 :founduser
@@ -46,6 +47,10 @@ setx PATH "%PATH%%PATHBINDIR%"
 
 :: Download the rust installer
 powershell -Command "Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe -OutFile %BINDIR%\rustup-init.exe"
+
+:: Install Visual Studio
+@call %SCRIPT_DIR%\vs2022\install.bat
+
 
 :gotrustup
 "%BINDIR%\rustup-init.exe" -y --no-modify-path

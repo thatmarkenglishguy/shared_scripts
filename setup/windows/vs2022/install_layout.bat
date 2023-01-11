@@ -27,6 +27,14 @@
 
 
 :unfound
+@set VS_DOWNLOAD_DIR=%USERPROFILE%\Downloads\Apps\Microsoft\VisualStudio\VS2022
+@set VS_DOWNLOAD_PATH=%VS_DOWNLOAD_DIR%\vs_Community.exe
+if not exist %VS_DOWNLOAD_DIR% mkdir %VS_DOWNLOAD_DIR%
+powershell -Command "Invoke-WebRequest https://aka.ms/vs/17/release/vs_Community.exe -OutFile %VS_DOWNLOAD_PATH%"
+@if exist %VS_DOWNLOAD_PATH% @(
+  @set EXE=%VS_DOWNLOAD_PATH%
+  @goto launch
+)
 @echo Unable to find layout installer in current directory or %VS_DOWNLOAD_DIR% >&2
 @goto end
 
