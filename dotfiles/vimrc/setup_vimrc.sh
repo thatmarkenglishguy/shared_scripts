@@ -311,7 +311,7 @@ EOF
       # The other lighter-weight plugins
       # #coc-rust-rls seems to be deprecated. TODO Remove this comment and the line below if that's all good.
       #_plug_command "${vim_quit_command}" +'CocInstall coc-rust-analyzer|CocInstall coc-rust-rls|CocInstall coc-json'
-      
+
       _plug_command "${vim_quit_command}" +'CocInstall -sync coc-json coc-rust-analyzer'
     fi
   fi
