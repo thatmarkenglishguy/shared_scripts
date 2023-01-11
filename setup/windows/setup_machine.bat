@@ -1,5 +1,8 @@
 :: Setup all the things
 @set SCRIPT_DIR=%~dp0
+@set PATHBATSDIR=
+@set PATHBINDIR=
+@set OLD_PATH=%PATH%
 
 :: You might have to do this line yourself if you've checked out this repo inside WSL
 :: You might see a CreateProcessEntryCommon error but can ignore it
@@ -24,6 +27,25 @@ winget import --accept-source-agreements --accept-package-agreements winget_impo
 :: Install PyWin32
 py -m pip install --upgrade pywin32
 
+:: Sort out the bats path
+@for %%d in (%~dp0..\..) do @set BATSDIR=%%~fd\bats
+
+:: Check for BATSDIR in PATH
+set PATH| findstr /C:"%BATSDIR%" >NUL
+
+if %ERRORLEVEL% NEQ 0 @goto addbats
+@goto gotbats
+
+:addbats
+:: Check for ; at the end of the PATH
+@set PATHBATSDIR=%BATSDIR%
+@set PATH| findstr /E /C:";" >NUL
+@if %ERRORLEVEL% EQU 1 @set PATHBATSDIR=;%PATHBATSDIR%
+setx PATH "%PATH%%PATHBATSDIR%"
+set PATH=%PATH%%PATHBATSDIR%
+
+
+:gotbats
 :: Sort out a place to put random binaries
 @set BINDIR=c:\bin
 @if not exist %BINDIR% mkdir %BINDIR%
@@ -36,12 +58,14 @@ py -m pip install --upgrade pywin32
 
 :addbin
 :: Check for ; at the end of the PATH
-@set PATHBINDIR="%BINDIR%"
+@set PATHBINDIR=%BINDIR%
 @set PATH| findstr /E /C:";" >NUL
-@if %ERRORLEVEL% EQU 1 @set PATHBINDIR=";%PATHBINDIR%" 
+@if %ERRORLEVEL% EQU 1 @set PATHBINDIR=;%PATHBINDIR%
 setx PATH "%PATH%%PATHBINDIR%"
+set PATH=%PATH%%PATHBINDIR%
 
 :gotbin
+@if exist %USERPROFILE%\.cargo @goto rustinstalled
 
 @if EXIST "%BINDIR%\rustup-init.exe" @goto gotrustup
 
@@ -51,9 +75,9 @@ powershell -Command "Invoke-WebRequest https://static.rust-lang.org/rustup/dist/
 :: Install Visual Studio
 @call %SCRIPT_DIR%\vs2022\install.bat
 
-
 :gotrustup
 "%BINDIR%\rustup-init.exe" -y --no-modify-path
 
+:rustinstalled
 
 :exit
