@@ -1,4 +1,4 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 
 #echo "ARGS: ${@}" >&2
 #echo "SRCLANG: ${SRCLANG}" >&2
@@ -75,11 +75,17 @@ then
           IFS="${OLD_IFS}"
           echo "${file}" |source-highlight --failsafe "${_lang_arg}" -f esc --style-file=esc.style
         else
-          src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+          if command -v src-hilite-lesspipe.sh
+          then
+            src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+          fi
         fi
         ;;
       *)
-        src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+        if command -v src-hilite-lesspipe.sh
+        then
+          src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+        fi
         ;;
     esac
   done
