@@ -10,6 +10,9 @@
 					"PackageIdentifier" : "Deezer.Deezer"
 				},
 				{
+					"PackageIdentifier" : "Foxit.FoxitReader"
+				},
+				{
 					"PackageIdentifier" : "Google.Drive"
 				},
 				{
@@ -25,7 +28,13 @@
 					"PackageIdentifier" : "Python.Python.3.11"
 				},
 				{
+					"PackageIdentifier" : "SlackTechnologies.Slack"
+				},
+				{
 					"PackageIdentifier" : "Sonos.S1Controller"
+				},
+				{
+					"PackageIdentifier" : "WhatsApp.WhatsApp"
 				}
 			],
 			"SourceDetails" : 
