@@ -9,8 +9,10 @@ Plug 'altercation/vim-colors-solarized'
 Plug '~/.fzf'
 Plug 'dylon/vim-antlr'
 Plug 'gyim/vim-boxdraw'
-Plug 'mtdl9/vim-log-highlighting' " log syntax highlighting. We shall see (01/10/2022)
-Plug 'vim-test/vim-test' " running tests plugin. We shall sett (08/11/2022)
+Plug 'mtdl9/vim-log-highlighting' " log syntax highlighting.
+Plug 'vim-test/vim-test' " running tests plugin. We shall see (08/11/2022)
+Plug 'jparise/vim-graphql' " graphql plugin. (10/02/2023)
+
 if g:use_coc == 0
   " Assume CoC is going to handle Rust
   Plug 'rust-lang/rust.vim'
