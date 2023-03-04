@@ -1,4 +1,4 @@
 #!/usr/bin/env sh
 
-ps -ef | grep -i "${1}" | grep -v 'grep\|pskill' | tr -s ' ' | cut -d' ' -f 3 | xargs kill
+ps -ef | grep -i "${1}" | grep -v 'grep\|pskill' | tr -s ' ' | cut -d' ' -f 3 | xargs kill "${@:2}"
 
