@@ -8,3 +8,5 @@ vimrctemp*
 *.so
 *.dynlib
 *.lib
+.idea/
+
