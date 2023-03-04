@@ -75,14 +75,14 @@ then
           IFS="${OLD_IFS}"
           echo "${file}" |source-highlight --failsafe "${_lang_arg}" -f esc --style-file=esc.style
         else
-          if command -v src-hilite-lesspipe.sh
+          if command -v src-hilite-lesspipe.sh &>/dev/null
           then
             src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
           fi
         fi
         ;;
       *)
-        if command -v src-hilite-lesspipe.sh
+        if command -v src-hilite-lesspipe.sh &>/dev/null
         then
           src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
         fi

@@ -17,10 +17,12 @@ fi
 
 shown_new=0
 shown_modified=0
+shown_deleted=0
 
 while read -r
 do
   line="${REPLY}"
+  prefix="${script_dir}/copy_to_phone"
 
   case "${line}" in
     \?\?*)
@@ -29,6 +31,22 @@ do
         echo '# New'
         shown_new=1
       fi
+      echo "${prefix}" "${@}" "$(pwd)/${line:3}" '"${@}"'
+      ;;
+    \ D*)
+      if [ ${shown_deleted} -eq 0 ]
+      then
+        echo '# Deleted so do a bit of this'
+        echo "${prefix}" "${@}" "$(pwd)/delete_me" '"${@}"'
+        cat <<EOF >./delete_me
+#!/usr/bin/env bash
+# Delete unwanted files from git
+
+EOF
+        chmod 755 ./delete_me
+        shown_deleted=1
+      fi
+      echo "git rm --force \"$(pwd)/${line:3}\" '"${@}"'" >>./delete_me
       ;;
     \ M*)
       if [ ${shown_modified} -eq 0 ]
@@ -36,9 +54,9 @@ do
         echo '# Modified'
         shown_modified=1
       fi
+      echo "${prefix}" "${@}" "$(pwd)/${line:3}" '"${@}"'
       ;;
   esac
 
-  echo "${script_dir}/copy_to_phone" "${@}" "$(pwd)/${line:3}" '"${@}"'
-done < <(git status --porcelain --untracked-files)
+done < <(git status --porcelain --untracked-files | sort)
 
