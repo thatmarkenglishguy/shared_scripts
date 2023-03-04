@@ -213,7 +213,7 @@ _pluginUp() {
             then
               sudo apt-get install --assume-yes cmake
             else
-              echo 'No apt-get so not sure how to install cmake on ubuntu' >&2 
+              echo 'No apt-get so not sure how to install cmake on ubuntu' >&2
             fi
           else
             echo "Skipping global install of cmake" >&2
