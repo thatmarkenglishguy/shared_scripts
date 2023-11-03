@@ -1,0 +1,76 @@
+# :vim ft=shell
+
+__source_bash_files() {
+  # Parameters:
+  #  1 - Directory to source files in.
+  #  2 - The root file used to trigger this call.
+  local profile_bash_dir
+  local root_profile_bash_path
+  local sub_dirs
+  local sub_dir_name
+  profile_bash_dir="${1}"
+  root_profile_bash_path="${2}"
+  declare -a sub_dirs
+  sub_dirs=()
+
+  if [ ! -d "${profile_bash_dir}" ]
+  then
+    return 1
+  fi
+
+  if declare -F time::debug_message >/dev/null
+  then
+    time::debug_message "Sourcing files in ${profile_bash_dir}"
+  fi
+
+  while read profile_bash_entry
+  do
+#    echo "ENTRY: ${profile_bash_entry}" >&2
+    if [ -f "${profile_bash_entry}" ]
+    then
+      if [ "${profile_bash_entry}" != "${root_profile_bash_path}" ]
+      then
+        case "${profile_bash_entry}" in
+          *common*)
+            : # Don't source common files
+            ;;
+          *)
+            if declare -F time::debug_message >/dev/null
+            then
+              time::debug_message "Sourcing ${profile_bash_entry}"
+            fi
+            source "${profile_bash_entry}"
+            ;;
+        esac
+      fi
+    elif [ -d "${profile_bash_entry}" ] \
+      && [ "${profile_bash_entry}" != "${profile_bash_dir}" ]
+    then
+      sub_dir_name="${profile_bash_entry##*/}"
+      # If sub dir is *bash*, *common*, or local
+      if [ -z "${sub_dir_name##*bash*}" ] \
+        || [ -z "${sub_dir_name##*common*}" ] \
+        || [ "${sub_dir_name}" = 'local' ]
+      then
+        sub_dirs+=( "${profile_bash_entry}" )
+      fi
+    fi
+  done < <(find "${profile_bash_dir}" -maxdepth 1 ! \( \
+    -path "*.sw?" -o \
+    -path "${profile_bash_dir}/root.*" -o \
+    -path "*zsh*" -o \
+    -path "*.log" -o \
+    -path "*.txt" \
+  \))
+
+  for sub_dir in "${sub_dirs[@]}"
+  do
+    __source_bash_files "${sub_dir}" "${root_profile_bash_path}"
+  done
+
+  if declare -F time::debug_message >/dev/null
+  then
+    time::debug_message "Finished sourcing files in ${profile_bash_dir}"
+  fi
+}
+
