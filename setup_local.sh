@@ -76,7 +76,6 @@ case "${os_name}" in
     do_global_installs=1
     ;;
   *)
-
     case "$(whoami)" in
       root|ROOT)
         do_global_installs=1
@@ -127,7 +126,8 @@ function usage() {
   cat <<EOF >&2
 $(basename "${0}") [--no-flamegraph] [--global-installs] [--no-global-installs]
 
-  --no-flamegraph       If specified, don't install cargo flamegraph which can be expensive. Defaults to $(boolstring ${do_flamegraph}).
+  --flamegraph          If specified, install cargo flamegraph which can be expensive. Defaults to $(boolstring ${do_flamegraph}).
+   --no-flamegraph      If specified, don't install cargo flamegraph which can be expensive. Defaults to $(inverseboolstring ${do_flamegraph}).
   --global-installs     If specified, do global installs. Defaults to $(boolstring ${do_global_installs}).
   --no-global-installs  If specified, don't do global installs. Defaults to $(inverseboolstring ${do_global_installs}).
 EOF
@@ -145,6 +145,9 @@ do
   arg="${args[${i}]}"
 
   case "${arg}" in
+    --flamegraph|--flame-graph)
+      do_flamegraph=1
+      ;;
     --no-flamegraph|--no-flame-graph)
       do_flamegraph=0
       ;;
@@ -215,6 +218,63 @@ then
        esac
      fi
   fi
+fi
+
+# Sort out sdkman (for some platforms)
+echo "Installing sdkman" >&2
+if ! command -v sdk &>/dev/null
+then
+  if ! command -v zip &>/dev/null
+  then
+    case "${os_name}" in
+      ubuntu)
+        sudo apt-get --assume-yes install zip
+        ;;
+      darwin)
+        brew install zip
+        ;;
+      msys)
+        pacman -Sy --needed --noconfirm zip
+        ;;
+    esac
+  fi
+
+  if ! command -v unzip &>/dev/null
+  then
+    case "${os_name}" in
+      ubuntu)
+        sudo apt-get --assume-yes install unzip
+        ;;
+      darwin)
+        brew install unzip
+        ;;
+      msys)
+        pacman -Sy --needed --noconfirm unzip
+        ;;
+    esac
+  fi
+
+  curl -s "https://get.sdkman.io" | bash
+  source "${HOME}/.sdkman/bin/sdkman-init.sh"
+
+  case "${os_name}" in
+    ubuntu)
+      if ! command -v sdk &>/dev/null
+      then
+        echo "Unable to install sdkman successfully (it's not on the path)" >&2
+      else
+        echo "Installing java" >&2
+        sdk install java
+        echo "Installing gradle" >&2
+        sdk install gradle
+        echo "Installing kotlin" >&2
+        sdk install kotlin
+      fi
+      ;;
+    *)
+      echo "We don't use sdkman on ${os_platform} yet, although we probably should." >&2
+      ;;
+  esac
 fi
 
 # Sort out flamegraph. It can be expensive so it's on command line.

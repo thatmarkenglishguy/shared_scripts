@@ -3,6 +3,10 @@
 # Expect argument one to be script root directory
 marke_local_common_script_dir="${1}"
 #echo "marke_local_common_script_dir: '${marke_local_common_script_dir}'"
+# Show messages by setting SCRIPT_TIME_ELAPSED_MESSAGE_LEVEL=debug
+source "${marke_local_common_script_dir}/shscripts/script_time_elapsed"
+source "${marke_local_common_script_dir}/shscripts/source_bash_files"
+
 os_name='unknown'
 case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *mingw64*)
@@ -78,14 +82,14 @@ alias gopr='(url=$(git httpsrawurl); ${__open_cmd} "${url/publicgithub/github}/p
 
 # source the stuff in profile.d
 #  needs shared_scripts
-for f in "${marke_local_common_script_dir}/profile.d/local"/*
-do
-  if [ -f "${f}" ]
-  then
-    . "${f}"
-  fi
-done
-
+# 31/10/2023 Now done by root.profile.bash
+#for f in "${marke_local_common_script_dir}/profile.d/local"/*
+#do
+#  if [ -f "${f}" ]
+#  then
+#    . "${f}"
+#  fi
+#done
 
 # Run check_ssh_agent/run-sshagent/~/temp/ssh-agent.sh
 if [ -f "${marke_local_common_script_dir}/onpath/check_ssh_agent" ]
@@ -94,12 +98,14 @@ then
   then
     if [ -f "${marke_local_common_script_dir}/onpath/run_ssh_agent" ]
     then
+      time::debug_message "${marke_local_common_script_dir}/onpath/run_ssh_agent"
       "${marke_local_common_script_dir}/onpath/run_ssh_agent" 1>/dev/null
     fi
   fi
 
   if "${marke_local_common_script_dir}/onpath/check_ssh_agent"
   then
+      time::debug_message ". ~/temp/ssh-agent.sh"
     . ~/temp/ssh-agent.sh >/dev/null
   fi
 fi
@@ -132,6 +138,7 @@ export LESS="-R -X -F ${LESS}"
 
 
 #Extra python script functions
+time::debug_message "Sourcing python scripts in ${marke_local_common_script_dir}/scripts/*.py"
 # Create function wrappers for the python scripts
 for f in `ls "${marke_local_common_script_dir}/scripts"/*.py | rev | cut -d/ -f 1 | rev | cut -d. -f 1`
 do
@@ -150,19 +157,15 @@ do
 
   eval "${scripty}"
 done
+time::debug_message "Finished sourcing python scripts in "${marke_local_common_script_dir}/scripts"/*.py"
 
 # Source the stuff in ~/.profile.d
 # External .profile.d sourcing
 if [ -d ~/.profile.d ]
 then
-  for f in ~/.profile.d/*
-  do
-    if [ -f "${f}" ]
-    then
-      source "${f}"
-    fi
-  done
+  __source_bash_files "${HOME}/.profile.d" "${BASH_SOURCE}"
 fi
+#time::debug_message "Finished sourcing ~/.profile.d"
 
 # GITHUB_USER setup
 export GITHUB_USER=wafflesouffle@github.com
@@ -187,15 +190,17 @@ function gitget() { git_get ; }
 #  #done < <(gitget orgs/"${org}"/repos -sS | jq -r .[].name)
 #}
 
+time::debug_message "Choosing gradle"
 # Choose a gradle
-if type gradle6 &>/dev/null
+if ! command -v gradle 1>/dev/null 2>&1
 then
-  if ! which gradle 1>/dev/null 2>&1
+  if type gradle6 &>/dev/null
   then
     gradle6 1>/dev/null 2>&1
   fi
 fi
 
+time::debug_message "Common aliases"
 # Some grep prettiness
 alias grep='grep --color'
 
@@ -245,6 +250,7 @@ function dirtitle {
 # What we have now based on mac...
 
 # Default to Java 11
+time::debug_message "Choosing java"
 if [ -z "${JAVA_HOME}" ]
 then
   if type j11 &>/dev/null
@@ -252,3 +258,6 @@ then
     j11 2>/dev/null
   fi
 fi
+
+time::debug_message "Finished marke_msys_local_common.rc"
+

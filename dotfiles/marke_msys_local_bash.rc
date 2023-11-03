@@ -1,46 +1,33 @@
 # 10 Apr 2020 Not currently used, but a starting point.
 # 29 Apr 2020 Ready for usage, Darwin and msys.
 # 12 Apr 2022 Support for zsh
+# 01 Nov 2023 time::debug_message
 
 # Expect argument one to be script root directory
 marke_local_bash_script_dir="$(dirname $(dirname ${BASH_SOURCE}))"
+source "${marke_local_bash_script_dir}/shscripts/script_time_elapsed"
+source "${marke_local_bash_script_dir}/shscripts/source_bash_files"
 
 # New things (we're going to add pathfunctions here, even though we might need it system wide too).
 if [ ! -f "${marke_local_bash_script_dir}/shscripts/bash_shscripts/pathfunctions" ]
 then
   echo "${marke_local_bash_script_dir}/shscripts/bash_shscripts/pathfunctions not found" >&2
 else
+  time::debug_message "Sourcing pathfunctions"
   source "${marke_local_bash_script_dir}/shscripts/bash_shscripts/pathfunctions"
 fi
 
-
+time::debug_message "Sourcing ${marke_local_bash_script_dir}/dotfiles/marke_msys_local_common.rc ${marke_local_bash_script_dir}"
 source "${marke_local_bash_script_dir}/dotfiles/marke_msys_local_common.rc" "${marke_local_bash_script_dir}"
 ##echo "marke_local_bash_script_dir: '${marke_local_bash_script_dir}'"
 
-# External .profile.d sourcing
-if [ -d ~/.profile.d/bash.profile.d ]
-then
-  for f in ~/.profile.d/bash.profile.d/*
-  do
-    if [ -f "${f}" ]
-    then
-      source "${f}"
-    fi
-  done
-fi
-
-# source the stuff in profile.d/bash_profile.d
-for f in "${marke_local_bash_script_dir}/profile.d/local/bash_profile.d"/*
-do
-  if [ -f "${f}" ]
-  then
-    source "${f}"
-  fi
-done
+time::debug_message "${marke_local_bash_script_dir}/profile.d/local/bash_profile.d/*"
+source "${marke_local_bash_script_dir}/profile.d/root.profile.bash"
 
 # Not exactly sure why need to do this for bash given it's sourced...
 export -f gitget
 
+time::debug_message "source git completion"
 source ~/.git-completion.bash
 
 # Setup GITAWAREPROMPT
@@ -48,6 +35,7 @@ if [ -z "${NOGITAWAREPROMPT}" ] || [ ${NOGITAWAREPROMPT} -ne 1 ]
 then
   GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
   #export GITAWAREPROMPT=~/code/thirdparty/shscripts/git-aware-prompt.git
+  time::debug_message "source git aware prompt"
   source "${GITAWAREPROMPT}/main.sh"
 fi
 #export PS1='\h:\W \u\$ '
@@ -59,15 +47,18 @@ fi
 export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
 
 # Source gradle completion (?)
+time::debug_message "source gradle completion"
 source ~/code/thirdparty/shscripts/gradle-completion.git/gradle-completion.bash
 
 # Aliases for java_sys_properties, tempstore, and gdl
 case "${os_name}" in
   darwin)
+    time::debug_message "source fzf completion"
     # Source fzf (not a good idea on msys)
     [ -f ~/.fzf.bash ] && source ~/.fzf.bash
 
     __=$(brew --prefix)
+    time::debug_message "source docker completion"
     # docker completion copied from https://docs.docker.com/docker-for-mac#install-shell-completion
     [ ! -L ${__}/etc/bash_completion.d/docker ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker.bash-completion ${__}/etc/bash_completion.d/docker
     [ ! -L ${__}/etc/bash_completion.d/docker-machine ] && ln -s /Applications/Docker.app/Contents/Resources/etc/docker-machine.bash-completion ${__}/etc/bash_completion.d/docker-machine
@@ -75,29 +66,24 @@ case "${os_name}" in
 
     if [ -f ${__}/etc/bash_completion ]
     then
+      time::debug_message "source brew completion"
       . ${__}/etc/bash_completion
     fi
    ;;
 esac
 
+time::debug_message "source Google Cloud SDK completion"
 # The next line updates PATH for the Google Cloud SDK.
 if [ -f "${HOME}/google-cloud-sdk/path.bash.inc" ]; then . "${HOME}/google-cloud-sdk/path.bash.inc"; fi
 
+time::debug_message "source gcloud completion"
 # The next line enables shell command completion for gcloud.
 if [ -f "${HOME}/google-cloud-sdk/completion.bash.inc" ]; then . "${HOME}/google-cloud-sdk/completion.bash.inc"; fi
-
-# Bash completion
-case "${os_name}" in
-  darwin)
-    if [ -f $(brew --prefix)/etc/bash_completion ]; then
-      source $(brew --prefix)/etc/bash_completion
-    fi
-    ;;
-esac
 
 # Kubectl completion
 if command -v kubectl &>/dev/null
 then
+  time::debug_message "source kubectl completion"
   source /dev/stdin <<<"$(kubectl completion bash)"
   # $((( #vim syntax higlighter is having a bit of a conniption which is why this is at the bottom of the file...
   complete -f __start_kubectl k
@@ -107,6 +93,7 @@ fi
 # Flamegraph completion
 if command -v flamegraph &>/dev/null
 then
+  time::debug_message "source flamegraph completion"
   source "${HOME}/.flamegraph-completion.bash"
 fi
 
@@ -118,3 +105,4 @@ then
 fi
 export HISTIGNORE="${HISTIGNORE}&:ls:mutt:[bf]g:exit"
 
+time::debug_message "End marke_msys_local_bash.rc"
