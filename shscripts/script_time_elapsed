@@ -1,0 +1,103 @@
+# :vim ft=shell
+
+# Functions to show elapsed time when trying to measure script usage.
+# Timer is initialised when this script is imported.
+# # Initialise timings with:
+# time::reinit
+# # Log messages with:
+# time::message something
+# # Log messages if SCRIPT_TIME_ELAPSED_MESSAGE_LEVEL set to debug:
+# SCRIPT_TIME_ELAPSED_MESSAGE_LEVEL=debug time::debug_message something
+# # e.g. if instrumenting .bashrc
+# SCRIPT_TIME_ELAPSED_MESSAGE_LEVEL=debug bash -li -c "echo hi bye; exit 42"; 
+
+# Nabbed from https://stackoverflow.com/questions/8903239/how-can-i-calculate-time-elapsed-in-a-bash-script
+
+# Initialise the timer.
+time::reinit() {
+  __time_clock_start=$(date "+%s%N")
+  __time_clock_prev=0
+    # Uncomment next line to see when clock is reset.
+#    echo "Starting time::clock at ${__time_clock_start}" >&2
+}
+
+# Initialise the timer once only.
+time::init() {
+  if [ -z "${__time_clock_start}" ]
+  then
+    time::reinit
+    return 0
+  fi
+
+  return 1
+}
+
+time::_clock_message_components() {
+  # Parameters:
+  #  1 Start time.
+  #  2 Previous delta.
+  # Returns on stdout
+  #  elapsed_total elapsed_delta
+  local time_clock_start
+  local formatted_prev
+  local time_clock_end
+  local formatted_total
+  local formatted_delta
+  time_clock_start="${1}"
+  formatted_prev="${2}"
+
+  time_clock_end=$(date "+%s%N")
+  formatted_total=$(echo "$((time_clock_end-time_clock_start))/1000000000" | bc -l)
+  formatted_delta=$(echo "${formatted_total}-${formatted_prev}" | bc -l)
+
+  printf "%6.4f %6.4f" ${formatted_total} ${formatted_delta}
+}
+
+# Update the global clock state
+time::_update_clock() {
+  # Parameters:
+  #  1 elapsed_total
+  local formatted_total
+  formatted_total=${1}
+  __time_clock_prev=${formatted_total}
+  # Unset to remove from current scope
+#  unset __time_clock_start __time_clock_prev
+}
+
+# Initialise the timer first time this script is imported.
+time::init
+
+# Show the time, elapsed time, and elapsed time delta prefixing the user supplied message.
+time::message() {
+  local formatted_total
+  local formatted_delta
+  local elapsed_message
+
+  if ! time::init
+  then
+    read formatted_total formatted_delta < <(time::_clock_message_components ${__time_clock_start} ${__time_clock_prev})
+    elapsed_message="${formatted_total} d=${formatted_delta}"
+    time::_update_clock ${formatted_total}
+  fi
+  date "+%a %b %d %Z %Y %H:%M:%S.%N [${elapsed_message}]: ${@}" >&2
+}
+
+# Show the time and elapsed time prefixing the user supplied message.
+# Uncomment the nested call to see timings and messages.
+time::debug_message() {
+  :
+  case "${SCRIPT_TIME_ELAPSED_MESSAGE_LEVEL}" in
+    debug|Debug|DEBUG)
+      time::message "${@}"
+      ;;
+  esac
+}
+
+time::test_message() {
+  time::message "Start"
+  sleep 0.1
+  time::message "Slept 0.1"
+  sleep 0.3
+  time::message "Slept 0.3"
+  time::message "End"
+}  
