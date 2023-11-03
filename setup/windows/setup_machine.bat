@@ -67,7 +67,7 @@ set PATH=%PATH%%PATHBINDIR%
 :gotbin
 @if exist %USERPROFILE%\.cargo @goto rustinstalled
 
-@if EXIST "%BINDIR%\rustup-init.exe" @goto gotrustup
+@if exist "%BINDIR%\rustup-init.exe" @goto gotrustup
 
 :: Download the rust installer
 powershell -Command "Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe -OutFile %BINDIR%\rustup-init.exe"
@@ -79,5 +79,10 @@ powershell -Command "Invoke-WebRequest https://static.rust-lang.org/rustup/dist/
 "%BINDIR%\rustup-init.exe" -y --no-modify-path
 
 :rustinstalled
+
+:extras
+@echo OPTIONAL: To avoid those annoying zone identifier files you get when you expand zip files for example, >&2
+@echo run gpedit.msc and edit >&2
+@echo Local Computer Policy/User Configuration/Administrative Templates/Windows Components/Attachment Manager/Do not preserve zone information in file attachments >&2
 
 :exit
