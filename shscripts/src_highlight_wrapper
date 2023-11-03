@@ -2,6 +2,7 @@
 
 #echo "ARGS: ${@}" >&2
 #echo "SRCLANG: ${SRCLANG}" >&2
+
 if command -v source-highlight >/dev/null
 then
   declare -a src_hilite_lesspipe_args
@@ -26,6 +27,26 @@ then
   then
     _lang_arg="--src-lang=${_lang}"
   fi
+
+  function run_src_hilite_lesspipe() {
+    local src_hilite_lesspipe_path
+   
+    if command -v src-hilite-lesspipe.sh &>/dev/null
+    then
+      src_hilite_lesspipe_path='src-hilite-lesspipe.sh'
+    elif command -v dpkg &>/dev/null
+    then
+      src_hilite_lesspipe_path="$(dpkg -L libsource-highlight-common | grep lesspipe | head -n1)"
+      if [ ! -f "${src_hilite_lesspipe_path}" ]
+      then
+        return 2
+      fi
+    else
+      return 1
+    fi
+
+    ${src_hilite_lesspipe_path} "${@}"
+  }
 
   function attempt_source_highlight() {
     local source
@@ -75,17 +96,19 @@ then
           IFS="${OLD_IFS}"
           echo "${file}" |source-highlight --failsafe "${_lang_arg}" -f esc --style-file=esc.style
         else
-          if command -v src-hilite-lesspipe.sh &>/dev/null
-          then
-            src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
-          fi
+          run_src_hilite_lesspipe "${src_hilite_lesspipe_args[@]}"
+#          if command -v src-hilite-lesspipe.sh &>/dev/null
+#          then
+#            src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+#          fi
         fi
         ;;
       *)
-        if command -v src-hilite-lesspipe.sh &>/dev/null
-        then
-          src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
-        fi
+        run_src_hilite_lesspipe "${src_hilite_lesspipe_args[@]}"
+#        if command -v src-hilite-lesspipe.sh &>/dev/null
+#        then
+#          src-hilite-lesspipe.sh "${src_hilite_lesspipe_args[@]}"
+#        fi
         ;;
     esac
   done
