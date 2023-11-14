@@ -40,6 +40,9 @@
 					"PackageIdentifier" : "OpenWhisperSystems.Signal"
 				},
 				{
+					"PackageIdentifier" : "Microsoft.Teams"
+				},
+				{
 					"PackageIdentifier" : "Sonos.S1Controller"
 				},
 				{
