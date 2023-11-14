@@ -1,4 +1,5 @@
-# :vim ft=shell
+# :vim set ft=shell
+source "$(dirname ${BASH_SOURCE})/script_time_elapsed"
 
 __source_bash_files() {
   # Parameters:
@@ -10,11 +11,14 @@ __source_bash_files() {
   local sub_dir_name
   profile_bash_dir="${1}"
   root_profile_bash_path="${2}"
+  shift
+  shift
   declare -a sub_dirs
   sub_dirs=()
 
   if [ ! -d "${profile_bash_dir}" ]
   then
+    echo "${profile_bash_dir} is not a directory." >&2
     return 1
   fi
 
@@ -39,7 +43,7 @@ __source_bash_files() {
             then
               time::debug_message "Sourcing ${profile_bash_entry}"
             fi
-            source "${profile_bash_entry}"
+            source "${profile_bash_entry}" "${@}"
             ;;
         esac
       fi
@@ -65,7 +69,7 @@ __source_bash_files() {
 
   for sub_dir in "${sub_dirs[@]}"
   do
-    __source_bash_files "${sub_dir}" "${root_profile_bash_path}"
+    __source_bash_files "${sub_dir}" "${root_profile_bash_path}" "${@}"
   done
 
   if declare -F time::debug_message >/dev/null
