@@ -25,6 +25,9 @@
 					"PackageIdentifier" : "JetBrains.IntelliJIDEA.Community"
 				},
 				{
+					"PackageIdentifier" : "TheDocumentFoundation.LibreOffice"
+				},
+				{
 					"PackageIdentifier" : "Microsoft.VisualStudioCode"
 				},
 				{
