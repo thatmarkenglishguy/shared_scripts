@@ -7,10 +7,14 @@
 # Examples:
 # Find all source files under the current directory.
 # srcfind .
-
-start_directory="${1:-.}"
+set -x
+seen_non_dash=0
+declare -a pre_args
+pre_args=()
+declare -a post_args
+post_args=()
 declare -a args
-args=( "${@:2}" )
+args=( "${@:1}" )
 
 raw_print=0
 for arg in "${args[@]}"
@@ -19,14 +23,50 @@ do
     -print0)
       raw_print=1
       ;;
+    -*)
+      if [ ${seen_non_dash} -eq 0 ]
+      then
+        pre_args+=( ${arg} )
+      else
+        post_args+=( ${arg} )
+      fi
+      ;;
+    *)
+      if [ ${seen_non_dash} -eq 0 ]
+      then
+        start_directory="${arg}"
+        seen_non_dash=1
+      else
+        post_args+=( ${arg} )
+      fi
+      ;;
   esac
 done
 
+if [ -z "${start_directory}" ]
+then
+  start_directory='.'
+fi
+
+#start_directory="${1:-.}"
+#declare -a args
+#args=( "${@:2}" )
+#
+#raw_print=0
+#for arg in "${args[@]}"
+#do
+#  case "${arg}" in
+#    -print0)
+#      raw_print=1
+#      ;;
+#  esac
+#done
+
 function find_source() {
 # -o means or
-  find "${start_directory}" \
-    ! \
-    \( \
+set -x
+  find ${pre_args[@]} "${start_directory}" \
+    \! \( \
       -path '*.sw?' -o \
       -path '*.iml' -o \
       -path '*.pdb' -o \
@@ -87,8 +127,9 @@ function find_source() {
       -path '*/cmake-build-debug' -o \
       -path '.' \
     \) \
-    "${args[@]}" \
+    ${post_args[@]} \
     "${@}"
+  set +x
 }
 
 #      -path 'gradlew.bat' -o \
@@ -198,4 +239,4 @@ function find_script_source() {
     fi
   done < <(find_source ! \( -type d \) "${@}")
 }
-
+set +x

@@ -19,6 +19,9 @@
 					"PackageIdentifier" : "Foxit.FoxitReader"
 				},
 				{
+					"PackageIdentifier" : "Google.Chrome"
+				},
+				{
 					"PackageIdentifier" : "Google.Drive"
 				},
 				{

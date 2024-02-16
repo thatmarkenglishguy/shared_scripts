@@ -1,5 +1,12 @@
 #!/usr/bin/env sh
 
 python3 -m pip install --upgrade pip
-pip3 list --outdated --format=freeze | cut -d'=' -f1 | xargs pip3 install -U
-pip3 list --outdated
+if command -v pip3 1>&2 2>/dev/null
+then
+  pip3 list --outdated --format=freeze | cut -d'=' -f1 | xargs pip3 install -U
+  pip3 list --outdated
+else
+  # From https://packaging.python.org/en/latest/tutorials/installing-packages/#id13
+  python3 -m pip install --upgrade pip setuptools wheel
+fi
+
