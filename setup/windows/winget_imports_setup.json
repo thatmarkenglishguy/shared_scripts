@@ -52,6 +52,9 @@
 					"PackageIdentifier" : "Sonos.S1Controller"
 				},
 				{
+					"PackageIdentifier" : "Telegram.TelegramDesktop"
+				},
+				{
 					"PackageIdentifier" : "WhatsApp.WhatsApp"
 				},
 				{
