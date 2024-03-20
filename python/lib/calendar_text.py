@@ -361,7 +361,12 @@ def run_calendar_text(argv=None):
   # noinspection PyTypeChecker
   parser_run = argparse.ArgumentParser(description=r"""Output calendar dates.
 
-For example: %(prog)s SomeFile.xml -e SomeElement -a SomeAttribute=foo""",
+For example:
+
+%(prog)s --days 1-7 --start 'Mar 09 2024' --weeks 5
+
+%(prog)s --days 1-7 --start 'Mar 09 2024' --weeks 2 --poll \ 'When do you need a cat sitter?'
+""",
     formatter_class=HelpFormatterPreserveDoubleNewlines
   )
   # noinspection PyUnusedLocal
@@ -390,7 +395,7 @@ For example: %(prog)s SomeFile.xml -e SomeElement -a SomeAttribute=foo""",
     parser_run.add_argument(
       '-p', '--poll',
       dest='Poll',
-      help='Output in summary format.'),
+      help='Use poll format output, where the poll question is the argument to this parameter.'),
     parser_run.add_argument(
       '--showtime',
       dest='Showtime',
