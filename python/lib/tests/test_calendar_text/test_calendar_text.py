@@ -5,6 +5,7 @@ Test for XXX.
 '''
 import datetime
 import unittest
+import os # linesep
 import calendar_text
 
 
@@ -122,6 +123,20 @@ class TestSummaryCalendarText(unittest.TestCase):
     )
 
 
+class TestOneLineCalendarText(unittest.TestCase):
+  def test_given_mon_wed_fri_2_weeks_from_july_27th_2018_then_result_is_2_tuples_of_dates_straddling_august(self):
+    start_date = datetime.date(year=2018, month=7, day=27)
+    weekdays = (1, 3, 5)
+    weeks = 2
+    date_visitor = calendar_text.OneLineDateVisitor()
+
+    result = calendar_text.do_run_calendar_text(weekdays, weeks, start_date, date_visitor)
+
+    result = iter(result)
+    self.assertEqual(os.linesep.join(('Mon 30 Jul', 'Wed 01 Aug', 'Fri 03 Aug')), next(result))
+    self.assertEqual(os.linesep.join(('Mon 06 Aug', 'Wed 08 Aug', 'Fri 10 Aug')), next(result))
+
+
 if __name__ == '__main__':
-  # import sys;sys.argv = ['', 'Test.testName']
   unittest.main()
+

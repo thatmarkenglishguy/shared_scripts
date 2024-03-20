@@ -3,6 +3,7 @@
 """Module used to CalendarText."""
 from __future__ import print_function
 import sys       # argv, exit()
+import os        # linesep
 import textwrap  # fill()
 import datetime  # now(), timedelta()
 from io import StringIO
@@ -23,6 +24,8 @@ log.setLevel(logging.WARN)
 # ==============================================================================
 # Globals
 # ==============================================================================
+linesep = os.linesep
+
 # EXAMPLE ONLY - WAXME
 
 
@@ -131,6 +134,31 @@ class DateVisitor(object):
   def __init__(self):
     super().__init__()
 
+  def start_with_month(self, date):
+    log.debug('start_with_month(%s)', date)
+
+  def start_year(self, date):
+    log.debug('start_year(%s)', date)
+
+  def start_month(self, date):
+    log.debug('start_month(%s)', date)
+
+  def add_day(self, date):
+    log.debug('add_day(%s)', date)
+
+  def finish_days(self):
+    pass
+
+  def consume(self):
+    pass
+
+  def adjust_start_date(self, start_date):
+    '''Optional override method for adjusting the start_date the visitor will output from.
+        :param start_date: Initial date to start output from.
+        :result Adjusted date to start output from.
+    '''
+    return move_date_to_monday(start_date)
+
 
 class SummaryDateVisitor(DateVisitor):
   """Summaries dates. Outputs month each time cross month line.
@@ -154,25 +182,32 @@ class SummaryDateVisitor(DateVisitor):
     self.output.write(item)
 
   def start_with_month(self, date):
+    super().start_with_month(date)
     self._append(date.strftime('%b'))
 
   def start_year(self, date):
+    super().start_year(date)
     self._line_item(date.strftime('%Y'))
 
   def start_month(self, date):
+    super().start_month(date)
     self._line_item(date.strftime('%b'))
 
   def add_day(self, date):
+    super().add_day(date)
     self._line_finish(date.strftime('%d'))
     self.lines.append(self.line_output.getvalue())
     self.line_output = StringIO()
 
   def finish_days(self):
+    super().finish_days()
     days = ', '.join(self.lines)
     self.lines = []
     self._finish(days)
 
   def consume(self):
+    super().consume()
+    log.debug('consume() output=%s', repr(self.output.getvalue()))
     result = self.output.getvalue()
     self.output = StringIO()
     return result
@@ -201,25 +236,64 @@ class PollDateVisitor(DateVisitor):
     self.output.write(item)
 
   def start_with_month(self, date):
+    super().start_with_month(date)
     self.current_month = date.strftime('%b')
 
   def start_year(self, date):
+    super().start_year(date)
     self._line_item(date.strftime('%Y'))
 
   def start_month(self, date):
+    super().start_month(date)
     self.current_month = date.strftime('%b')
 
   def add_day(self, date):
+    super().add_day(date)
     self._line_finish(f'"{date.strftime("%a")} {self.current_month} {date.strftime("%d")}"')
     self.lines.append(self.line_output.getvalue())
     self.line_output = StringIO()
 
   def finish_days(self):
+    super().finish_days()
     days = ' '.join(self.lines)
     self.lines = []
     self._finish(days)
 
   def consume(self):
+    super().consume()
+    log.debug('consume() output=%s', repr(self.output.getvalue()))
+    result = self.output.getvalue()
+    self.output = StringIO()
+    return result
+
+class OneLineDateVisitor(DateVisitor):
+  """Outputs a single line with the date in line format.
+     e.g. for 30 Jul 2018 -> Mon 30 Jul
+  """
+  def __init__(self):
+    super().__init__()
+    self.output = StringIO()
+    self.lines = []
+
+  def _finish(self, item):
+    self.output.write(item)
+
+#  def adjust_start_date(self, start_date):
+#    return start_date
+
+  def add_day(self, date):
+    super().add_day(date)
+    self.lines.append(date.strftime('%a %d %b'))
+
+  def finish_days(self):
+    super().finish_days()
+    days = linesep.join(self.lines)
+    self.lines = []
+    self._finish(days)
+
+  def consume(self):
+    super().consume()
+    log.debug('consume() output=%s', repr(self.output.getvalue()))
     result = self.output.getvalue()
     self.output = StringIO()
     return result
@@ -233,13 +307,14 @@ def gen_do_run_calendar_text(weekdays, weeks, start_date, date_visitor):
       :param date_visitor: Handles dates.
       :return Sequence of date strings containing specified weekdays.
   """
-  log.info('Running CalendarText')
   if not weekdays:
     return
 
   if start_date is None: start_date = datetime.datetime.now()
+  log.debug('Running CalendarText. weekdays=%s, weeks=%s, start_date=%s, date_visitor=%s'
+      , weekdays, weeks, start_date, date_visitor)
 
-  start_date = move_date_to_monday(start_date)
+  start_date = date_visitor.adjust_start_date(start_date)
 
   week_counter = 0
   date_iterator = start_date
@@ -397,6 +472,12 @@ For example:
       dest='Poll',
       help='Use poll format output, where the poll question is the argument to this parameter.'),
     parser_run.add_argument(
+      '-l', '--day-per-line',
+      dest='OneDayPerLine',
+      default=False,
+      action='store_true',
+      help='Output using one day on each line format.'),
+    parser_run.add_argument(
       '--showtime',
       dest='Showtime',
       default=False,
@@ -435,9 +516,12 @@ For example:
   else:
     start_date = datetime.datetime.strptime(vals_parse.Start, '%b %d %Y')
 
-  end_of_line_delim = '\n'
+  end_of_line_delim = linesep
   if vals_parse.Format is None:
-    if vals_parse.Poll:
+    if vals_parse.OneDayPerLine:
+      date_visitor = OneLineDateVisitor()
+      end_of_line_delim = linesep
+    elif vals_parse.Poll:
       date_visitor = PollDateVisitor(vals_parse.Poll)
       end_of_line_delim = ' '
     else:
