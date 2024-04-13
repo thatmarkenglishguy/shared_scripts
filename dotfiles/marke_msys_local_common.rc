@@ -144,11 +144,11 @@ for f in `ls "${marke_local_common_script_dir}/scripts"/*.py | rev | cut -d/ -f 
 do
   #echo Creating ${f}
   scripty="
-  ${f} () {
-  ~/code/mE/shared/shared_scripts/scripts/${f}.py \"\${@}\"
+${f}() {
+  ${marke_local_common_script_dir}/scripts/${f}.py \"\${@}\"
 }
 "
-#  echo "${scripty}"
+#  echo "${scripty}" >&2
 #    read -r -d '' scripty << EOF
 #  function ${f} () {
 #    ${f}.py "\${@}"
