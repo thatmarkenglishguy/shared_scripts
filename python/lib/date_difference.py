@@ -133,7 +133,7 @@ For example: %(prog)s '20 04 2023' '14 05 2023'""",
 
   # Check arguments
   if len(list_args) != 2:
-    print('Error: Exactly two arguments expected')
+    print(f'Error: Exactly two arguments expected. Got f{list_args}')
     ok_to_continue = False
 
   if ok_to_continue:  # If OK to run
