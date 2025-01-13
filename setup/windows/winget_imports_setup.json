@@ -55,6 +55,9 @@
 					"PackageIdentifier" : "Telegram.TelegramDesktop"
 				},
 				{
+					"PackageIdentifier" : "vim.vim"
+				},
+				{
 					"PackageIdentifier" : "WhatsApp.WhatsApp"
 				},
 				{
