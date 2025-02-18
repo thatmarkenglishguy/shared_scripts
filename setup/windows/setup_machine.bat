@@ -11,11 +11,11 @@
   @goto founduser
 )
 
-@echo "No wsl user for you" >&2
+@echo No wsl user for you >&2
 @goto exit
 
 :founduser
-@echo Found WSLUSER: %WSLUSER%
+@echo Found WSLUSER: %WSLUSER% >&2
 @if not exist %USERPROFILE%\wslme mklink /D %USERPROFILE%\wslme \\wsl.localhost\Ubuntu\home\%WSLUSER%
 
 :: Import all the standard things, including:
@@ -67,18 +67,22 @@ set PATH=%PATH%%PATHBINDIR%
 :gotbin
 @if exist %USERPROFILE%\.cargo @goto rustinstalled
 
-@if exist "%BINDIR%\rustup-init.exe" @goto gotrustup
+@if exist "%BINDIR%\rustup-init.exe" @goto gotrustupinit
 
 :: Download the rust installer
 powershell -Command "Invoke-WebRequest https://static.rust-lang.org/rustup/dist/x86_64-pc-windows-msvc/rustup-init.exe -OutFile %BINDIR%\rustup-init.exe"
 
-:: Install Visual Studio
-@call %SCRIPT_DIR%\vs2022\install.bat
-
-:gotrustup
+:gotrustupinit
 "%BINDIR%\rustup-init.exe" -y --no-modify-path
 
 :rustinstalled
+
+:setupregistry
+@call %SCRIPT_DIR%setup_registry.bat
+
+:: Install Visual Studio
+@call %SCRIPT_DIR%\vs2022\install.bat
+
 
 :extras
 @echo OPTIONAL: To avoid those annoying zone identifier files you get when you expand zip files for example, >&2

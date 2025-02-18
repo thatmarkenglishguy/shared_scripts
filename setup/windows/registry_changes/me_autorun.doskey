@@ -1,0 +1,3 @@
+;= Any invocation to doskey will install the history function so this file is here, even when empty, to trigger a doskey invocation at startup.
+;= That said, any doskey macros put in here will be added to standard cmd prompts.
+;=
