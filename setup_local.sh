@@ -127,7 +127,7 @@ function usage() {
 $(basename "${0}") [--no-flamegraph] [--global-installs] [--no-global-installs]
 
   --flamegraph          If specified, install cargo flamegraph which can be expensive. Defaults to $(boolstring ${do_flamegraph}).
-   --no-flamegraph      If specified, don't install cargo flamegraph which can be expensive. Defaults to $(inverseboolstring ${do_flamegraph}).
+  --no-flamegraph       If specified, don't install cargo flamegraph which can be expensive. Defaults to $(inverseboolstring ${do_flamegraph}).
   --global-installs     If specified, do global installs. Defaults to $(boolstring ${do_global_installs}).
   --no-global-installs  If specified, don't do global installs. Defaults to $(inverseboolstring ${do_global_installs}).
 EOF
@@ -194,6 +194,7 @@ if ! command -v nvm &>/dev/null
 then
   case "${os_name}" in
     ubuntu)
+      # TODO Switch to fnm
       curl -o- -sSf https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh | bash
       export nvm_dir="$home/.nvm"
       [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
@@ -277,11 +278,14 @@ then
   esac
 fi
 
+# Install pkg-config. It's small and useful for things like cargo-generate
+sudo apt --assume-yes install pkg-config
+
 # Sort out flamegraph. It can be expensive so it's on command line.
 # Note at the moment we do this whether do_global_installs is true or not.
 if [ ${do_flamegraph} -eq 0 ]
 then
-  echo '# Skipping cargo flamegraph installation for setup_local.sh'
+  echo '# Skipping cargo flamegraph installation for setup_local.sh' >&2
 else
   echo '# Installing cargo flamegraph...' >&2
   # Note at the moment we do this whether do_global_installs is true or not.
