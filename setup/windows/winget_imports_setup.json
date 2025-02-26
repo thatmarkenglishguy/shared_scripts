@@ -16,7 +16,13 @@
 					"PackageIdentifier" : "Deezer.Deezer"
 				},
 				{
+					"PackageIdentifier" : "Schniz.fnm"
+				},
+				{
 					"PackageIdentifier" : "Foxit.FoxitReader"
+				},
+				{
+					"PackageIdentifier" : "Git.Git"
 				},
 				{
 					"PackageIdentifier" : "Google.Chrome"
