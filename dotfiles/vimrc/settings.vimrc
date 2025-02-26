@@ -7,6 +7,9 @@ if !exists("g:use_ycm")
       \ && g:platform != "ubuntu"
     let g:use_ycm=1
     let g:use_coc=0
+  elseif g:platform == "windows"
+    let g:use_ycm=0
+    let g:use_coc=0
   else
     let g:use_ycm=0
     let g:use_coc=1
