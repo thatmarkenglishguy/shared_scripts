@@ -1,5 +1,27 @@
-#!/usr/bin/env sh
+#!/usr/bin/env bash
 script_dir="$(cd "$(dirname "$0")"; pwd)"
 
-python3 -m unittest discover -t "${script_dir}/lib" -s "${script_dir}/lib/tests" "${@}"
+declare -a args
+args=()
+dry_run=0
+
+for arg in "${@}"
+do
+  case "${arg}" in
+    --dry|--dry-run|--dryrun)
+      dry_run=1
+      ;;
+    *)
+      args+=( "${arg}" )
+      ;;
+  esac
+done
+
+if [ ${dry_run} -eq 0 ]
+then
+  python3 -m unittest discover -t "${script_dir}/lib" -s "${script_dir}/lib/tests" "${@}"
+else
+  echo python3 -m unittest discover -t "${script_dir}/lib" -s "${script_dir}/lib/tests" "${args[@]}"
+fi
+
 
