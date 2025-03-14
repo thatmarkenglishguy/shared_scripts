@@ -37,6 +37,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *linuxkit*)
     os_name='linux_kit'
     ;;
+  *penguin*)
+    os_name='penguin'
+    ;;
   *wsl*)
    _lsb_release_os_name
    ;;
@@ -128,7 +131,7 @@ fi
 
 echo "os name: ${os_name}"
 case "${os_name}" in
-  msys|cygwin|linux_kit)
+  msys|cygwin|linux_kit|penguin)
     _setup_local_dir="${HOME}/code/onpath"
     _setup_shscripts_dir="${HOME}/code/shscripts"
 #    source_line='source "${HOME}/code/shscripts/marke_mac_bash.rc"'
@@ -179,7 +182,7 @@ case "${os_name}" in
     _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
     _add_to_file "if \[ -f \"${_setup_shscripts_dir}/marke_mac_bash.rc\" \]\; then source \"${_setup_shscripts_dir}/marke_mac_bash.rc\" \; fi" "${HOME}/.bashrc"
     ;;
-  msys|cygwin|linux_kit)
+  msys|cygwin|linux_kit|penguin)
     _add_to_file "if \[ -f \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\" \]\; then source \"${_setup_local_dir}/dotfiles/marke_local_bash.rc\" \; fi" "${HOME}/.bashrc"
     _add_to_file "source \"${setup_script_dir}/marke_msys_local_bash.rc\"" "${HOME}/.bashrc"
     ;;
@@ -312,7 +315,7 @@ then
       msys)
         pacman --noconfirm -S mingw-w64-x86_64-source-highlight
         ;;
-      ubuntu)
+      penguin|ubuntu)
         sudo apt-get --assume-yes install source-highlight
         ;;
       *)

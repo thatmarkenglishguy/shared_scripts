@@ -30,6 +30,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *linuxkit*)
     os_name='linux_kit'
     ;;
+  *penguin*)
+    os_name='penguin'
+    ;;
   *wsl*)
    _lsb_release_os_name
    ;;
@@ -138,7 +141,7 @@ _pluginUp() {
         https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
   fi
 
-  if [ ! -d "${HOME}/.vim/bundle/Vundle.vim" ]
+  if [ ${do_vundle} -ne 0 ] && [ ! -d "${HOME}/.vim/bundle/Vundle.vim" ]
   then
     if ! command -v git 2>&1 1>/dev/null
     then
@@ -163,7 +166,7 @@ _pluginUp() {
             echo "Skipping global install of git" >&2
           fi
           ;;
-        ubuntu)
+        penguin|ubuntu)
           if [ ${do_global_installs} -ne 0 ]
           then
             if command -v apt-get &>/dev/null
@@ -206,14 +209,14 @@ _pluginUp() {
             echo "Skipping global install of cmake" >&2
           fi
           ;;
-        ubuntu)
+        penguin|ubuntu)
           if [ ${do_global_installs} -ne 0 ]
           then
             if command -v apt-get &>/dev/null
             then
               sudo apt-get install --assume-yes cmake
             else
-              echo 'No apt-get so not sure how to install cmake on ubuntu' >&2
+              echo "No apt-get so not sure how to install cmake on ${os_name}" >&2
             fi
           else
             echo "Skipping global install of cmake" >&2
@@ -370,7 +373,7 @@ function setup_vimrc() {
   do_plugins=${5:-1}
   do_global_installs=${6:-1}
   do_user_installs=${7:-1}
-
+set -x
   if [ ! "${actual_home_vimrcpath}" -ef "${script_vimrcpath}" ]
   then
     source_line="source ${script_vimrcpath}"
@@ -415,6 +418,7 @@ EOF
   else
     echo '.vimrc already pointing at this git repository.'
   fi
+  set +x
 }
 
 function setup_youcompleteme() {
@@ -502,6 +506,10 @@ case "${os_name}" in
       do_global_installs=0
       do_user_installs=1
     fi
+    ;;
+  penguin)
+    do_setup_ycm=0
+    do_setup_coc=1
     ;;
   ubuntu)
     do_setup_ycm=0

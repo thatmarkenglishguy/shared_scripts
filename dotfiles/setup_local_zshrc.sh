@@ -31,6 +31,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *linuxkit*)
     os_name='linux_kit'
     ;;
+  *penguin*)
+    os_name='penguin'
+    ;;
   *wsl*)
    _lsb_release_os_name
    ;;

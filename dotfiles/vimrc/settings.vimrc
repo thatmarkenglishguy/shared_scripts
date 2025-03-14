@@ -5,6 +5,7 @@ if !exists("g:use_ycm")
       \ && g:platform != "darwin"
       \ && g:platform != "linux_kit"
       \ && g:platform != "ubuntu"
+      \ && g:platform != 'penguin'
     let g:use_ycm=1
     let g:use_coc=0
   elseif g:platform == "windows"

@@ -21,6 +21,9 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *linuxkit*)
     os_name='linux_kit'
     ;;
+  *penguin*)
+    os_name='penguin'
+    ;;
 esac
 
 ## New things (we're going to add pathfunctions here, even though we might need it system wide too).

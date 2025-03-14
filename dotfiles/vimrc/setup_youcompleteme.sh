@@ -49,6 +49,10 @@ case "${uname_result}" in
     echo "Platform result suggests Mingw64 without Msys2/Mingw64 terminal as required. Please install Msys2 and launch a Mingw64 console from there."
     echo "Platform result: '${uname_result}'"
     ;;
+  *penguin*)
+    platform='penguin'
+    sub_platform='penguin'
+    ;;
   *linuxkit*)
     platform=linux_kit
     sub_platform=linux_kit

@@ -17,6 +17,9 @@ else
   elseif stridx(uname_result, "linuxkit") != -1
     let g:platform="linux_kit"
     let g:sub_platform="linux_kit"
+  elseif stridx(uname_result, "penguin") != -1
+    let g:platform="penguin"
+    let g:sub_platform="penguin"
   elseif stridx(uname_result, "wsl") != -1
     let lsb_release_result=tolower(system("lsb_release -d"))
     if stridx(lsb_release_result, "ubuntu") != -1
