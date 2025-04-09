@@ -37,6 +37,9 @@
 					"PackageIdentifier" : "TheDocumentFoundation.LibreOffice"
 				},
 				{
+					"PackageIdentifier" : "Microsoft.PowerShell"
+				},
+				{
 					"PackageIdentifier" : "Microsoft.VisualStudioCode"
 				},
 				{
