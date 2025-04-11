@@ -87,5 +87,15 @@ fi
 # Flamegraph completion is auto-loaded from "${HOME}/.zsh/.flamegraph-completion.zsh"
 # TODO check this is actually working
 
+# pipx completion
+# TODO test this out.
+if command -v pipx &>/dev/null
+then
+  # Instructions from running "pipx completions"
+  autoload -U bashcompinit
+  bashcompinit
+  eval "$(register-python-argcomplete pipx)"
+fi
+
 # History
 HISTORY_IGNORE="(ls|mutt|bg|fg|exit|cd ..)"

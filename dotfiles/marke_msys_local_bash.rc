@@ -97,6 +97,13 @@ then
   source "${HOME}/.flamegraph-completion.bash"
 fi
 
+# pipx completion
+if command -v pipx &>/dev/null
+then
+  time::debug_message "source pipx completion"
+  eval "$(register-python-argcomplete pipx)"
+fi
+
 # History
 # See http://www.caliban.org/bash/
 if [ -n "${HISTIGNORE}" ]
@@ -106,3 +113,4 @@ fi
 export HISTIGNORE="${HISTIGNORE}&:ls:mutt:[bf]g:exit"
 
 time::debug_message "End marke_msys_local_bash.rc"
+

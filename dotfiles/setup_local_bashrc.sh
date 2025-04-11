@@ -255,7 +255,6 @@ then
   flamegraph --completions bash > "${HOME}/.flamegraph-completion.bash"
 fi
 
-
 #add_git=0
 #
 #if [ -f ~/.git-completion.bash ]

@@ -281,6 +281,17 @@ then
   esac
 fi
 
+echo "Installing pipx" >&2
+if ! command -v pipx &/dev/null
+then
+  case "${os_name}" in
+    ubuntu)
+      sudo apt install pipx
+      pipx ensurepath
+      ;;
+  esac
+fi
+
 # Install pkg-config. It's small and useful for things like cargo-generate
 sudo apt --assume-yes install pkg-config
 
