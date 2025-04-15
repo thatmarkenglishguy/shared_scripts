@@ -1,0 +1,7 @@
+# vim: ft=sh
+
+if [ -d "${HOME}/.local/bin" ]
+then
+  pathappend "${HOME}/.local/bin"
+fi
+
