@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+remove_nonexistent_directories_from_path() {
+  local OLDIFS
+  local IFS
+  local all_the_paths
+  local newpath
+  local delim
+  local p
+
+  OLDIFS="${IFS}"
+  declare -a all_the_paths
+  IFS=':' all_the_paths=( $(echo "${PATH}") )
+  IFS="${OLDIFS}"
+  delim=''
+
+  for p in "${all_the_paths[@]}"
+  do
+    if [ -e "${p}" ]
+    then
+      newpath="${newpath}${delim}${p}"
+      delim=':'
+    fi
+  done
+
+  export PATH="${newpath}"
+}
+
+remove_nonexistent_directories_from_path
+

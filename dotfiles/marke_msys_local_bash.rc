@@ -27,6 +27,17 @@ source "${marke_local_bash_script_dir}/profile.d/root.profile.bash"
 # Not exactly sure why need to do this for bash given it's sourced...
 export -f gitget
 
+# Clean up any non-existent directories on path
+# New things (we're going to add adjust_path here, even though we might need it system wide too).
+if [ ! -f "${marke_local_bash_script_dir}/shscripts/bash_shscripts/adjust_path" ]
+then
+  echo "${marke_local_bash_script_dir}/shscripts/bash_shscripts/adjust_path not found" >&2
+else
+  time::debug_message "Sourcing adjust_path"
+  source "${marke_local_bash_script_dir}/shscripts/bash_shscripts/adjust_path"
+fi
+
+
 time::debug_message "source git completion"
 source ~/.git-completion.bash
 
@@ -111,6 +122,8 @@ then
   export HISTIGNORE="${HISTIGNORE}:"
 fi
 export HISTIGNORE="${HISTIGNORE}&:ls:mutt:[bf]g:exit"
+
+
 
 time::debug_message "End marke_msys_local_bash.rc"
 
