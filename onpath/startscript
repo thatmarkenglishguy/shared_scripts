@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 scriptpath=''
 shelltype=''
+shebang_shelltype=''
 
 declare -a args
 args=( "${@}" )
@@ -31,12 +32,20 @@ if [ -z "${scriptpath}" ]
 then
   echo 'Must specify path to script as first parameter.' >&2
 else
-  if [ -z "${shelltype}" ]
-  then
-    shelltype='sh'
-  fi
+  case "${shelltype}" in
+    '')
+      shelltype='sh'
+      shebang_shelltype="${shelltype}"
+      ;;
+    rawbash|bashraw)
+      shebang_shelltype='bash'
+      ;;
+    *)
+      shebang_shelltype="${shelltype}"
+      ;;
+  esac
 
-  echo \#\!/usr/bin/env "${shelltype}"'
+  echo \#\!/usr/bin/env "${shebang_shelltype}"'
 ' >"${scriptpath}"
   case ${shelltype} in
     bash)
