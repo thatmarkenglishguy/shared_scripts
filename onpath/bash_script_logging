@@ -1,0 +1,238 @@
+# :vim ft=bash
+
+# Functions for logging.
+#
+# Logs are namespaced using sensible module names delimited by '.'.
+# Log levels are: ERROR, WARN, INFO, DEBUG, TRACE.
+# Log levels are inherited from nearest parent.
+# Default log level is INFO.
+#
+# For example:
+# ```
+# source script_logging
+# log::set_level 'some_module' ${INFO}
+# log::set_level 'some_module.sub.submodule2' ${WARN}
+# log::info 'some_module.sub.submodule1' 'a message for submodule 1' # Appears in log output
+# log::info 'some_module.sub.submodule2' 'a message for submodule 2' # Omitted from log output
+# ```
+
+if [ -z ${__script_logging_imported} ]
+then
+  readonly NONE=0
+  readonly ERROR=10
+  readonly WARN=20
+  readonly INFO=30
+  readonly DEBUG=40
+  readonly TRACE=50
+  readonly _ROOT_NAMESPACE='_'
+  readonly _default_level=${INFO}
+  readonly _default_format='%s\n'
+  declare -A __log_namespaces
+  _log_current_default_level=${_default_level}
+  __script_logging_imported=1
+fi
+
+log::_dump_variables_by_prefix() {
+  # Parameters:
+  #  1 Prefix. Prefix of variables to dump out.
+  echo "Variables prefixed with '${1}':" >&2
+  compgen -v | grep "^${1}" >&2
+}
+
+log::_dump_namespaces() {
+  local key
+  local value
+  echo 'Logging namespace start' >&2
+  for key in "${!__log_namespaces[@]}"
+  do
+    value="${__log_namespaces[${key}]}"
+    echo "${key}=${value}" >&2
+  done 
+  echo 'Logging namespace end' >&2
+}
+
+log::_shorter_and_shorter_prefix() {
+  # Parameters:
+  #  1 A string of sub-strings with a delimiter.
+  #  2. Namespace delimiter.
+  # Outputs:
+  #  Successive iterations of initial string with
+  #  substring at end removed.
+  # E.g.
+  #  log::_shorter_and_shorter_prefix 'a.b.c.d' '.'
+  # Produces:
+  #  'a.b.c'
+  #  'a.b'
+  #  'a'
+  local prefix
+  local delim
+  local prev
+
+  prefix="${1}"
+  delim="${2-.}"
+  prev=''
+
+  while [ "${prev}" != "${prefix}" ]
+  do
+    echo "${prefix}"
+    prev="${prefix}"
+    prefix="${prefix%${delim}*}"
+  done
+}
+
+log::_loop_effective_log_level() {
+  # Globals:
+  #  __log_namespaces
+  # Parameters:
+  #  1 Namespace. e.g. 'outer.inner.sub'
+  # Outputs:
+  #  Effective log level for specified namespace string, if found,
+  #  otherwise default log level.
+  # Returns:
+  #  0 if effective log level found.
+  #  1 if effective log level not found.
+  local name
+
+  while read name
+  do
+    if [[ -v "__log_namespaces[${name}]" ]]
+    then
+      echo ${__log_namespaces[${name}]}
+      return 0
+    fi
+  done < <(log::_shorter_and_shorter_prefix "${1}" '.' )
+
+  return 1
+}
+
+log::_build_namespace_key() {
+  # Parameters:
+  #  1 Namespace
+  # Returns:
+  #  Namespace key in __log_namespaces.
+  local namespace_key
+  namespace_key="${1}"
+
+  echo "${namespace_key}"
+}
+
+log::_effective_log_level() {
+  # Globals:
+  #  __log_namespaces
+  # Parameters:
+  #  1 Namespace. e.g. 'outer.inner.sub'
+  # Returns:
+  #  Effective log level for specified namespace string,
+  #  or default level if not found.
+  if ! log::_loop_effective_log_level "${1}"
+  then
+    echo ${_log_current_default_level}
+    return 1
+  else
+    return 0
+  fi
+}
+
+# Log functions for external scripts to call.
+
+log::set_default_level() {
+  _log_current_default_level=${1}
+}
+
+log::log() {
+  # Top level logging function.
+  # Typically not called directly.
+  # Instead log::error, log::warn, log::info, log::debug, log::trace
+  # are used.
+  #
+  # Globals:
+  #  _default_format
+  #  _log_current_default_level
+  # Parameters:
+  #  1 Level to log at. e.g. '${INFO}'
+  #  2 Namespace. e.g. 'outer.inner.sub'
+  #  3 Message to log
+  # Outputs:
+  #  Log message
+  local level
+  local namespace
+  local message
+  local effective_level
+  local effective_level_result
+  local effective_format
+  level=${1}
+
+  if [ -z "${level}" ]
+  then
+    level=${_log_current_default_level}
+  fi
+
+  namespace="${2}"
+  if [ -z "${namespace}" ]
+  then
+    namespace="${_ROOT_NAMESPACE}"
+  else
+    namespace=$(log::_build_namespace_key "${namespace}")
+  fi
+
+  message="${3}"
+  effective_level=$(log::_effective_log_level "${namespace}")
+  effective_level_result=$?
+#  echo "Namespace ${namespace}"$'\n'"Message: '${message}'"
+#  echo "Effective level: '${effective_level}' (result=${effective_level_result})"$'\n'"Level: '${level}'"
+  effective_format="${_default_format}"
+#  set -x
+  if [ ${level} -le ${effective_level} ]
+  then
+    printf "${effective_format}" "${message}" >&2
+  fi
+#  set +x
+}
+
+log::error() {
+  log::log ${ERROR} "${@}"
+}
+
+log::warn() {
+  log::log ${WARN} "${@}"
+}
+
+log::info() {
+  log::log ${INFO} "${@}"
+}
+
+log::debug() {
+  log::log ${DEBUG} "${@}"
+}
+
+log::trace() {
+  log::log ${TRACE} "${@}"
+}
+
+log::set_level() {
+  # Set the log level for the specified namespace.
+  # Affects all sub-namespaces unless they have an explicit setting registered.
+  #
+  # Globals:
+  #  __log_namespaces
+  # Parameters:
+  #  1 Namespace
+  #  2 Log level
+  local namespace
+  local level
+  namespace="$(log::_build_namespace_key "${1}")"
+  level=${2}
+
+  __log_namespaces["${namespace}"]=${level}
+}
+
+log::reset() {
+  # Globals:
+  #  __log_namespaces
+  #  _log_current_default_level
+  __log_namespaces=()
+  log::set_default_level ${_default_level}
+}
+
+log::reset
+
