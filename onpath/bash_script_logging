@@ -27,7 +27,9 @@ then
   readonly _ROOT_NAMESPACE='_'
   readonly _default_level=${INFO}
   readonly _default_format='%s\n'
+  readonly __LOG_DEFAULT_STREAM_APPENDER=/dev/fd/2
   declare -A __log_namespaces
+  declare -A __log_stream_appenders
   _log_current_default_level=${_default_level}
   __script_logging_imported=1
 fi
@@ -49,6 +51,17 @@ log::_dump_namespaces() {
     echo "${key}=${value}" >&2
   done 
   echo 'Logging namespace end' >&2
+}
+
+log::_build_namespace_key() {
+  # Parameters:
+  #  1 Namespace
+  # Returns:
+  #  Namespace key in __log_namespaces.
+  local namespace_key
+  namespace_key="${1}"
+
+  echo "${namespace_key}"
 }
 
 log::_shorter_and_shorter_prefix() {
@@ -105,17 +118,6 @@ log::_loop_effective_log_level() {
   return 1
 }
 
-log::_build_namespace_key() {
-  # Parameters:
-  #  1 Namespace
-  # Returns:
-  #  Namespace key in __log_namespaces.
-  local namespace_key
-  namespace_key="${1}"
-
-  echo "${namespace_key}"
-}
-
 log::_effective_log_level() {
   # Globals:
   #  __log_namespaces
@@ -127,6 +129,48 @@ log::_effective_log_level() {
   if ! log::_loop_effective_log_level "${1}"
   then
     echo ${_log_current_default_level}
+    return 1
+  else
+    return 0
+  fi
+}
+
+log::_loop_effective_log_stream_appender() {
+  # Globals:
+  #  __log_stream_appenders
+  # Parameters:
+  #  1 Namespace. e.g. 'outer.inner.sub'
+  # Outputs:
+  #  Effective log stream appender for specified namespace string, if found,
+  #  otherwise default log stream appender.
+  # Returns:
+  #  0 if effective log stream appender found.
+  #  1 if effective log stream appender not found.
+  local name
+
+  while read name
+  do
+    if [[ -v "__log_stream_appenders[${name}]" ]]
+    then
+      echo ${__log_stream_appenders[${name}]}
+      return 0
+    fi
+  done < <(log::_shorter_and_shorter_prefix "${1}" '.' )
+
+  return 1
+}
+
+log::_effective_log_stream_appender() {
+  # Globals:
+  #  __log_namespaces
+  # Parameters:
+  #  1 Namespace. e.g. 'outer.inner.sub'
+  # Returns:
+  #  Effective log stream appender for specified namespace string,
+  #  or default log stream appender if not found.
+  if ! log::_loop_effective_log_stream_appender "${1}"
+  then
+    echo ${__LOG_DEFAULT_STREAM_APPENDER}
     return 1
   else
     return 0
@@ -160,6 +204,7 @@ log::log() {
   local effective_level
   local effective_level_result
   local effective_format
+  local effective_stream_appender
   level=${1}
 
   if [ -z "${level}" ]
@@ -181,10 +226,11 @@ log::log() {
 #  echo "Namespace ${namespace}"$'\n'"Message: '${message}'"
 #  echo "Effective level: '${effective_level}' (result=${effective_level_result})"$'\n'"Level: '${level}'"
   effective_format="${_default_format}"
+  effective_stream_appender="$(log::_effective_log_stream_appender "${namespace}")"
 #  set -x
   if [ ${level} -le ${effective_level} ]
   then
-    printf "${effective_format}" "${message}" >&2
+    printf "${effective_format}" "${message}" >>"${effective_stream_appender}"
   fi
 #  set +x
 }
@@ -220,10 +266,29 @@ log::set_level() {
   #  2 Log level
   local namespace
   local level
+
   namespace="$(log::_build_namespace_key "${1}")"
   level=${2}
 
   __log_namespaces["${namespace}"]=${level}
+}
+
+log::set_stream_appender() {
+  # Set a stream appender for the specified namespace.
+  # Affects all sub-namespaces unless they have an explicit setting registered.
+  #
+  # Globals:
+  #  __log_stream_appenders
+  # Parameters:
+  #  1 Namespace
+  #  2 Stream identifier
+  local namespace
+  local stream
+
+  namespace="$(log::_build_namespace_key "${1}")"
+  stream=${2}
+
+  __log_stream_appenders["${namespace}"]="${stream}"
 }
 
 log::reset() {

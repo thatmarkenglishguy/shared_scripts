@@ -226,6 +226,23 @@ test_info 'foo' 'log::info() for foo level=NONE' EMPTY
 test_debug 'foo' 'log::debug() for foo level=NONE' EMPTY
 test_trace 'foo' 'log::trace() for foo level=NONE' EMPTY
 
+test::section 'outputting_to_files' 'Outputting to files'
+log::reset
+test_output_file=$(mktemp)
+log::set_stream_appender 'foo' "${test_output_file}"
+log::trace 'foo.bar' 'TRACE Should not appear in file'
+log::debug 'foo.bar' 'DEBUG Should not appear in file'
+log::info 'foo.bar' 'INFO should appear in file'
+log::warn 'foo.bar' 'WARN should appear in file'
+log::error 'foo.bar' 'ERROR should appear in file'
+test_info 'bar' 'Log to separate namespace should not go to file' SAME
+test_expected_file=$(mktemp)
+cat <<-EOF >"${test_expected_file}"
+INFO should appear in file
+WARN should appear in file
+ERROR should appear in file
+EOF
+test::assert_file_content_same "${test_output_file}" "${test_expected_file}" 'Log output to file'
 test::finish
 
 #test::dump_sections
