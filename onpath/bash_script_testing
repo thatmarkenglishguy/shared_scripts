@@ -1,0 +1,456 @@
+# :vim ft=bash
+
+# Bash testing framework.
+#
+# For example:
+# ```
+# source script_testing
+# test::process_command_line_args "${0}" "${@}"
+# test::section 'first_section' 'Some example tests'
+# test::assert_equal 'foo' 'foo'
+# test::section 'second_section' 'Comparison tests with failing test'
+# test::assert_compare 'foo' 'foo' SAME
+# test::assert_compare 'foo' 'bar' SAME # failing test
+# test::finish
+#
+# ```
+
+# Globals
+declare -A __test_section_passes
+declare -A __test_section_fails
+declare -A __test_section_descriptions
+__test_current_section=''
+__test_all_passes=0
+__test_all_fails=0
+__test_all_tests=0
+__test_verbose=0
+__test_output_skipped_newline=1
+
+if [ -z ${__script_testing_imported+defined} ]
+then
+  readonly VERBOSE_VISIBLE=2
+  __script_testing_imported=1
+fi
+
+# Output functions
+test::raw_message() {
+  # Output a message (depending on test message verbosity).
+  #
+  # Globals:
+  #  __test_verbose
+  #  VERBOSE_VISIBLE
+  # Parameters:
+  #  Array of variables to output.
+  # Outputs:
+  #  Variables from input.
+  if [ ${__test_verbose} -ge ${VERBOSE_VISIBLE} ]
+  then
+    echo "${@}" >&2
+  fi
+}
+
+test::message() {
+  # Output a test formatted message (depending on test message verbosity).
+  #
+  # Globals:
+  #  __test_verbose
+  #  VERBOSE_VISIBLE
+  # Parameters:
+  #  Array of variables to output.
+  # Outputs:
+  #  Variables from input formatted for test output.
+  test::raw_message "# ${@}"
+}
+
+test::newline() {
+  # Output a newline (depending on test message verbosity).
+  # Globals:
+  #  __test_verbose
+  #  VERBOSE_VISIBLE
+  test::raw_message ''
+}
+
+test::announce() {
+  # Output a test formatted message separate from previous announcement
+  # (depending on test message verbosity).
+  #
+  # Globals:
+  #  __test_verbose
+  #  VERBOSE_VISIBLE
+  # Parameters:
+  #  Array of variables to output.
+  # Outputs:
+  #  Variables from input formatted for test output.
+  if [ ${__test_verbose} -ge ${VERBOSE_VISIBLE} ]
+  then
+    if [ ${__test_output_skipped_newline} -eq 0 ]
+    then
+      __test_output_skipped_newline=1
+      test::newline
+    fi
+    test::message ${@}
+  fi
+}
+
+test::dump_sections() {
+  # Dump the test internals sections.
+  #
+  # Globals:
+  #  __test_section_passes
+  #  __test_section_fails
+  #  __test_section_descriptions
+  local key
+  for key in "${!__test_section_passes[@]}"
+  do
+    echo "__test_section_passes[${key}]=${__test_section_passes[${key}]}" >&2
+    echo "__test_section_fails[${key}]=${__test_section_fails[${key}]}" >&2
+    echo "__test_section_descriptions[${key}]='${__test_section_descriptions[${key}]}'" >&2
+  done
+}
+
+# Test organisation functions
+
+test::_test_current_section_results() {
+  # Show the test results for the most recent test section.
+  #
+  # Globals
+  #  __test_section_passes
+  #  __test_section_fails
+  #  __test_section_descriptions
+  #  __test_verbose
+  local prev_section
+  local prev_passes
+  local prev_fails
+  local description
+  local total_tests
+  prev_section="${__test_current_section}"
+  if [ -z "${prev_section}" ]
+  then
+    return 0
+  fi
+
+  description="Unkonwn test section '${prev_section}'"
+  prev_passes=0
+  prev_fails=0
+
+  if [[ -v __test_section_passes["${prev_section}"] ]]
+  then
+    prev_section_passes=${__test_section_passes["${prev_section}"]}
+  fi
+
+  if [[ -v __test_section_fails["${prev_section}"] ]]
+  then
+    prev_section_fails=${__test_section_fails["${prev_section}"]}
+  fi
+
+  if [[ -v __test_section_descriptions["${prev_section}"] ]]
+  then
+    description=${__test_section_descriptions["${prev_section}"]}
+  fi
+
+  ((total_tests=prev_section_passes+prev_section_fails))
+
+  case ${__test_verbose} in
+    0|1)
+      echo "${description} results: PASSES ${prev_section_passes}. FAILS ${prev_section_fails}. TOTAL ${total_tests}" >&2
+      ;;
+    *)
+      echo "${description} results:">&2
+      echo "PASSES ${prev_section_passes}" >&2
+      echo "FAILS  ${prev_section_fails}" >&2
+      echo "TOTAL  ${total_tests}">&2
+      echo '' >&2
+      ;;
+  esac
+}
+
+test::_pass() {
+  # Call when a test passes.
+  #
+  # Globals:
+  #  __test_section_passes
+  #  __test_current_section
+  #  __test_all_passes
+  #  __test_all_tests
+  __test_section_passes[${__test_current_section}]=$((__test_section_passes[${__test_current_section}] + 1))
+  ((__test_all_passes+=1))
+  ((__test_all_tests+=1))
+}
+
+test::_fail() {
+  # Call when a test fails.
+  #
+  # Globals:
+  #  __test_section_fails
+  #  __test_current_section
+  #  __test_all_fails
+  #  __test_all_tests
+  __test_section_fails[${__test_current_section}]=$((__test_section_fails[${__test_current_section}] + 1))
+  ((__test_all_fails+=1))
+  ((__test_all_tests+=1))
+}
+
+test::_build_expected_string() {
+  # Parameters:
+  #  1 String under test.
+  #  2 Expected string result.
+  #    Special cases:
+  #      SAME Compare string under test against itself.
+  #      EMPTY Compare string under test against empty string.
+  # Outputs:
+  #  Expected string.
+  local source
+  local expected
+  source="${1}"
+  expected="${2}"
+
+  case "${expected}" in
+    EMPTY)
+      expected=''
+      ;;
+    SAME)
+      expected="${message}"
+      ;;
+  esac
+
+  echo "${expected}"
+}
+
+test::_build_expected_description() {
+  # Parameters:
+  #  1 String under test.
+  #  2 Expected string result.
+  #    Special cases:
+  #      SAME Compare string under test against itself.
+  #      EMPTY Compare string under test against empty string.
+  # Outputs:
+  #  Expected description.
+  local source
+  local expected
+
+  source="${1}"
+  expected="${2}"
+
+  case "${expected}" in
+    EMPTY)
+      echo "EMPTY('')"
+      ;;
+    SAME)
+      echo "SAME('${source}')"
+      ;;
+    *)
+      echo "'${expected}'"
+      ;;
+  esac
+}
+
+test::_assert_equal_impl() {
+  local output
+  local expected
+  local description
+  local expected_description
+
+  output="${1}"
+  expected="${2}"
+  description="${3}"
+  expected_description="${4:-"'${expected}'"}"
+
+  if [ "${output}" != "${expected}" ]
+  then
+    test::_fail
+    echo "ERROR: ${description}." >&2
+    echo " Expected: ${expected_description}" >&2
+    echo " Result: '${output}'" >&2
+    return 1
+  else
+    test::_pass
+    test::raw_message "SUCCESS: ${description}. Result equals '${expected}'."
+  fi
+}
+
+# Test functions called by external scripts.
+
+# Test command_line
+
+test::usage() {
+  # Show test program usage.
+  #
+  # Parameters:
+  #  1 Path to test program.
+  local prgram
+
+  program=$(basename "${1}")
+
+  cat <<-EOF
+${program} [-v|--verbose] [-q|--quiet]
+
+Parameters:
+  -v|--verbose Turn up test verbosity. Can be repeated.
+  -q|--quiet   Tests are quiet, just see results.
+EOF
+}
+
+test::process_command_line_args() {
+  # Handle the command line to the test program.
+  #
+  # Globals:
+  #  __test_verbose
+  #  VERBOSE_VISIBLE
+  # Parameters:
+  #  1 Path to calling script.
+  #  * Array of command line arguments.
+  # Returns:
+  #  Non zero exit code if should exit.
+  local args
+  local ok_exit_code
+  local i
+  local v_count
+
+  ok_exit_code=0
+  declare -a args
+  args=( "${@}" )
+
+  for (( i=1; i<${#args[@]}; ++i ))
+  do
+    arg="${args[${i}]}"
+    case "${arg}" in
+      --verbose)
+        ((__test_verbose = __test_verbose+1))
+        ;;
+      -v*)
+        v_count=$(echo "${arg}" | grep -o 'v' | wc -l)
+        ((__test_verbose += v_count))
+        unset v_count
+        ;;
+      -q|--quiet)
+        __test_verbose=0
+        ;;
+      -h|--help|/?)
+        test::usage "${args[@]}"
+        exit 1
+        ;;
+      *)
+        echo "Unexpected argument '${arg}' to $(basename "${0}")" >&2
+        (( ++ok_exit_code ))
+        ;;
+    esac
+  done
+  
+  if [ ${ok_exit_code} -ne 0 ]
+  then
+    exit ${ok_exit_code}
+  fi
+}
+
+# Test organisation
+
+test::section() {
+  # Call to start a new test section.
+  #
+  # Globals:
+  #  __test_current_section
+  #  __test_section_passes
+  #  __test_section_fails
+  #  __test_section_descriptions
+  # Parameters:
+  #  1 Section key
+  #  2 Section description
+  test::_test_current_section_results
+
+  __test_current_section=${1}
+  __test_section_passes[${__test_current_section}]=0
+  __test_section_fails[${__test_current_section}]=0
+  __test_section_descriptions[${__test_current_section}]="${2}"
+  test::announce "${2}"
+}
+
+test::finish() {
+  # Call at end of test run.
+  #
+  # Globals
+  #  __test_verbose
+  #  __test_all_passes
+  #  __test_all_fails
+  #  __test_all_tests
+  #  __test_current_section
+  test::_test_current_section_results
+
+  case ${__test_verbose} in
+    0)
+      ;;
+    1)
+      echo "All passes: ${__test_all_passes}. All fails: ${__test_all_fails}. All tests: ${__test_all_tests}" >&2
+      ;;
+    *)
+      echo "All passes: ${__test_all_passes}" >&2
+      echo "All fails:  ${__test_all_fails}" >&2
+      echo "All tests:  ${__test_all_tests}" >&2
+      ;;
+  esac
+  __test_current_section=''
+}
+
+# Test assertions
+
+test::assert_equal() {
+  # Call to check two variables are equal.
+  #
+  # Parameters:
+  #  1 Variable under test.
+  #  2 Expected value.
+  #  3 Description.
+  # Outputs:
+  #  Test result.
+  # Returns:
+  #  0 - pass.
+  #  1 - fail
+  local output
+  local expected
+  local description
+
+  output="${1}"
+  expected="${2}"
+  description="${3}"
+
+  test::_assert_equal_impl "${output}" "${expected}" "${description}"
+
+  return ${?}
+}
+
+test::assert_compare() {
+  # Call to compare two variables.
+  #
+  # Parameters:
+  #  1 Input to function under test.
+  #  2 Comparison string.
+  #    Special cases:
+  #      SAME Compare variable under test against input to function.
+  #      EMPTY Compare variable under test against empty string.
+  #  3 Variable under test.
+  #  3 Description.
+  # Outputs:
+  #  Test result.
+  # Returns:
+  #  0 - pass.
+  #  1 - fail
+  local source
+  local original_expected
+  local output
+  local description
+  local expected
+  local expected_description
+
+  source="${1}"
+  original_expected="${2}"
+  output="${3}"
+  description="${4}"
+
+  expected="$(test::_build_expected_string "${source}" "${original_expected}")"
+  expected_description="$(test::_build_expected_description "${source}" "${original_expected}")"
+
+  test::_assert_equal_impl "${output}" "${expected}" "${description}" "${expected_description}"
+
+  return ${?}
+}
+
+
