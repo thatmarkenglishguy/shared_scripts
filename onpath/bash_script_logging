@@ -6,14 +6,22 @@
 # Log levels are: ERROR, WARN, INFO, DEBUG, TRACE.
 # Log levels are inherited from nearest parent.
 # Default log level is INFO.
+# Default log appender is STDERR.
+# Default log format is the message.
 #
 # For example:
 # ```
 # source script_logging
 # log::set_level 'some_module' ${INFO}
 # log::set_level 'some_module.sub.submodule2' ${WARN}
+# log::set_format 'some_module.format_example' 'start %<level>|%<namespace> %<message> end'
+# log::set_stream_sppender 'some_module.file_example' '~/my_log.log'
 # log::info 'some_module.sub.submodule1' 'a message for submodule 1' # Appears in log output
 # log::info 'some_module.sub.submodule2' 'a message for submodule 2' # Omitted from log output
+# log::info 'some_module.file_example' 'a message for a file' # Appears in file
+# Output for following line:
+# 'start INFO|some_module.format_example a message for a file end'
+# log::info 'some_module.format_example' 'a message for a file'
 # ```
 
 if [ -z ${__script_logging_imported} ]
@@ -25,12 +33,18 @@ then
   readonly DEBUG=40
   readonly TRACE=50
   readonly __LOG_ROOT_NAMESPACE='_'
+  readonly __LOG_DEFAULT_FORMAT_DELIMITER=$'\u2588' # $'\u2588' is the Unicode block character.
   readonly __LOG_DEFAULT_LEVEL=${INFO}
-  readonly __LOG_DEFAULT_FORMAT='%s\n'
+  readonly __LOG_DEFAULT_FORMAT='%<message>\n'
   readonly __LOG_DEFAULT_STREAM_APPENDER=/dev/fd/2
-  declare -A __log_namespaces
+  readonly __LOG_DEFAULT_DATE_FORMAT='%d/%b/%Y:%H:%M:%S %z'
+  declare -A __log_levels
   declare -A __log_stream_appenders
+  declare -A __log_formats
   __log_current_default_level=${__LOG_DEFAULT_LEVEL}
+  __log_current_format_delimiter=${__LOG_DEFAULT_FORMAT_DELIMITER}
+  __log_current_default_date_format="${__LOG_DEFAULT_DATE_FORMAT}"
+  __log_current_default_format="${__LOG_DEFAULT_FORMAT}"
   __script_logging_imported=1
 fi
 
@@ -45,9 +59,9 @@ log::_dump_namespaces() {
   local key
   local value
   echo 'Logging namespace start' >&2
-  for key in "${!__log_namespaces[@]}"
+  for key in "${!__log_levels[@]}"
   do
-    value="${__log_namespaces[${key}]}"
+    value="${__log_levels[${key}]}"
     echo "${key}=${value}" >&2
   done 
   echo 'Logging namespace end' >&2
@@ -57,7 +71,7 @@ log::_build_namespace_key() {
   # Parameters:
   #  1 Namespace
   # Returns:
-  #  Namespace key in __log_namespaces.
+  #  Namespace key in the log internal associative arrays.
   local namespace_key
   namespace_key="${1}"
 
@@ -95,7 +109,7 @@ log::_shorter_and_shorter_prefix() {
 
 log::_loop_effective_log_level() {
   # Globals:
-  #  __log_namespaces
+  #  __log_levels
   # Parameters:
   #  1 Namespace. e.g. 'outer.inner.sub'
   # Outputs:
@@ -108,9 +122,9 @@ log::_loop_effective_log_level() {
 
   while read name
   do
-    if [[ -v "__log_namespaces[${name}]" ]]
+    if [[ -v "__log_levels[${name}]" ]]
     then
-      echo ${__log_namespaces[${name}]}
+      echo ${__log_levels[${name}]}
       return 0
     fi
   done < <(log::_shorter_and_shorter_prefix "${1}" '.' )
@@ -120,7 +134,7 @@ log::_loop_effective_log_level() {
 
 log::_effective_log_level() {
   # Globals:
-  #  __log_namespaces
+  #  __log_current_default_level
   # Parameters:
   #  1 Namespace. e.g. 'outer.inner.sub'
   # Returns:
@@ -162,7 +176,7 @@ log::_loop_effective_log_stream_appender() {
 
 log::_effective_log_stream_appender() {
   # Globals:
-  #  __log_namespaces
+  #   __LOG_DEFAULT_STREAM_APPENDER
   # Parameters:
   #  1 Namespace. e.g. 'outer.inner.sub'
   # Returns:
@@ -177,7 +191,211 @@ log::_effective_log_stream_appender() {
   fi
 }
 
+log::_loop_effective_log_format() {
+  # Globals:
+  #  __log_formats
+  # Parameters:
+  #  1 Namespace. e.g. 'outer.inner.sub'
+  # Outputs:
+  #  Effective log format for specified namespace string, if found,
+  #  otherwise default log format .
+  # Returns:
+  #  0 if effective log format found.
+  #  1 if effective log format not found.
+  local name
+
+  while read name
+  do
+    if [[ -v "__log_formats[${name}]" ]]
+    then
+      echo ${__log_formats[${name}]}
+      return 0
+    fi
+  done < <(log::_shorter_and_shorter_prefix "${1}" '.' )
+
+  return 1
+}
+
+log::_effective_log_format() {
+  # Globals:
+  #  __log_current_default_format
+  # Parameters:
+  #  1 Namespace. e.g. 'outer.inner.sub'
+  # Returns:
+  #  Effective log format for specified namespace string,
+  #  or default log format if not found.
+  if ! log::_loop_effective_log_format "${1}"
+  then
+    echo ${__log_current_default_format}
+    return 1
+  else
+    return 0
+  fi
+}
+
+
+log::_loop_format_tokens() {
+  # Loops through a format string breaking into tokens.
+  # Parameters:
+  #  1 Format string to parse.
+  #  2 Delimiter to separate tokens. Defaults to $'\u2588' (Unicode block character).
+  #
+  # Outputs:
+  #  Pair of tokens: prefix format_field. These are delimited by the delimiter.
+  local original_format_string
+  local delim
+  local next_string
+  local regex
+  local matched_token
+  local extracted_group
+  local prefix
+  local start_position
+
+  original_format_string="${1}"
+  delim=${2:-${__log_current_format_delimiter}}
+
+  next_string="${original_format_string}"
+  regex='%<([a-z]+)>'
+  regex='%<([[:alnum:]]+[[:space:]]*[[:alpha:]%+-/]+)>'
+
+  while [[ "$next_string" =~ $regex ]]; do
+    matched_token="${BASH_REMATCH[0]}"
+    extracted_group="${BASH_REMATCH[1]}"
+
+    # Calculate the start position by getting the length of the string before the match
+    prefix="${next_string%%"${matched_token}"*}"
+    start_position="${#prefix}"
+
+    echo -e "${prefix}"${delim}"${extracted_group}"
+
+    # Remove the matched part from the string
+    next_string="${next_string:$start_position + ${#matched_token}}"
+  done
+
+  echo "${next_string}"
+}
+
+# Log formatting
+
+log::_level_string() {
+  # Parameters:
+  #  1 Log level
+  # Outputs:
+  #  String equivalent of log level.
+  local level
+  local level_string
+  level="${1}"
+
+  case "${level}" in
+    ${ERROR})
+      level_string="ERROR"
+      ;;
+    ${WARN})
+      level_string="WARN"
+      ;;
+    ${INFO})
+      level_string="INFO"
+      ;;
+    ${DEBUG})
+      level_string="DEBUG"
+      ;;
+    ${TRACE})
+      level_string="TRACE"
+      ;;
+    *)
+      level_string="UNKNOWN_LEVEL(${level})"
+      ;;
+  esac
+
+  echo "${level_string}"
+}
+
 # Log functions for external scripts to call.
+
+log::build_message() {
+  # Globals:
+  #   __log_current_format_delimiter
+  #   __log_current_default_date_format
+  # Parameters:
+  #  1 Format string
+  #  2 Log level
+  #  3 Log namespace
+  #  4 Message
+  # Outputs:
+  #  Formatted message
+  local format
+  local level
+  local namespace
+  local raw_message
+  local message
+  local prefix
+  local token
+  local level_string
+  local timestamp
+  local date_format
+  local date
+
+  format="${1}"
+  level="${2}"
+  namespace="${3}"
+  raw_message="${4}"
+
+  message=''
+
+  while IFS=${__log_current_format_delimiter} read -r prefix token
+  do
+    message="${message}${prefix}"
+
+    if [ -n "${token}" ]
+    then
+      case "${token}" in
+        message)
+          message="${message}${raw_message}"
+          ;;
+        level)
+          level_string="$(log::_level_string ${level})"
+          message="${message}${level_string}"
+          ;;
+        timestamp)
+          timestamp=$(date "+%s%N")
+          message="${message}${timestamp}"
+          ;;
+        namespace)
+          message="${message}${namespace}"
+          ;;
+        date*)
+          if [ "${token}" != 'date' ]
+          then
+            # Presumably there's a format string in there
+            if [[ "${token}" =~ date[[:space:]]*([^>]*) ]]
+            then
+              date_format="${BASH_REMATCH[1]}"
+            else
+              date_format="${__log_current_default_date_format}"
+            fi
+          else
+            date_format="${__log_current_default_date_format}"
+          fi
+
+          date="$(date "+${date_format}")"
+          message="${message}${date}"
+          ;;
+        ip)
+          message="${message}$(hostname -i)"
+          ;;
+        host)
+          message="${message}$(hostname)"
+          ;;
+        user)
+          message="${message}${USER}"
+          ;;
+      esac
+    fi
+  done < <(log::_loop_format_tokens "${format}" ${__log_current_format_delimiter})
+
+  message="$(echo -e "${message}")"
+  printf "%s" "${message}"
+}
 
 log::set_default_level() {
   __log_current_default_level=${1}
@@ -200,11 +418,12 @@ log::log() {
   #  Log message
   local level
   local namespace
-  local message
+  local raw_message
   local effective_level
-  local effective_level_result
   local effective_format
   local effective_stream_appender
+  local message
+
   level=${1}
 
   if [ -z "${level}" ]
@@ -220,19 +439,17 @@ log::log() {
     namespace=$(log::_build_namespace_key "${namespace}")
   fi
 
-  message="${3}"
+  raw_message="${3}"
+
   effective_level=$(log::_effective_log_level "${namespace}")
-  effective_level_result=$?
-#  echo "Namespace ${namespace}"$'\n'"Message: '${message}'"
-#  echo "Effective level: '${effective_level}' (result=${effective_level_result})"$'\n'"Level: '${level}'"
-  effective_format="${__LOG_DEFAULT_FORMAT}"
+  effective_format="$(log::_effective_log_format "${namespace}")"
   effective_stream_appender="$(log::_effective_log_stream_appender "${namespace}")"
-#  set -x
+
   if [ ${level} -le ${effective_level} ]
   then
-    printf "${effective_format}" "${message}" >>"${effective_stream_appender}"
+    message="$(log::build_message "${effective_format}" "${effective_level}" "${namespace}" "${raw_message}")"
+    echo "${message}" >>"${effective_stream_appender}"
   fi
-#  set +x
 }
 
 log::error() {
@@ -260,7 +477,7 @@ log::set_level() {
   # Affects all sub-namespaces unless they have an explicit setting registered.
   #
   # Globals:
-  #  __log_namespaces
+  #  __log_levels
   # Parameters:
   #  1 Namespace
   #  2 Log level
@@ -270,7 +487,7 @@ log::set_level() {
   namespace="$(log::_build_namespace_key "${1}")"
   level=${2}
 
-  __log_namespaces["${namespace}"]=${level}
+  __log_levels["${namespace}"]=${level}
 }
 
 log::set_stream_appender() {
@@ -286,16 +503,48 @@ log::set_stream_appender() {
   local stream
 
   namespace="$(log::_build_namespace_key "${1}")"
-  stream=${2}
+  stream="${2}"
 
   __log_stream_appenders["${namespace}"]="${stream}"
 }
 
+log::set_format() {
+  # Set a format for the specified namespace.
+  # Affects all sub-namespaces unless they have an explicit setting registered.
+  #
+  # Globals:
+  #  __log_formats
+  # Parameters:
+  #  1 Namespace
+  #  2 Format
+  local namespace
+  local format
+
+  namespace="$(log::_build_namespace_key "${1}")"
+  format="${2}"
+
+  __log_formats["${namespace}"]="${format}"
+}
+
 log::reset() {
   # Globals:
-  #  __log_namespaces
+  #  __log_levels
+  #  __log_stream_appenders
+  #  __log_formats
   #  __log_current_default_level
-  __log_namespaces=()
+  #  __log_current_format_delimiter
+  #  __log_current_default_date_format
+  #  __log_current_default_format
+
+  __log_levels=()
+  __log_stream_appenders=()
+  __log_formats=()
+
+  __log_current_format_delimiter=${__LOG_DEFAULT_FORMAT_DELIMITER}
+  __log_current_default_date_format="${__LOG_DEFAULT_DATE_FORMAT}"
+  __log_current_default_format="${__LOG_DEFAULT_FORMAT}"
+
+  __script_logging_imported=1
   log::set_default_level ${__LOG_DEFAULT_LEVEL}
 }
 

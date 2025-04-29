@@ -161,10 +161,29 @@ function test_trace() {
   show_log_test_result ${TRACE} "${1}" "${2}" "${3}" "${output}"
 }
 
+function test_build_message() {
+  local format
+  local level
+  local namespace
+  local raw_message
+  local expected
+  local output
+
+  format="${1}"
+  level="${2}"
+  namespace="${3}"
+  raw_message="${4}"
+  expected="${5}"
+
+  output="$(log::build_message "${format}" ${level} "${namespace}" "${raw_message}")"
+
+  test::assert_match "${output}" "${expected}" "Format message format='${format}' level=${level} namespace='${namespace}' message='${raw_message}'"
+}
+
 ## Command line
 test::process_command_line_args "${0}" "${@}"
 
-## The Tests
+# The Tests
 test::section 'effective_levels' 'Effective levels'
 log::reset
 #log::_dump_namespaces
@@ -243,6 +262,30 @@ WARN should appear in file
 ERROR should appear in file
 EOF
 test::assert_file_content_same "${test_output_file}" "${test_expected_file}" 'Log output to file'
+
+test::section 'building_message' 'Building formatted log messages'
+## '%d/%b/%Y:%H:%M:%S %z'
+## 00/Abc/1111:22:33:44 +5555
+expr_date='[[:digit:]]{2}/[[:upper:]][[:lower:]]{2}/[[:digit:]]{4}:[[:digit:]]{2}:[[:digit:]]{2}:[[:digit:]]{2}[[:space:]]+\+[[:digit:]]{4}'
+expr_ip_address='[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}'
+log::reset
+test_build_message 'test %<message>' ${INFO} 'foo' 'test message' '^test test message$'
+test_build_message 'test %<namespace>' ${INFO} 'foo' 'test namespace' '^test foo$'
+test_build_message 'test %<level>' ${INFO} 'foo' 'test level' '^test INFO$'
+test_build_message 'test %<timestamp>' ${INFO} 'foo' 'test timestamp' '^test [[:digit:]]+$'
+test_build_message 'test %<date>' ${INFO} 'foo' 'test date without format' '^test '${expr_date}'$'
+test_build_message 'test %<date %d/%m/%Y>' ${INFO} 'foo' 'test date with format' '^test [[:digit:]]{2}/[[:digit:]]{2}/[[:digit:]]{4}$'
+test_build_message 'test %<ip>' ${INFO} 'foo' 'test ip address' '^test '${expr_ip_address}'$'
+test_build_message 'test %<host>' ${INFO} 'foo' 'test hostname' '^test [[:alnum:]_]+$'
+test_build_message 'test %<user>' ${INFO} 'foo' 'test user' '^test [[:alnum:]_]+$'
+
+test::section 'format_by_namespace' 'Setting format at namespace level'
+log::reset
+log::set_format 'foo' 'start %<level>|%<namespace>: %<message> end'
+test_info 'foo' 'message 1' 'start INFO|foo: message 1 end'
+test_info 'bar' 'message 1' SAME
+log::reset
+test_info 'foo' 'reset clears the formatting' SAME
 test::finish
 
 #test::dump_sections
