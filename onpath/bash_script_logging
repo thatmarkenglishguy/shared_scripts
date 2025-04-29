@@ -501,9 +501,17 @@ log::set_stream_appender() {
   #  2 Stream identifier
   local namespace
   local stream
+  local dir
 
   namespace="$(log::_build_namespace_key "${1}")"
   stream="${2}"
+
+  dir="$(dirname "${stream}")"
+  if [ -n "${dir}" ] && [ ! -d "${dir}" ] && [ "${dir}" != '.' ]
+  then
+    mkdir -p "${dir}"
+    touch "${stream}"
+  fi
 
   __log_stream_appenders["${namespace}"]="${stream}"
 }
