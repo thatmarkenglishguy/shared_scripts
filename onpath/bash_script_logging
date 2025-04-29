@@ -24,13 +24,13 @@ then
   readonly INFO=30
   readonly DEBUG=40
   readonly TRACE=50
-  readonly _ROOT_NAMESPACE='_'
-  readonly _default_level=${INFO}
-  readonly _default_format='%s\n'
+  readonly __LOG_ROOT_NAMESPACE='_'
+  readonly __LOG_DEFAULT_LEVEL=${INFO}
+  readonly __LOG_DEFAULT_FORMAT='%s\n'
   readonly __LOG_DEFAULT_STREAM_APPENDER=/dev/fd/2
   declare -A __log_namespaces
   declare -A __log_stream_appenders
-  _log_current_default_level=${_default_level}
+  __log_current_default_level=${__LOG_DEFAULT_LEVEL}
   __script_logging_imported=1
 fi
 
@@ -128,7 +128,7 @@ log::_effective_log_level() {
   #  or default level if not found.
   if ! log::_loop_effective_log_level "${1}"
   then
-    echo ${_log_current_default_level}
+    echo ${__log_current_default_level}
     return 1
   else
     return 0
@@ -180,7 +180,7 @@ log::_effective_log_stream_appender() {
 # Log functions for external scripts to call.
 
 log::set_default_level() {
-  _log_current_default_level=${1}
+  __log_current_default_level=${1}
 }
 
 log::log() {
@@ -190,8 +190,8 @@ log::log() {
   # are used.
   #
   # Globals:
-  #  _default_format
-  #  _log_current_default_level
+  #  __LOG_DEFAULT_FORMAT
+  #  __log_current_default_level
   # Parameters:
   #  1 Level to log at. e.g. '${INFO}'
   #  2 Namespace. e.g. 'outer.inner.sub'
@@ -209,13 +209,13 @@ log::log() {
 
   if [ -z "${level}" ]
   then
-    level=${_log_current_default_level}
+    level=${__log_current_default_level}
   fi
 
   namespace="${2}"
   if [ -z "${namespace}" ]
   then
-    namespace="${_ROOT_NAMESPACE}"
+    namespace="${__LOG_ROOT_NAMESPACE}"
   else
     namespace=$(log::_build_namespace_key "${namespace}")
   fi
@@ -225,7 +225,7 @@ log::log() {
   effective_level_result=$?
 #  echo "Namespace ${namespace}"$'\n'"Message: '${message}'"
 #  echo "Effective level: '${effective_level}' (result=${effective_level_result})"$'\n'"Level: '${level}'"
-  effective_format="${_default_format}"
+  effective_format="${__LOG_DEFAULT_FORMAT}"
   effective_stream_appender="$(log::_effective_log_stream_appender "${namespace}")"
 #  set -x
   if [ ${level} -le ${effective_level} ]
@@ -294,9 +294,9 @@ log::set_stream_appender() {
 log::reset() {
   # Globals:
   #  __log_namespaces
-  #  _log_current_default_level
+  #  __log_current_default_level
   __log_namespaces=()
-  log::set_default_level ${_default_level}
+  log::set_default_level ${__LOG_DEFAULT_LEVEL}
 }
 
 log::reset
