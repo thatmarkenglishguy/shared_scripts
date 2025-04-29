@@ -5,12 +5,18 @@
 # For example:
 # ```
 # source script_testing
+# test::section 'example_tests' 'Example tests'
 # test::process_command_line_args "${0}" "${@}"
 # test::section 'first_section' 'Some example tests'
 # test::assert_equal 'foo' 'foo'
 # test::section 'second_section' 'Comparison tests with failing test'
 # test::assert_compare 'foo' 'foo' SAME
 # test::assert_compare 'foo' 'bar' SAME # failing test
+# test::assert_match 'foo' 'f.*'
+# test::assert_match 'foo' 'g.*' # failing test
+# echo 'test' >lhs
+# echo 'test' >rhs
+# test::assert_file_content_same lhs rhs 'Files get deleted by default'
 # test::finish
 #
 # ```
@@ -22,6 +28,9 @@ then
   declare -A __test_section_passes
   declare -A __test_section_fails
   declare -A __test_section_descriptions
+  __test_section_passes=()
+  __test_section_fails=()
+  __test_section_descriptions=()
   __test_current_section=''
   __test_all_passes=0
   __test_all_fails=0
@@ -174,7 +183,10 @@ test::_pass() {
   #  __test_current_section
   #  __test_all_passes
   #  __test_all_tests
-  __test_section_passes[${__test_current_section}]=$((__test_section_passes[${__test_current_section}] + 1))
+  if [ -n "${__test_current_section}" ]
+  then
+    __test_section_passes[${__test_current_section}]=$((__test_section_passes[${__test_current_section}] + 1))
+  fi
   ((__test_all_passes+=1))
   ((__test_all_tests+=1))
 }
@@ -187,7 +199,10 @@ test::_fail() {
   #  __test_current_section
   #  __test_all_fails
   #  __test_all_tests
-  __test_section_fails[${__test_current_section}]=$((__test_section_fails[${__test_current_section}] + 1))
+  if [ -n "${__test_current_section}" ]
+  then
+    __test_section_fails[${__test_current_section}]=$((__test_section_fails[${__test_current_section}] + 1))
+  fi
   ((__test_all_fails+=1))
   ((__test_all_tests+=1))
 }
@@ -279,6 +294,33 @@ test::__finish_file() {
 
 # Test assertion implementations
 
+test::_assert_impl() {
+  local result_exit_code
+  local output
+  local expected
+  local description
+  local expected_description
+
+  result_exit_code=${1}
+  output="${2}"
+  expected="${3}"
+  description="${4}"
+  expected_description="${5:-"'${expected}'"}"
+  #expected_description="${5}"
+
+  if [ ${result_exit_code} -ne 0 ]
+  then
+    test::_fail
+    echo "ERROR: ${description}." >&2
+    echo " Expected: ${expected_description}" >&2
+    echo " Result:   '${output}'" >&2
+    return 1
+  else
+    test::_pass
+    test::raw_message "SUCCESS: ${description}. ${expected_description}. Output='${output}'."
+  fi
+}
+
 test::_assert_equal_impl() {
   local output
   local expected
@@ -288,19 +330,9 @@ test::_assert_equal_impl() {
   output="${1}"
   expected="${2}"
   description="${3}"
-  expected_description="${4:-"'${expected}'"}"
+  expected_description="${4}"
 
-  if [ "${output}" != "${expected}" ]
-  then
-    test::_fail
-    echo "ERROR: ${description}." >&2
-    echo " Expected: ${expected_description}" >&2
-    echo " Result: '${output}'" >&2
-    return 1
-  else
-    test::_pass
-    test::raw_message "SUCCESS: ${description}. Result equals '${expected}'."
-  fi
+  test::_assert_impl $([[ "${output}" == "${expected}" ]]; echo $?) "${output}" "${expected}" "${description}" "${expected_description}"
 }
 
 # Test functions called by external scripts.
@@ -434,6 +466,31 @@ test::finish() {
 }
 
 # Test assertions
+
+test::assert_match() {
+  # Call to check two variables are equal using a regex.
+  #
+  # Parameters:
+  #  1 Variable under test.
+  #  2 Expected regex.
+  #  3 Description.
+  # Outputs:
+  #  Test result.
+  # Returns:
+  #  0 - pass.
+  #  1 - fail
+  local output
+  local expected_expr
+  local description
+
+  output="${1}"
+  expected_expr="${2}"
+  description="${3}"
+
+  test::_assert_impl $([[ "${output}" =~ ${expected_expr} ]]; echo ${?}) "${1}" "${2}" "${3}" ${4}
+
+  return ${?}
+}
 
 test::assert_equal() {
   # Call to check two variables are equal.
