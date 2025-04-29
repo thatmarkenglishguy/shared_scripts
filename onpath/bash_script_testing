@@ -16,19 +16,21 @@
 # ```
 
 # Globals
-declare -A __test_section_passes
-declare -A __test_section_fails
-declare -A __test_section_descriptions
-__test_current_section=''
-__test_all_passes=0
-__test_all_fails=0
-__test_all_tests=0
-__test_verbose=0
-__test_output_skipped_newline=1
-
 if [ -z ${__script_testing_imported+defined} ]
 then
   readonly VERBOSE_VISIBLE=2
+  declare -A __test_section_passes
+  declare -A __test_section_fails
+  declare -A __test_section_descriptions
+  __test_current_section=''
+  __test_all_passes=0
+  __test_all_fails=0
+  __test_all_tests=0
+  __test_verbose=0
+  __test_output_skipped_newline=1
+  readonly __TEST_DEFAULT_LEAVE_FILES_INTACT_AFTER_TEST=0
+  __test_leave_files_intact_after_test="${__TEST_DEFAULT_LEAVE_FILES_INTACT_AFTER_TEST}"
+
   __script_testing_imported=1
 fi
 
@@ -244,6 +246,39 @@ test::_build_expected_description() {
   esac
 }
 
+# Test file handle implementations
+
+test::__finish_file() {
+  local file_path
+  local leave_files_alone
+  local file_looks_deletable
+
+  file_path="${1}"
+  leave_files_alone=${2:-${__test_leave_files_intact_after_test}}
+
+  file_looks_deletable=0
+  # If path is non-numeric (avoid trying to remove std streams)
+  if [[ "${file_path}" != +([0-9]) ]] && [[ "${file_path}" != /dev/fd/+([0-9]) ]]
+  then
+    file_looks_deletable=1
+  fi
+
+  if [ ${leave_files_alone} -eq 0 ]
+  then
+    if [ ${file_looks_deletable} -ne 0 ]
+    then
+      rm "${file_path}"
+    fi
+  else
+    if [ ${file_looks_deletable} -ne 0 ]
+    then
+      echo "Leaving file intact: '${file_path}'" >&2
+    fi
+  fi
+}
+
+# Test assertion implementations
+
 test::_assert_equal_impl() {
   local output
   local expected
@@ -282,11 +317,13 @@ test::usage() {
   program=$(basename "${1}")
 
   cat <<-EOF
-${program} [-v|--verbose] [-q|--quiet]
+${program} [-l|--leave|--leave-files|--leave-files-alone]
+  [-v|--verbose] [-q|--quiet]
 
 Parameters:
-  -v|--verbose Turn up test verbosity. Can be repeated.
-  -q|--quiet   Tests are quiet, just see results.
+  -l|--leave[-files[-alone]] If specified, don't delete files after file assertions.
+  -v|--verbose               Turn up test verbosity. Can be repeated.
+  -q|--quiet                 Tests are quiet, just see results.
 EOF
 }
 
@@ -314,6 +351,12 @@ test::process_command_line_args() {
   do
     arg="${args[${i}]}"
     case "${arg}" in
+      -l|--leave|--leave-files|--leave-files-alone)
+        __test_leave_files_intact_after_test=1
+        ;;
+      -d|--delete|--delete-files)
+        __test_leave_files_intact_after_test=0
+        ;;
       --verbose)
         ((__test_verbose = __test_verbose+1))
         ;;
@@ -453,4 +496,74 @@ test::assert_compare() {
   return ${?}
 }
 
+test::leave_files_intact_after_test() {
+  __test_leave_files_intact_after_test=1
+}
 
+test::delete_files_after_test() {
+  __test_leave_files_intact_after_test=0
+}
+
+test::assert_file_content_same() {
+  # Call to compare two files.
+  #
+  # Parameters:
+  #  1  File containing output from function under test.
+  #  2. File containing expected output.
+  #  3. Description.
+  #  4. Leave files intact after test. 
+  #     (0 or empty means delete, anything else means leave).
+  # Outputs:
+  #  Test result.
+  # Returns:
+  #  0 - pass.
+  #  1 - fail.
+  #  2 - Input file not found.
+  #  3 - Expected file not found.
+  local file_input
+  local file_expected
+  local description
+  local leave_files_alone
+  local diff_output
+  local diff_result
+
+  file_input="${1}"
+  file_expected="${2}"
+  description="${3}"
+  leave_files_alone=${4:-${__test_leave_files_intact_after_test}}
+
+  if [ ! -f "${file_input}" ]
+  then
+    test::_fail
+    echo "ERROR: Input test file not found '${file_input}'" >&2a
+    return 2
+  fi
+
+  if [ ! -f "${file_expected}" ]
+  then
+    test::_fail
+    echo "ERROR: Expected test file not found '${file_expected}'" >&2a
+    test::__finish_file "${file_input}" ${leave_files_alone}
+    return 3
+  fi
+
+  diff_output="$(diff -y "${file_input}" "${file_expected}")"
+  diff_result=${?}
+
+  if [ ${diff_result} -ne 0 ]
+  then
+    test::_fail
+    echo "ERROR in file diff: ${description}. LHS='${file_input}'. RHS='${file_expected}'." >&2
+    echo "${diff_output}" >&2
+    echo '' >&2
+    echo 'Input file content:' >&2
+    cat "${file_input}" >&2
+    return 1
+  else
+    test::_pass
+    test::raw_message "SUCCESS: ${description}. File content as expected in '${file_input}'"
+  fi
+
+  test::__finish_file "${file_input}" ${leave_files_alone}
+  test::__finish_file "${file_expected}" ${leave_files_alone}
+}
