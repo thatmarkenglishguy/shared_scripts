@@ -1,0 +1,55 @@
+#!/usr/bin/env bash
+
+s1='xxxxfoo1yyyyybarzzz'
+s2='zzzzfoo1yyyyybarxxx'
+s3='xxxxfoo2yyyyybarxxx'
+
+# Note:
+# % - Match from end and delete
+# # - Match from beginning and delete
+#
+# Find the longest string at the end of $s1
+# which DOESN'T match the letter 'x' and delete it.
+# i.e. get 'x' from the front.
+echo "Longest End doesn't match 'x' (no 'x' on end):       '${s1%%[!x]*}'"
+echo "Longest End doesn't match 'x' ('x' also on end):     '${s3%%[!x]*}'"
+
+# Find the longest string at the start of $s2
+# which DOESN'T match the letter 'x' and delete it.
+# i.e. get 'x' from the end.
+echo "Longest Begin doesn't match 'x' (no 'x' on start):   '${s2##*[!x]}'"
+echo "Longest Begin doesn't match 'x' ('x' also on start): '${s3##*[!x]}'"
+# SO THIS APPROACH WORKS WHETHER MATCH IS ON BOTH ENDS OF STRING OR NOT.
+
+# Stripping
+# Find the longest pattern of 'x' matching at the front of $s1
+# and remove it.
+# i.e. remove 'x' from front.
+echo "Strip 'x' from start (no 'x' on end):   '${s1##*[x]}'"
+# However where the character being removed is at both ends of the string,
+# this just returns an empty string.
+echo "Strip 'x' from start ('x' also on end): '${s3##*[x]}'"
+
+# Find the longest pattern of 'x' matching at the end of $s1
+# and remove it.
+# i.e. remove 'x' from end.
+echo "Strip 'x' from end (no 'x' on start):   '${s2%%[x]*}'"
+
+# However where the character being removed is at both ends of the string,
+# this just returns an empty string.
+echo "Strip 'x' from end ('x' also on start): '${s3%%[x]*}'"
+
+# So
+# The "best" way to trim is to use the negated reverse search illustrated above
+# and then remove that specific string from the appropriate end of the appropriate string.
+#
+# Find the longest string at the end of $s3
+# which DOESN'T match the letter 'x' and delete.
+# Take the resulting string and remove it from the front.
+echo "Remove <Longest End doesn't match 'x'> from front: '${s3#"${s3%%[!x]*}"}'"
+#
+# Find the longest string at the start of $s3
+# which DOESN'T match the letter 'x' and delete.
+# Take the resulting string and remove it from the end.
+echo "Remove <Longest Start doesn't match 'x'> from end: '${s3%"${s3##*[!x]}"}'"
+
