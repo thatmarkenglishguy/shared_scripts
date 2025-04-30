@@ -24,6 +24,12 @@ then
   __log_current_format_delimiter=${__LOG_DEFAULT_FORMAT_DELIMITER}
   __log_current_default_date_format="${__LOG_DEFAULT_DATE_FORMAT}"
   __log_current_default_format="${__LOG_DEFAULT_FORMAT}"
+  unset __log_message_ip
+  unset __log_message_host
+  unset __log_message_user
+  unset __log_message_pid
+  unset __log_message_cmd
+  unset __log_message_cmd_without_shell
   __script_logging_imported=1
 fi
 
@@ -406,27 +412,53 @@ log::build_message() {
           message="${message}${date}"
           ;;
         ip)
-          message="${message}$(hostname -i)"
+          if [ -z "${__log_message_ip+defined}" ]
+          then
+            __log_message_ip="$(hostname -i)"
+          fi
+          message="${message}${__log_message_ip}"
           ;;
         host)
-          message="${message}$(hostname)"
+          if [ -z "${__log_message_host+defined}" ]
+          then
+            __log_message_host="$(hostname)"
+          fi
+          message="${message}${__log_message_host}"
           ;;
         user)
-          message="${message}${USER}"
+          if [ -z "${__log_message_user+defined}" ]
+          then
+            __log_message_user="${USER}"
+          fi
+          message="${message}${__log_message_user}"
           ;;
         pid)
-          message="${message}$$"
+          if [ -z "${__log_message_pid+defined}" ]
+          then
+            __log_message_pid="$$"
+          fi
+          message="${message}${__log_message_pid}"
           ;;
         tid)
           message="${message}$(ps --no-headers --format tid $$)"
           ;;
-        cmd_without_shell)
-          cmd="$(ps --no-headers --format cmd $$)"
-          cmd="${cmd#"${SHELL##*/}"}"
-          message="${message}${cmd}"
-          ;;
         cmd)
-          message="${message}$(ps --no-headers --format cmd $$)"
+          if [ -z "${__log_message_cmd+defined}" ]
+          then
+            __log_message_cmd="$(ps --no-headers --format cmd $$)"
+          fi
+          message="${message}${__log_message_cmd}"
+          ;;
+        cmd_without_shell)
+          if [ -z "${__log_message_cmd_without_shell+defined}" ]
+          then
+            if [ -z "${__log_message_cmd+defined}" ]
+            then
+              __log_message_cmd="$(ps --no-headers --format cmd $$)"
+            fi
+            __log_message_cmd_without_shell="${__log_message_cmd#"${SHELL##*/}"}"
+          fi
+          message="${message}${__log_message_cmd_without_shell}"
           ;;
         *)
           message="${message}%<${token}>"
@@ -594,7 +626,13 @@ log::reset() {
   __log_current_default_date_format="${__LOG_DEFAULT_DATE_FORMAT}"
   __log_current_default_format="${__LOG_DEFAULT_FORMAT}"
 
-  __script_logging_imported=1
+  unset __log_message_ip
+  unset __log_message_host
+  unset __log_message_user
+  unset __log_message_pid
+  unset __log_message_cmd
+  unset __log_message_cmd_without_shell
+
   log::set_default_level ${__LOG_DEFAULT_LEVEL}
 }
 
