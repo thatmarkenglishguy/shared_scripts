@@ -269,6 +269,7 @@ test::section 'building_message' 'Building formatted log messages'
 expr_date='[[:digit:]]{2}/[[:upper:]][[:lower:]]{2}/[[:digit:]]{4}:[[:digit:]]{2}:[[:digit:]]{2}:[[:digit:]]{2}[[:space:]]+\+[[:digit:]]{4}'
 expr_ip_address='[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}\.[[:digit:]]{1,3}'
 log::reset
+test_build_message 'test %<nope>' ${INFO} 'foo' 'test nope' '^test %<nope>$'
 test_build_message 'test %<message>' ${INFO} 'foo' 'test message' '^test test message$'
 test_build_message 'test %<level>' ${INFO} 'foo' 'test level' '^test INFO$'
 test_build_message 'test %<namespace>' ${INFO} 'foo' 'test namespace' '^test foo$'
@@ -280,7 +281,8 @@ test_build_message 'test %<host>' ${INFO} 'foo' 'test hostname' '^test [[:alnum:
 test_build_message 'test %<user>' ${INFO} 'foo' 'test user' '^test [[:alnum:]_]+$'
 test_build_message 'test %<pid>' ${INFO} 'foo' 'test pid' '^test [[:digit:]]+$'
 test_build_message 'test %<tid>' ${INFO} 'foo' 'test tid' '^test [[:digit:]]+$'
-test_build_message 'test %<nope>' ${INFO} 'foo' 'test nope' '^test %<nope>$'
+test_build_message 'test %<cmd>' ${INFO} 'foo' 'test cmd' '^test [[:alnum:]/[:space:]_\.]+$'
+test_build_message 'test %<cmd_without_shell>' ${INFO} 'foo' 'test cmd_without_shell' '^test [[:alnum:]/[:space:]_\.]+$'
 
 test::section 'format_by_namespace' 'Setting format at namespace level'
 log::reset

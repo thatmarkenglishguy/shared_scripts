@@ -41,17 +41,19 @@ Default log format is the message.
 
 Available format specifiers:
 Format syntax is %<FORMAT_SPECIFIER>.
- message       Log message
- level         Log level
- namespace     Log namespace
- timestamp     Timestamp now
- date[ FORMAT] Date now in optional format specified.
-               Default format is: ${__LOG_DEFAULT_DATE_FORMAT}
- ip            IP address
- host          Hostname
- user          Username
- pid           Process ID
- tid           Thread ID
+ message           Log message.
+ level             Log level.
+ namespace         Log namespace.
+ timestamp         Timestamp now.
+ date[ FORMAT]     Date now in optional format specified.
+                   Default format is: '${__LOG_DEFAULT_DATE_FORMAT}'.
+ ip                IP address.
+ host              Hostname.
+ user              Username.
+ pid               Process ID.
+ tid               Thread ID.
+ cmd               Process cmd.
+ cmd_without_shell Process cmd with shell omitted.
 For example:
 ```
 source script_logging
@@ -278,8 +280,7 @@ log::_loop_format_tokens() {
   delim=${2:-${__log_current_format_delimiter}}
 
   next_string="${original_format_string}"
-  regex='%<([a-z]+)>'
-  regex='%<([[:alnum:]]+[[:space:]]*[[:alpha:]%+-/]+)>'
+  regex='%<([[:alnum:]]+[[:space:]]*[[:alpha:]%+-/_]+)>'
 
   while [[ "$next_string" =~ $regex ]]; do
     matched_token="${BASH_REMATCH[0]}"
@@ -357,6 +358,7 @@ log::build_message() {
   local timestamp
   local date_format
   local date
+  local cmd
 
   format="${1}"
   level="${2}"
@@ -417,6 +419,14 @@ log::build_message() {
           ;;
         tid)
           message="${message}$(ps --no-headers --format tid $$)"
+          ;;
+        cmd_without_shell)
+          cmd="$(ps --no-headers --format cmd $$)"
+          cmd="${cmd#"${SHELL##*/}"}"
+          message="${message}${cmd}"
+          ;;
+        cmd)
+          message="${message}$(ps --no-headers --format cmd $$)"
           ;;
         *)
           message="${message}%<${token}>"
