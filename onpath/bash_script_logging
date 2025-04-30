@@ -1,28 +1,7 @@
 # :vim ft=bash
 
 # Functions for logging.
-#
-# Logs are namespaced using sensible module names delimited by '.'.
-# Log levels are: ERROR, WARN, INFO, DEBUG, TRACE.
-# Log levels are inherited from nearest parent.
-# Default log level is INFO.
-# Default log appender is STDERR.
-# Default log format is the message.
-#
-# For example:
-# ```
-# source script_logging
-# log::set_level 'some_module' ${INFO}
-# log::set_level 'some_module.sub.submodule2' ${WARN}
-# log::set_format 'some_module.format_example' 'start %<level>|%<namespace> %<message> end'
-# log::set_stream_sppender 'some_module.file_example' '~/my_log.log'
-# log::info 'some_module.sub.submodule1' 'a message for submodule 1' # Appears in log output
-# log::info 'some_module.sub.submodule2' 'a message for submodule 2' # Omitted from log output
-# log::info 'some_module.file_example' 'a message for a file' # Appears in file
-# Output for following line:
-# 'start INFO|some_module.format_example a message for a file end'
-# log::info 'some_module.format_example' 'a message for a file'
-# ```
+# See log::usage for details.
 
 if [ -z ${__script_logging_imported} ]
 then
@@ -48,6 +27,50 @@ then
   __script_logging_imported=1
 fi
 
+# Usage
+log::usage() {
+  cat <<-EOF
+Functions for logging.
+
+Logs are namespaced using sensible module names delimited by '.'.
+Log levels are: ERROR, WARN, INFO, DEBUG, TRACE.
+Log levels are inherited from nearest parent.
+Default log level is INFO.
+Default log appender is STDERR.
+Default log format is the message.
+
+Available format specifiers:
+Format syntax is %<FORMAT_SPECIFIER>.
+ message       Log message
+ level         Log level
+ namespace     Log namespace
+ timestamp     Timestamp now
+ date[ FORMAT] Date now in optional format specified.
+               Default format is: ${__LOG_DEFAULT_DATE_FORMAT}
+ ip            IP address
+ host          Hostname
+ user          Username
+ pid           Process ID
+ tid           Thread ID
+For example:
+```
+source script_logging
+log::set_level 'some_module' \${INFO}
+log::set_level 'some_module.sub.submodule2' \${WARN}
+log::set_format 'some_module.format_example' 'start %<level>|%<namespace> %<message> end'
+log::set_stream_sppender 'some_module.file_example' '~/my_log.log'
+log::info 'some_module.sub.submodule1' 'a message for submodule 1' # Appears in log output
+log::info 'some_module.sub.submodule2' 'a message for submodule 2' # Omitted from log output
+log::info 'some_module.file_example' 'a message for a file' # Appears in file
+Output for following line:
+'start INFO|some_module.format_example a message for a file end'
+log::info 'some_module.format_example' 'a message for a file'
+```
+
+EOF
+}
+
+# Logging internals
 log::_dump_variables_by_prefix() {
   # Parameters:
   #  1 Prefix. Prefix of variables to dump out.
@@ -356,12 +379,12 @@ log::build_message() {
           level_string="$(log::_level_string ${level})"
           message="${message}${level_string}"
           ;;
+        namespace)
+          message="${message}${namespace}"
+          ;;
         timestamp)
           timestamp=$(date "+%s%N")
           message="${message}${timestamp}"
-          ;;
-        namespace)
-          message="${message}${namespace}"
           ;;
         date*)
           if [ "${token}" != 'date' ]
@@ -388,6 +411,15 @@ log::build_message() {
           ;;
         user)
           message="${message}${USER}"
+          ;;
+        pid)
+          message="${message}$$"
+          ;;
+        tid)
+          message="${message}$(ps --no-headers --format tid $$)"
+          ;;
+        *)
+          message="${message}%<${token}>"
           ;;
       esac
     fi
