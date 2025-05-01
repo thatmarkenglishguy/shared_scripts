@@ -115,6 +115,13 @@ then
   eval "$(register-python-argcomplete pipx)"
 fi
 
+# fnm complection
+if command -v fnm &>/dev/null
+then
+  time::debug_message "source fnm completion"
+  eval "$(fnm env --use-on-cd --shell bash)"
+fi
+
 # History
 # See http://www.caliban.org/bash/
 if [ -n "${HISTIGNORE}" ]
