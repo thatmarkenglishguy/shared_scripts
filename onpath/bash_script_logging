@@ -365,6 +365,7 @@ log::build_message() {
   local date_format
   local date
   local cmd
+  local tid
 
   format="${1}"
   level="${2}"
@@ -440,7 +441,9 @@ log::build_message() {
           message="${message}${__log_message_pid}"
           ;;
         tid)
-          message="${message}$(ps --no-headers --format tid $$)"
+          tid="$(ps --no-headers --format tid $$)"
+          tid="${tid##* }"
+          message="${message}${tid}"
           ;;
         cmd)
           if [ -z "${__log_message_cmd+defined}" ]
