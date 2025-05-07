@@ -25,26 +25,45 @@
   last = log HEAD^..HEAD --name-status
   firstremote = "!git config remote.origin.url > /dev/null && echo origin || git remote | head -n 1"
   url = "!git config --get remote.$(git firstremote).url"
-
   httpsrawurl = ! "f() {\
     local url; url=\"$(git url | sed -e 's!megithub!github!' -e 's!publicgithub!github!')\" ; \
-    if [ \"${url:0:4}\" == 'http' ]; then \
-      echo \"${url}\" | sed -e 's!\\.git$!!' ; \
-    else \
-      echo \"${url}\" \
-        | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!' -e 's!\\.git$!!'; \
-    fi\
+    case \"${url}\" in \
+      *github*) \
+        case \"${url}\" in \
+          http*) echo \"${url}\" | sed -e 's!\\.git$!!' ;; \
+          *) echo \"${url}\" \
+            | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!' -e 's!\\.git$!!' ;; \
+        esac \
+        ;; \
+      *bitbucket*) \
+        case \"${url}\" in \
+          http) echo \"${url}\" | sed -e 's!\\.git$!!' ;; \
+          *) echo \"${url}\" \
+            | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!' -e 's!\\(.*\\)\\.git$!\\1!' ;; \
+        esac \
+        ;; \
+      esac \
     }; \
     f"
   httpsurlbranch = ! "f() {\
     local url; url=\"$(git url | sed -e 's!megithub!github!' -e 's!publicgithub!github!')\" ; \
-    if [ \"${url:0:4}\" == 'http' ]; then \
-      echo \"${url}\" \
-        | sed -e 's!\\.git$!/tree!' | tr '\n' '/' && git rev-parse --abbrev-ref HEAD ; \
-    else \
-      echo \"${url}\" \
-        | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!' -e 's!\\.git$!/tree!' | tr '\n' '/' && git rev-parse --abbrev-ref HEAD ; \
-    fi\
+    case \"${url}\" in \
+      *github*) \
+        case \"${url}\" in \
+          http*) echo \"${url}\" \
+            | sed -e 's!\\.git$!/tree!' | tr '\n' '/' && git rev-parse --abbrev-ref HEAD ;; \
+          *) echo \"${url}\" \
+            | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!' -e 's!\\.git$!/tree!' | tr '\n' '/' && git rev-parse --abbrev-ref HEAD ;; \
+        esac \
+        ;; \
+      *bitbucket*) \
+        case \"${url}\" in \
+          http) echo \"${url}\" | sed -e 's!\\.git$!!' ;; \
+          *) echo \"${url}\" \
+            | sed -e 's!:!/!' -e 's!^\\(.*\\)@!https://!' -e 's!\\.git$!/src!' | tr '\n' '/' && git rev-parse --abbrev-ref HEAD ;; \
+        esac \
+        ;; \
+    esac\
     }; \
     f"
   httpsurl = httpsurlbranch
