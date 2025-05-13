@@ -41,7 +41,13 @@ if %ERRORLEVEL% NEQ 0 @goto addbats
 @set PATHBATSDIR=%BATSDIR%
 @set PATH| findstr /E /C:";" >NUL
 @if %ERRORLEVEL% EQU 1 @set PATHBATSDIR=;%PATHBATSDIR%
-setx PATH "%PATH%%PATHBATSDIR%"
+@echo Adding %BATSDIR% to PATH... >&2
+@echo We used to edit the path using setx but that now truncates to 1024 characters which isn't a lot. >&2
+@echo Instead edit the Environment Variables directly for %USER% by running: >&2
+@echo rundll32 sysdm.cpl,EditEnvironmentVariables >&2
+@echo and set the PATH to: >&2
+@echo %PATH%%PATHBATSDIR%
+::setx PATH "%PATH%%PATHBATSDIR%"
 set PATH=%PATH%%PATHBATSDIR%
 
 
@@ -61,7 +67,13 @@ set PATH=%PATH%%PATHBATSDIR%
 @set PATHBINDIR=%BINDIR%
 @set PATH| findstr /E /C:";" >NUL
 @if %ERRORLEVEL% EQU 1 @set PATHBINDIR=;%PATHBINDIR%
-setx PATH "%PATH%%PATHBINDIR%"
+@echo Adding %BINDIR% to PATH... >&2
+@echo We used to edit the path using setx but that now truncates to 1024 characters which isn't a lot. >&2
+@echo Instead edit the Environment Variables directly for %USER% by running: >&2
+@echo rundll32 sysdm.cpl,EditEnvironmentVariables >&2
+@echo and set the PATH to: >&2
+@echo %PATH%%PATHBINDIR%
+::setx PATH "%PATH%%PATHBINDIR%"
 set PATH=%PATH%%PATHBINDIR%
 
 :gotbin
@@ -83,6 +95,36 @@ powershell -Command "Invoke-WebRequest https://static.rust-lang.org/rustup/dist/
 :: Install Visual Studio
 @call %SCRIPT_DIR%\vs2022\install.bat
 
+:: Bit of a hack for fnm
+:: It has all kinds of trickery for manipulating the PATH, and there
+:: are things you can do for a Powershell profile, but for cmd there is not
+:: a lot. Rather than invoke "fnm env" to generate a bunch of variables
+:: in a registry autorun setting,
+:: we cheat and just put the "default" alias location on the end of the PATH directly.
+:: Totally unsupported...
+@set FNM_ME_DIR=%APPDATA%\fnm\aliases\default
+
+:: Check for FNM_ME_DIR in PATH
+set PATH| findstr /C:"%FNM_ME_DIR%" >NUL
+
+if %ERRORLEVEL% NEQ 0 @goto addfnm
+@goto gotfnm
+
+:addfnm
+:: Check for ; at the end of the PATH
+@set PATH_FNM_ME_DIR=%FNM_ME_DIR%
+@set PATH| findstr /E /C:";" >NUL
+@if %ERRORLEVEL% EQU 1 @set PATH_FNM_ME_DIR=;%PATH_FNM_ME_DIR%
+@echo Adding fnm default node alias to path...>&2
+@echo We used to edit the path using setx but that now truncates to 1024 characters which isn't a lot. >&2
+@echo Instead edit the Environment Variables directly for %USER% by running: >&2
+@echo rundll32 sysdm.cpl,EditEnvironmentVariables >&2
+@echo and set the PATH to: >&2
+@echo %PATH%%PATH_FNM_ME_DIR%
+::setx PATH "%PATH%%PATH_FNM_ME_DIR%"
+set PATH=%PATH%%PATH_FNM_ME_DIR%
+
+:gotfnm
 
 :extras
 @echo OPTIONAL: To avoid those annoying zone identifier files you get when you expand zip files for example, >&2
