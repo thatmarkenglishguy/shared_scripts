@@ -125,6 +125,20 @@ if %ERRORLEVEL% NEQ 0 @goto addfnm
 set PATH=%PATH%%PATH_FNM_ME_DIR%
 
 :gotfnm
+:: Configure vim on windows
+:: Switch USERPROFILE from windows to Unix path, search for entry in global gitconfig file on windows.
+:: If entry not found, use git to add it.
+@echo Addubg safe directory for vim plugins to git config >&2
+@findstr /C:"directory = %USERPROFILE:\=/%/.vim/plugged/*" <%USERPROFILE%\.gitconfig >NUL
+@if %ERRORLEVEL% EQU 0 @goto :got_git_safedir
+:not_got_git_safedir
+git config --global --add safe.directory=C:/Users/thatm/.vim/plugged/*
+::[safe]
+::	directory = %USERPROFILE%/.vim/plugged/*
+@goto :extras
+
+:got_git_safedir
+@goto :extras
 
 :extras
 @echo OPTIONAL: To avoid those annoying zone identifier files you get when you expand zip files for example, >&2
