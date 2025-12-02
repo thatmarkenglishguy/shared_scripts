@@ -22,10 +22,12 @@ fi
 # --binary-file=without-match means ignore binary files
 declare -a args
 declare -a extra_args
+declare -a find_args
 
 UNSET_COLOR=2
 args=( "${@}" )
 extra_args=()
+find_args=()
 color=${UNSET_COLOR}
 case_sensitive=0
 pattern=0
@@ -35,20 +37,23 @@ function usage() {
   local program
   program="${0##*/}"
   cat <<EOF
-${program} [-P|--pattern] SEARCH_STRING SEARCH_DIRECTORY SEARCH_PATTERN [--no-color] [EXTRA_ARGS...]
+${program} [-P|--pattern] SEARCH_STRING SEARCH_DIRECTORY SEARCH_PATTERN [--no-color]
+           [--exclude GLOB] [--exclude-dir GLOB] [EXTRA_ARGS...]
   Search source code for the specified search string (required).
   Start search in specified SEARCH_DIRECTORY, matching files with specified SEARCH_PATTERN.
  
 Parameters:
-  SEARCH_STRING    String to search for.
-  SEARCH_DIRECTORY Directory to start search in. Defaults to .
-  SEARCH_PATTERN   Pattern to match files against. Default is all files (*).
-  --no-color       If specified, don't colourize output. Useful if piping.
-  --color=COLOR    Overrides the default color=always with the specified setting.
-  --case           If specfied, grep with case sensitivity.
-  --vim            Pipe the output into vim and search for the search string.
-  -P|--pattern     Treat SEARCH_STRING as a pattern.
-  EXTRA_ARGS       All additional args passed to grep.
+  SEARCH_STRING      String to search for.
+  SEARCH_DIRECTORY   Directory to start search in. Defaults to .
+  SEARCH_PATTERN     Pattern to match files against. Default is all files (*).
+  --no-color         If specified, don't colourize output. Useful if piping.
+  --color=COLOR      Overrides the default color=always with the specified setting.
+  --case             If specfied, grep with case sensitivity.
+  --vim              Pipe the output into vim and search for the search string.
+  -P|--pattern       Treat SEARCH_STRING as a pattern.
+  --exclude GLOB     Exclude GLOB from file pattern to find.
+  --exclude-dir GLOB Exclude GLOB directory from pattern to find.
+  EXTRA_ARGS         All additional args passed to grep.
 EOF
 }
 
@@ -76,20 +81,26 @@ do
       usage
       exit 1
       ;;
-    *)
-        if [ -z "${search_string+x}" ]
-        then
-          search_string="${arg}"
-        elif [ -z "${search_directory+x}" ]
-        then
-          search_directory="${arg}"
-        elif [ -z "${search_pattern+x}" ]
-        then
-          search_pattern="${arg}"
-        else
-          extra_args+=( "${arg}" )
-        fi
+    --exclude|--exclude-dir)
+      # Handled by srcfindcommon
+      find_args+=( "${arg}" )
+      (( ++i ))
+      find_args+=( "${args[${i}]}" )
       ;;
+    *)
+      if [ -z "${search_string+defined}" ]
+      then
+        search_string="${arg}"
+      elif [ -z "${search_directory+defined}" ]
+      then
+        search_directory="${arg}"
+      elif [ -z "${search_pattern+defined}" ]
+      then
+        search_pattern="${arg}"
+      else
+        extra_args+=( "${arg}" )
+      fi
+    ;;
   esac
 done
 
@@ -119,7 +130,6 @@ if [ ${pattern} -ne 0 ]
 then
   case "$(uname -a | tr [:upper:] [:lower:])" in
     *darwin*)
-      echo "It's Darwin baby."
       pattern_args+=( '--extended-regexp' )
       ;;
     *)
@@ -128,19 +138,41 @@ then
   esac
 fi
 
-pattern_args+=( "${search_string:?Must specific search string}" )
+pattern_args+=( "${search_string:?Must specify search string}" )
 
 function search_like_crazy() {
-# -H Always include file name
-srcfind "${search_directory}" -type f -print0 | xargs -0 -n1 -P8 grep \
-  "${pattern_args[@]}" \
-  --binary-file=without-match \
-  --line-number \
-  -H \
-  --include "${search_pattern:-*}" \
-  --exclude 'gradlew.bat' \
-  --exclude 'gradle' \
-  "${extra_args[@]}"
+  local somefile
+
+  # -H Always include file name
+  #echo "Pattern args:   '${pattern_args[@]}'" >&2
+  #echo "Search pattern: '${search_pattern}'" >&2
+  #echo "Extra args:     '${extra_args[@]}'" >&2
+  
+  #srcfind "${search_directory}" -type f -print0 | xargs -0 -n1 -P8 grep \
+  #  "${pattern_args[@]}" \
+  #  --binary-file=without-match \
+  #  --line-number \
+  #  -H \
+  #  --include "${search_pattern:-*}" \
+  #  --exclude 'gradlew.bat' \
+  #  --exclude 'gradle' \
+  #  "${extra_args[@]}"
+  #}
+  while read -r somefile
+  do
+    #echo "hi ${somefile}"
+    grep \
+      "${pattern_args[@]}" \
+      "${somefile}" \
+      --binary-file=without-match \
+      --line-number \
+      -H \
+      --include "${search_pattern:-*}" \
+      --exclude 'gradlew.bat' \
+      --exclude 'gradle' \
+      "${extra_args[@]}"
+    
+  done < <(srcfind "${search_directory}" -type f ${find_args[@]})
 }
 
 if [ ${use_vim} -eq 0 ]

@@ -7,8 +7,10 @@
 # Examples:
 # Find all source files under the current directory.
 # srcfind .
-set -x
+#set -x
 seen_non_dash=0
+declare -a exclude_args
+exclude_args=()
 declare -a pre_args
 pre_args=()
 declare -a post_args
@@ -17,11 +19,34 @@ declare -a args
 args=( "${@:1}" )
 
 raw_print=0
-for arg in "${args[@]}"
+#for arg in "${args[@]}"
+for ((i=0; i<${#args[@]}; ++i))
 do
+  arg="${args[${i}]}"
+  #echo "Arg: '${arg}'" >&2
   case "${arg}" in
     -print0)
       raw_print=1
+      ;;
+    --exclude)
+      (( ++i ))
+      if [ ${i} -eq ${#args[@]} ]
+      then
+        echo "Expected argument for '${arg}'" >&2
+        (( ++ok_exit_code ))
+      else
+        exclude_args+=( -path "${args[${i}]}" -o )
+      fi
+      ;;
+    --exclude-dir)
+      (( ++i ))
+      if [ ${i} -eq ${#args[@]} ]
+      then
+        echo "Expected argument for '${arg}'" >&2
+        (( ++ok_exit_code ))
+      else
+        exclude_args+=( -path "*/${args[${i}]}/*" -o )
+      fi
       ;;
     -*)
       if [ ${seen_non_dash} -eq 0 ]
@@ -63,10 +88,12 @@ fi
 #done
 
 function find_source() {
+  #echo "Exclude args: '${exclude_args[@]}'" >&2
 # -o means or
-set -x
+#set -x
   find ${pre_args[@]} "${start_directory}" \
     \! \( \
+      "${exclude_args[@]}" \
       -path '*.sw?' -o \
       -path '*.iml' -o \
       -path '*.pdb' -o \
@@ -76,7 +103,18 @@ set -x
       -path '*.tlog' -o \
       -path '*.idb' -o \
       -path '*.obj' -o \
+      -path '*.png' -o \
+      -path '*.jpeg' -o \
+      -path '*.jpg' -o \
+      -path '*.bmp' -o \
+      -path '*.svg' -o \
+      -path '*.ico' -o \
+      -path '*.gz' -o \
       -path '*.o' -o \
+      -path '*.so' -o \
+      -path '*.dll' -o \
+      -path '*.lib' -o \
+      -path '*.exe' -o \
       -path '*.pyc' -o \
       -path '*.beam' -o \
       -path '*/Debug' -o \
@@ -129,7 +167,7 @@ set -x
     \) \
     ${post_args[@]} \
     "${@}"
-  set +x
+#  set +x
 }
 
 #      -path 'gradlew.bat' -o \
@@ -239,4 +277,5 @@ function find_script_source() {
     fi
   done < <(find_source ! \( -type d \) "${@}")
 }
-set +x
+#set +x
+
