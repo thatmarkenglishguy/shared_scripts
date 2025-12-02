@@ -49,6 +49,7 @@ Available format specifiers:
 Format syntax is %<FORMAT_SPECIFIER>.
  message           Log message.
  level             Log level.
+ lvl               Log level 3 letter abbreviation: ERR, WRN, INF, DBG, TRC.
  namespace         Log namespace.
  timestamp         Timestamp now.
  date[ FORMAT]     Date now in optional format specified.
@@ -62,11 +63,11 @@ Format syntax is %<FORMAT_SPECIFIER>.
  cmd_without_shell Process cmd with shell omitted.
 For example:
 ```
-source script_logging
+source bash_script_logging
 log::set_level 'some_module' \${INFO}
 log::set_level 'some_module.sub.submodule2' \${WARN}
 log::set_format 'some_module.format_example' 'start %<level>|%<namespace> %<message> end'
-log::set_stream_sppender 'some_module.file_example' '~/my_log.log'
+log::set_stream_appender 'some_module.file_example' '~/my_log.log'
 log::info 'some_module.sub.submodule1' 'a message for submodule 1' # Appears in log output
 log::info 'some_module.sub.submodule2' 'a message for submodule 2' # Omitted from log output
 log::info 'some_module.file_example' 'a message for a file' # Appears in file
@@ -77,6 +78,7 @@ log::info 'some_module.format_example' 'a message for a file'
 
 EOF
 }
+
 
 # Logging internals
 log::_dump_variables_by_prefix() {
@@ -340,6 +342,39 @@ log::_level_string() {
   echo "${level_string}"
 }
 
+log::_level_abbrevation_string() {
+  # Parameters:
+  #  1 Log level
+  # Outputs:
+  #  String equivalent of log level for inclusion in log output.
+  local level
+  local level_string
+  level="${1}"
+
+  case "${level}" in
+    ${ERROR})
+      level_string="ERR"
+      ;;
+    ${WARN})
+      level_string="WRN"
+      ;;
+    ${INFO})
+      level_string="INF"
+      ;;
+    ${DEBUG})
+      level_string="DBG"
+      ;;
+    ${TRACE})
+      level_string="TRC"
+      ;;
+    *)
+      level_string="UNK(${level})"
+      ;;
+  esac
+
+  echo "${level_string}"
+}
+
 # Log functions for external scripts to call.
 
 log::build_message() {
@@ -361,6 +396,7 @@ log::build_message() {
   local prefix
   local token
   local level_string
+  local level_abbrevation_string
   local timestamp
   local date_format
   local date
@@ -387,6 +423,10 @@ log::build_message() {
         level)
           level_string="$(log::_level_string ${level})"
           message="${message}${level_string}"
+          ;;
+        lvl)
+          level_abbrevation_string="$(log::_level_abbrevation_string ${level})"
+          message="${message}${level_abbrevation_string}"
           ;;
         namespace)
           message="${message}${namespace}"
@@ -524,7 +564,7 @@ log::log() {
 
   if [ ${level} -le ${effective_level} ]
   then
-    message="$(log::build_message "${effective_format}" "${effective_level}" "${namespace}" "${raw_message}")"
+    message="$(log::build_message "${effective_format}" "${level}" "${namespace}" "${raw_message}")"
     echo "${message}" >>"${effective_stream_appender}"
   fi
 }
@@ -582,8 +622,8 @@ log::set_stream_appender() {
 
   namespace="$(log::_build_namespace_key "${1}")"
   stream="${2}"
-
   dir="$(dirname "${stream}")"
+
   if [ -n "${dir}" ] && [ ! -d "${dir}" ] && [ "${dir}" != '.' ]
   then
     mkdir -p "${dir}"

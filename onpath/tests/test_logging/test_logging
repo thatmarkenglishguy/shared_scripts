@@ -272,6 +272,12 @@ log::reset
 test_build_message 'test %<nope>' ${INFO} 'foo' 'test nope' '^test %<nope>$'
 test_build_message 'test %<message>' ${INFO} 'foo' 'test message' '^test test message$'
 test_build_message 'test %<level>' ${INFO} 'foo' 'test level' '^test INFO$'
+test_build_message 'test %<lvl>' ${TRACE} 'foo' 'test level' '^test TRC$'
+test_build_message 'test %<lvl>' ${DEBUG} 'foo' 'test level' '^test DBG$'
+test_build_message 'test %<lvl>' ${INFO} 'foo' 'test level' '^test INF$'
+test_build_message 'test %<lvl>' ${WARN} 'foo' 'test level' '^test WRN$'
+test_build_message 'test %<lvl>' ${ERROR} 'foo' 'test level' '^test ERR$'
+test_build_message 'test %<lvl>' $(( ERROR+1 )) 'foo' 'test level' "^test UNK\($((ERROR+1))\)$"
 test_build_message 'test %<namespace>' ${INFO} 'foo' 'test namespace' '^test foo$'
 test_build_message 'test %<timestamp>' ${INFO} 'foo' 'test timestamp' '^test [[:digit:]]+$'
 test_build_message 'test %<date>' ${INFO} 'foo' 'test date without format' '^test '${expr_date}'$'
