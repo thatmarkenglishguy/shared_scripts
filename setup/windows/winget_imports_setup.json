@@ -66,6 +66,9 @@
 				{
 					"PackageIdentifier" : "vim.vim"
 				},
+        {
+          "PackageIdentifier" : "VideoLAN.VLC"
+        },
 				{
 					"PackageIdentifier" : "WhatsApp.WhatsApp"
 				},
