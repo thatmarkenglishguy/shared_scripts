@@ -13,6 +13,8 @@ case $(uname -a | tr '[:upper:]' '[:lower:]') in
   *darwin*)
     os_name='darwin'
     ;;
+  *linux*microsoft*)
+    os_name='linuxwsl'
 esac
 
 case "${os_name}" in 
@@ -27,6 +29,9 @@ case "${os_name}" in
     ;;
   darwin)
     Open "${@}"
+    ;;
+  linuxwsl)
+    /mnt/c/Program\ Files/Google/Chrome/Application/chrome.exe "${@}"
     ;;
   *)
     echo "Can't open '${@}' on '${os_name}'"
