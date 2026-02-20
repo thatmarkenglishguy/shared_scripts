@@ -1,0 +1,17 @@
+prompt_bold=1
+prompt_standard_darkblue=34m
+prompt_standard_magenta=35m
+prompt_reset=00m
+# Include pwdname, shell level, git info
+# Note the debian_chroot colour is modified by "1;" (seems to make it a bit darker)
+# txt... seem to be a git aware prompt inclusion for 3 letter color codes.
+export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[${prompt_bold};${prompt_standard_darkblue}\]\W\[\033[${prompt_reset}\] \[\033[${prompt_standard_darkblue}\]$([ $SHLVL -gt 1 ] && echo "L${SHLVL} ")\[\033[${prompt_reset}\]\[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+
+#export PS1='\h:\W \u\$ '
+##Off the web
+#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+##Still lots of info
+#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[0;32m\]\h\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+##Paired back
+#export PS1='$([ $SHLVL -gt 1 ] && echo "$txtred(L$((SHLVL-1))) ")$txtcyn\u@\h$txtrst:\w $git_branch\$ '
+

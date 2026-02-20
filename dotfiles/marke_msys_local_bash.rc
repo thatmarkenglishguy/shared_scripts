@@ -2,6 +2,7 @@
 # 29 Apr 2020 Ready for usage, Darwin and msys.
 # 12 Apr 2022 Support for zsh
 # 01 Nov 2023 time::debug_message
+# 20 Feb 2025 Show shell level
 
 # Expect argument one to be script root directory
 marke_local_bash_script_dir="$(dirname $(dirname ${BASH_SOURCE}))"
@@ -49,13 +50,10 @@ then
   time::debug_message "source git aware prompt"
   source "${GITAWAREPROMPT}/main.sh"
 fi
-#export PS1='\h:\W \u\$ '
-##Off the web
-#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
-##Still lots of info
-#export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[0;32m\]\h\[\033[00m\]:\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
-##Paired back
-export PS1="\${debian_chroot:+(\$debian_chroot)}\[\033[01;34m\]\W\[\033[00m\] \[$txtcyn\]\$git_branch\[$txtred\]\$git_dirty\[$txtrst\]\$ "
+
+
+time::debug_message "source prompt"
+source "${marke_local_bash_script_dir}/dotfiles/marke_local_bash_prompt.rc"
 
 # Source gradle completion (?)
 time::debug_message "source gradle completion"
