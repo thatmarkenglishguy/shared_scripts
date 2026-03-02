@@ -15,3 +15,6 @@ vim +PlugUpdate +PluginUpdate +CocUpdateSync +qall
 "${script_dir}/install_fzf"
 "${script_dir}/install_cmake"
 
+echo 'Update node'>&2
+fnm install --lts
+fnm default lts-latest
