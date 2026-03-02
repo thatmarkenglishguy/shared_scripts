@@ -1,0 +1,123 @@
+#!/usr/bin/env bash
+download_path="$(mktemp --suffix .tar.gz)"
+trap cleanup 0
+#echo "Download path: ${download_path}" >&2
+
+function cleanup() {
+  rm -f "${download_path}"
+}
+
+check_cmake_needs_update() {
+  # Returns:
+  #  0        If CMake does need updating.
+  #  non-zero If CMake does not need updating.
+  # Outputs:
+  #  Latest version of CMake.
+ 
+  local latest_version
+  local local_cmake_path
+  local cmake_version_line
+  local cmake_version_index
+  local local_version
+
+  # Get the latest version tag from GitHub
+  latest_version=$(curl -s https://api.github.com/repos/Kitware/CMake/releases/latest | grep -Po '"tag_name": "v\K[0-9.]+')
+  local_cmake_path="$(command -v cmake)"
+  if [ -z "${local_cmake_path}" ] || [ ! -f "${local_cmake_path}" ]
+  then
+    echo "CMake is not installed locally. Latest version: '${latest_version}'">&2
+    echo "${latest_version}"
+    return 0
+  fi
+
+  # Get the local version from running cmake
+  read -ra cmake_version_line < <(cmake --version)
+  cmake_version_index=$(( ${#cmake_version_line[@]} - 1 ))
+  local_version="${cmake_version_line[${cmake_version_index}]}"
+
+  if [ "${latest_version}" == "${local_version}" ]
+  then
+    echo "CMake is up to date: '${latest_version}'">&2
+    return 2
+  fi
+
+  echo "${latest_version}"
+}
+
+download_cmake() {
+  # Parameters:
+  #  1 - CMake latest version.
+  local latest_version
+  local url
+
+  # Get the latest version tag from GitHub
+  latest_version="${1}"
+
+  # Construct the download url (adjust 'linux-x86_64.tar.gz' for your OS)
+  url="https://github.com/Kitware/CMake/releases/download/v${latest_version}/cmake-${latest_version}-linux-x86_64.tar.gz"
+
+  echo "Downloading CMake ${latest_version}..." >&2
+  curl --location "${url}" --output "${download_path}"
+  echo "Downloaded CMake ${latest_version} to '${download_path}'">&2
+}
+
+function install_cmake() {
+  # Parameters:
+  #  1 - latest_version Latest version of CMake
+  local latest_version
+  local cmake_install_path
+  local cmake_install_bin_path
+  local cmake_install_exe_path
+  local cmake_install_exe_file
+  local cmake_local_exe_path
+
+  latest_version="${1}"
+
+  if [ -z "${latest_version+assigned}" ]
+  then
+    echo 'install_cmake expected latest_version parameter'>&2
+    exit 2
+  else
+    echo "Latest cmake version: '${latest_version}'">&2
+  fi
+
+  cmake_install_path="/opt/cmake/cmake_${latest_version}"
+  cmake_install_bin_path="${cmake_install_path}/bin"
+
+  if [ ! -d "${cmake_install_path}" ]
+  then
+    echo "Installing to '${cmake_install_path}'">&2
+    sudo mkdir -p "${cmake_install_path}"
+    sudo tar --gunzip\
+      --extract\
+      --file "${download_path}"\
+      --strip-components=1\
+      --directory "${cmake_install_path}"
+  fi
+
+  if [ -z "$(find "${cmake_install_bin_path}" -maxdepth 0 -empty)" ]
+  then
+    for cmake_install_exe_path in "${cmake_install_bin_path}"/*
+    do
+      cmake_install_exe_file="${cmake_install_exe_path##*/}"
+      cmake_local_exe_path="/usr/local/bin/${cmake_install_exe_file}"
+      if [ -L "${cmake_local_exe_path}" ]
+      then
+        echo "Removing existing '${cmake_local_exe_path}'">&2
+        sudo rm "${cmake_local_exe_path}"
+      fi
+      sudo ln -sf "${cmake_install_exe_path}" "${cmake_local_exe_path}">&2
+    done
+  else
+    echo "No binaries found in: '${cmake_local_exe_path}'">&2
+  fi
+}
+
+latest_version="$(check_cmake_needs_update)"
+if [ ${?} -eq 0 ]
+then
+  echo "CMake needs an update to ${latest_version}...">&2
+  download_cmake "${latest_version}"
+  install_cmake "${latest_version}"
+fi
+
