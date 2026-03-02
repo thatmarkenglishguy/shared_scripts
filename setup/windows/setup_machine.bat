@@ -24,6 +24,9 @@
 :: * SysInternals
 winget import --accept-source-agreements --accept-package-agreements winget_imports_setup.json
 
+:: Upgrade pip
+py -m pip install --upgrade pip
+
 :: Install PyWin32
 py -m pip install --upgrade pywin32
 
@@ -77,6 +80,7 @@ set PATH=%PATH%%PATHBATSDIR%
 set PATH=%PATH%%PATHBINDIR%
 
 :gotbin
+:: Ensure rust
 @if exist %USERPROFILE%\.cargo @goto rustinstalled
 
 @if exist "%BINDIR%\rustup-init.exe" @goto gotrustupinit
