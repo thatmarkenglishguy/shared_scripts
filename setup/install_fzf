@@ -4,10 +4,11 @@ if [ ! -d "${HOME}/.fzf" ]
 then
   git clone --depth 1 https://github.com/junegunn/fzf.git "${HOME}/.fzf"
 else
-  pushd "${HOME}/.fzf" >/dev/null
-  git fetch
-  git rebase
-  popd >/dev/null
+  (
+    cd "${HOME}/.fzf" >/dev/null
+    git fetch
+    git rebase
+  )
 fi
 
 echo 'y

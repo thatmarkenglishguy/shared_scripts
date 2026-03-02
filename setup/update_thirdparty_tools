@@ -6,12 +6,12 @@ if [ -z ${BASH_SOURCE} ]; then
 else
   script_dir="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 fi
-"${script_dir}/install_brewlist"
-"${script_dir}/install_git_tools"
-"${script_dir}/install_gradle_tools"
-"${script_dir}/install_java"
-"${script_dir}/install_gradle"
-"${script_dir}/install_android_tools"
+
+rustup self update
+rustup update stable
+echo 'Vim Update...'
+vim +PlugUpdate +PluginUpdate +CocUpdateSync +qall
+
 "${script_dir}/install_fzf"
 "${script_dir}/install_cmake"
 
