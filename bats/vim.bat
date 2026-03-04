@@ -1,2 +1,2 @@
 :: Redirect to vim executable
-@CALL "c:\Program Files\vim\vim91\vim.exe" %*
+@CALL "c:\Program Files\Vim\vim92\vim.exe" %*
