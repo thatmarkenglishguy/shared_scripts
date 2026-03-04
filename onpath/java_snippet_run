@@ -27,7 +27,7 @@ if [ ${bContinue} -eq 1 ]
 then
   cat << EOF >"${tmpfile}"
 public class ${classname} {
-  public static void main(String[] args) {
+  public static void main(final String[] args) {
 EOF
   if [ ${gotArgs} -eq 1 ]
   then

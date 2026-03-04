@@ -58,26 +58,8 @@ class InvalidWeekdayRangeException(Exception):
   pass
 
 
-# def _day_range_token_to_tuple(day_range_token):
-#   '''Convert a hypenatied day_range_token to a range.
-#       :param day_range_token: Either hypenated numeric string, or simple number.
-#   '''
-#   range_strings = day_range_token.split('-')
-#   range_lower = int(range_strings[0])
-#
-#   if len(range_strings) > 1:
-#     range_upper = int(range_strings[-1])
-#   else:
-#     range_upper = range_lower
-#
-#   if range_lower < 1 or range_lower > 7:
-#     raise InvalidWeekdayRangeException()
-#
-#   return range_lower, range_upper+1
-#
-
 def _day_range_token_to_tuple(day_range_token):
-  '''Convert a hypenatied day_range_token to a range.
+  '''Convert a hyphenated day_range_token to a range.
       :param day_range_token: Tuple of numbers in specified range.
   '''
   range_strings = day_range_token.split('-')

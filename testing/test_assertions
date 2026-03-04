@@ -1,15 +1,35 @@
 #!/usr/bin/env bash
 
+global_assert_runs=1
 global_assert_errors=0
 
+function _assert_description() {
+  # Internal function to generate test name.
+  # Globals:
+  #  global_assert_runs
+  # Parameters:
+  #  1 - Test name
+  # Outputs:
+  #  Test name string
+  local name
+
+  name="${1}"
+  echo "(test #${global_assert_runs}) ${name}"
+}
+
 function assert_exited_with_success() {
+  # Parameters:
+  #  1 - Test description.
+  #  2 - Result exit code.
+  # Returns:
+  #  Result exit code.
   local description
   local exit_code
 
   description="${1}"
   if [ -z "${description}" ]
   then
-    echo 'assert_exited_with_success expects a description as first parameters.'
+    echo 'assert_exited_with_success expects a description as first parameter.'
     exit_code=2
   else
     shift
@@ -21,22 +41,34 @@ function assert_exited_with_success() {
       exit_code=1
     else
       exit_code=${1}
-      if [[ ${1} -ne 0 ]]
+      if [[ ${exit_code} -ne 0 ]]
       then
-        echo "ERROR ${description} exited with '${1}'" >&2
+        echo "ERROR $(_assert_description "${description}") exited with '${exit_code}'" >&2
       else
-        echo "SUCCESS ${description}"
+        echo "SUCCESS $(_assert_description "${description}")"
       fi
     fi
   fi
 
   (( global_assert_errors += ${exit_code} ))
+  (( global_assert_runs += 1))
   return ${exit_code}
 }
 
 function assert_contains_text() {
+  # Parameters:
+  #  1     - Test description.
+  #  2     - Expected text.
+  #  3-... - Text to inspect.
+  # Returns:
+  #  0  - Assertion passed.
+  #  <0 - Error in assertion parameters.
+  #  >0 - Assertion failed.
+
   local description
   local text
+  local check_count
+
   exit_code=0
 
   description="${1}"
@@ -59,22 +91,26 @@ function assert_contains_text() {
     else
       shift
 
+      check_count=0
       for check in "${@}"
       do
         if [[ ! "${text}" = *"${check}"* ]]
         then
           (( exit_code += 1 ))
-          echo "Failure: '${check}' not found" >&2
+          echo "Failure [${check_count}]: '${check}' not found in '${text}'" >&2
         fi
+
+        (( check_count += 1))
       done
 
-      if [ ${exit_code} != 0 ]
+      if [ ${exit_code} -ne 0 ]
       then
-        echo "FAILED ${description} with ${exit_code} missing strings" >&2
+        echo "FAILED $(_assert_description "${description}") with ${exit_code} missing strings" >&2
       else
-        echo "SUCCESS ${description}"
+        echo "SUCCESS $(_assert_description "${description}")"
       fi
 
+      (( global_assert_runs += 1))
       (( global_assert_errors += ${exit_code} ))
     fi
   fi
@@ -85,16 +121,22 @@ function assert_contains_text() {
 run_tests=1
 
 function assert_result_fails_with_error_text() {
+  # Parameters:
+  #  1 - Result of test code.
+  #  2 - Result exit code.
+  #  3 - Expected error text.
+  #  4 - Test name.
+  #  5 - [optional] Force test to run if not 0, regardless of global run_tests value.
   # E.g. assert_result_fails_with_error_text "$(my_function 2>&1)" ${?} 'expected some arguments' 'my_function no args'
-
   # Set global run_tests variable to 0 to turn off tests.
-  # Add 1 as final parameter to force test to execute when run_tests is 0.
+
   local result
   local exit_code
   local error_text
   local name
   local _run_tests
   local assert_exit_code
+
   assert_exit_code=0
   result=${1}
   if [ ${assert_exit_code} -eq 0 ] && [ -z "${1}" ]
@@ -107,7 +149,7 @@ function assert_result_fails_with_error_text() {
   exit_code=${1}
   if [ ${assert_exit_code} -eq 0 ] && [[ ! "${1}" =~ ^-?[0-9]+$ ]]
   then
-    echo 'Exit code not supplied' >&2
+    echo "Exit code not correct: '${1}'" >&2
     assert_exit_code=2
   fi
 
@@ -119,7 +161,6 @@ function assert_result_fails_with_error_text() {
     assert_exit_code=3
   fi
 
-
   shift
   name=${1}
   if [ ${assert_exit_code} -eq 0 ] && [ -z "${1}" ]
@@ -127,7 +168,6 @@ function assert_result_fails_with_error_text() {
     echo 'Name not supplied' >&2
     assert_exit_code=4
   fi
-
 
   if [ ${assert_exit_code} -eq 0 ]
   then
@@ -142,13 +182,14 @@ function assert_result_fails_with_error_text() {
       else
         if [[ "${result}" = *"${error_text}"* ]]
         then
-          echo "${name} failed as expected. exit_code = ${exit_code}"
+          echo "$(_assert_description "${name}") failed as expected. exit_code = ${exit_code}"
         else
-          echo "${name} failed but does not contain '${error_text}'. exit_code = ${exit_code}"
+          echo "$(_assert_description "${name}") failed but does not contain '${error_text}'. exit_code = ${exit_code}"
         fi
       fi
     fi
   fi
 
+  (( global_assert_runs += 1))
   return ${assert_exit_code}
 }

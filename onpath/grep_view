@@ -34,7 +34,7 @@ function usage() {
   program="$(basename "${0}")"
 
   cat <<-EOF
-${program} [[-c|--command] COMMAND] [--dry-run] [-h|--help] [--vim] [--less]
+${program} [[-c|--command] COMMAND] [-s|--separate] [--dry-run] [-h|--help] [--vim] [--less]
 Take grep output lines prefixed with path and line number and open them using a command such as less or vim.
 The default view command is ${default_command}.
 
@@ -42,6 +42,7 @@ Parameters:
   --less                Set view command to less.
   --view                Set view command to vim.
   -c|--command COMMAND  Command to run with. Defaults to ${default_command}.
+  -s|--separate         View all files in one program, or in separate program invocations.
   --dry-run             Output commands which would be executed.
   -h|--help             Show usage.
 
@@ -204,10 +205,10 @@ then
         then
           arg="${args[${i}]}"
           command="${arg}"
-          echo "Command is ${command}"
+          echo "Command is ${command}" >&2
         fi
         ;;
-      -s|--separate)
+      -s|--seperate|--separate)
         separate=1
         ;;
       --dry|--dry-run|--dryrun)

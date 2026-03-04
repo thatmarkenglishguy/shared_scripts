@@ -1,24 +1,11 @@
 #!/usr/bin/env bash
 
-# Parameters:
-# 1- Search string
-# 2- Search directory (defaults to .)
-# 3- Search include pattern (defaults to all)
-# --color|--no-color
-# --case
-# All other parameters passed to grep
-
-# Examples:
-# Search for 'containerBuildPub' in current directory including all files giving context of 5 lines.
-# srcgrep containerBuildPub . '*' -C5
-
-# --binary-file=without-match means ignore binary files
 declare -a args
 declare -a extra_args
 
 args=( "${@}" )
 extra_args=()
-color=1
+specify_color=1
 case_sensitive=0
 pattern=0
 
@@ -38,6 +25,13 @@ Parameters:
   --color=COLOR    Overrides the default color=always with the specified setting.
   --case           If specfied, grep with case sensitivity.
   EXTRA_ARGS       All additional args passed to grep.
+
+Examples:
+# Search for 'containerBuildPub' in current directory including all files giving context of 5 lines.
+srcgrep containerBuildPub . '*' -C5
+
+# Search for 'works' in rust subdirectory including rust files
+srcgrep works rust '*.rs'
 EOF
 }
 
@@ -46,11 +40,11 @@ do
   arg="${args[${i}]}"
   case "${arg}" in
     --nocolor|--no-color)
-      color=0
+      specify_color=0
       ;;
     --color=*)
       extra_args=( "${arg}" "${extra_args[@]}" )
-      color=0
+      specify_color=0
       ;;
     --case)
       case_sensitive=1
@@ -78,22 +72,8 @@ do
       ;;
   esac
 done
-#args=( "${@:4}" )
-#
-#for arg in "${args[@]}"
-#do
-#  case "${arg}" in
-#    --nocolor|--no-color)
-#      color=0
-#      ;;
-#    *)
-#      extra_args+=( "${arg}" )
-#      ;;
-#  esac
-#done
-#
-#if [ -t 0 ]
-if [ ${color} -ne 0 ]
+
+if [ ${specify_color} -ne 0 ]
 then
   extra_args=( '--color=always' "${extra_args[@]}" )
 fi
@@ -109,7 +89,6 @@ if [ ${pattern} -ne 0 ]
 then
   case "$(uname -a | tr [:upper:] [:lower:])" in
     *darwin*)
-      echo "It's Darwin baby."
       pattern_args+=( '--extended-regexp' )
       ;;
     *)
@@ -118,8 +97,9 @@ then
   esac
 fi
 
-pattern_args+=( "${search_string:?Must specific search string}" )
+pattern_args+=( "${search_string:?Must specify search string}" )
 
+# --binary-file=without-match means ignore binary files
 grep --recursive \
   "${pattern_args[@]}" \
   "${search_directory:-.}" \

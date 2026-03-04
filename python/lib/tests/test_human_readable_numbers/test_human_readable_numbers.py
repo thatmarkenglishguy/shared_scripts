@@ -4,95 +4,75 @@ import unittest
 import human_readable_numbers
 
 class TestHumanReadableNumbers(unittest.TestCase):
-  def test_ten_gets_no_comma(self):
-      number = 20
-
+  def verify_comma_count(self, number, expected_comma_count):
       result = human_readable_numbers.humanise_number(number)
 
-      self.assertEqual(result.locale_string.count(','), 0)
+      self.assertEqual(result.locale_string.count(','), expected_comma_count)
+
+  def verify_locale_string_is_number(self, number):
+      result = human_readable_numbers.humanise_number(number)
+
       self.assertEqual(int(result.locale_string.replace(',', '')), number)
 
-  def test_ten_gets_one_ten_magnitude(self):
-      number = 20
-
+  def verify_magnitude_string(self, number, expected_magnitude_string):
       result = human_readable_numbers.humanise_number(number)
 
-      self.assertEqual(result.magnitude_string, '20')
+      self.assertEqual(result.magnitude_string, expected_magnitude_string, 'Expected on right')
 
-  def test_hundred_gets_no_comma(self):
-      number = 200
+  def test_tens_get_no_comma(self):
+      self.verify_comma_count(20, 0)
 
-      result = human_readable_numbers.humanise_number(number)
+  def test_tens_get_correct_value(self):
+      self.verify_locale_string_is_number(20)
 
-      self.assertEqual(result.locale_string.count(','), 0)
-      self.assertEqual(int(result.locale_string.replace(',', '')), number)
+  def test_tens_get_one_ten_magnitude(self):
+      self.verify_magnitude_string(20, '20')
 
-  def test_hundred_gets_one_hundred_magnitude(self):
-      number = 200
+  def test_hundreds_get_no_comma(self):
+      self.verify_comma_count(200, 0)
 
-      result = human_readable_numbers.humanise_number(number)
+  def test_hundreds_get_correct_value(self):
+      self.verify_locale_string_is_number(200)
 
-      self.assertEqual(result.magnitude_string, '2 hundred')
+  def test_hundreds_get_one_hundred_magnitude(self):
+      self.verify_magnitude_string(200, '2 hundred')
 
-  def test_ten_thousand_gets_one_comma(self):
-      number = 12345
+  def test_ten_thousands_get_one_comma(self):
+      self.verify_comma_count(12345, 1)
 
-      result = human_readable_numbers.humanise_number(number)
+  def test_ten_thousands_get_correct_value(self):
+      self.verify_locale_string_is_number(12345)
 
-      self.assertEqual(result.locale_string.count(','), 1)
-      self.assertEqual(int(result.locale_string.replace(',', '')), number)
+  def test_ten_thousands_get_thousand_and_hundred_magnitude(self):
+      self.verify_magnitude_string(12345, '12 thousand 3 hundred 45')
 
-  def test_ten_thousand_gets_thousand_magnitude(self):
-      number = 12345
+  def test_thousands_get_one_comma(self):
+      self.verify_comma_count(2000, 1)
 
-      result = human_readable_numbers.humanise_number(number)
+  def test_thousands_get_correct_value(self):
+      self.verify_locale_string_is_number(2000)
+      
+  def test_thousands_get_thousand_magnitude(self):
+      self.verify_magnitude_string(2000, '2 thousand')
 
-      self.assertEqual(result.magnitude_string, '12 thousand 3 hundred 45')
+  def test_millions_get_two_comma(self):
+      self.verify_comma_count(2000000, 2)
 
-  def test_thousand_gets_one_comma(self):
-      number = 2000
+  def test_millions_get_correct_value(self):
+      self.verify_locale_string_is_number(2000000)
 
-      result = human_readable_numbers.humanise_number(number)
+  def test_millions_get_one_million_magnitude(self):
+      self.verify_magnitude_string(2000000, '2 million')
 
-      self.assertEqual(result.locale_string.count(','), 1)
-      self.assertEqual(int(result.locale_string.replace(',', '')), number)
+  TWO_TRILLION = 2 * (10 ** 15)
+  def test_trillions_get_five_comma(self):
+      self.verify_comma_count(self.TWO_TRILLION, 5)
 
-  def test_thousand_gets_thousand_magnitude(self):
-      number = 2000
-
-      result = human_readable_numbers.humanise_number(number)
-
-      self.assertEqual(result.magnitude_string, '2 thousand')
-
-  def test_million_gets_two_comma(self):
-      number = 2000000
-
-      result = human_readable_numbers.humanise_number(number)
-
-      self.assertEqual(result.locale_string.count(','), 2)
-      self.assertEqual(int(result.locale_string.replace(',', '')), number)
-
-  def test_million_gets_one_million_magnitude(self):
-      number = 2000000
-
-      result = human_readable_numbers.humanise_number(number)
-
-      self.assertEqual(result.magnitude_string, '2 million')
-
-  def test_next_over_trillion_gets_five_comma(self):
-      number = 2 * (10 ** 15)
-
-      result = human_readable_numbers.humanise_number(number)
-
-      self.assertEqual(result.locale_string.count(','), 5)
-      self.assertEqual(int(result.locale_string.replace(',', '')), number)
-
-  def test_next_over_trillion_gets_unformatted_magnitude(self):
-      number = 2 * (10 ** 15)
-
-      result = human_readable_numbers.humanise_number(number)
-
-      self.assertEqual(result.magnitude_string, '2,000 trillion')
+  def test_trillions_get_correct_value(self):
+      self.verify_locale_string_is_number(self.TWO_TRILLION)
+      
+  def test_number_in_trillions_gets_unformatted_magnitude(self):
+      self.verify_magnitude_string(self.TWO_TRILLION, '2,000 trillion')
 
 if __name__ == '__main__':
   # import sys;sys.argv = ['', 'Test.testName']
