@@ -29,20 +29,38 @@ if g:use_coc != 0
   " Inlay colours
   " 232 is black, and up from there is progressively lighter
   " (i.e. 233 and beyond)
-  hi CocInlayHint ctermfg=239 ctermbg=233
+  augroup CustomCocHints
+      autocmd!
+      " Fire whenever colors change OR after coc.nvim finishes loading
+      autocmd ColorScheme,User CocNvimInit * call s:set_coc_inlay_hints()
+  augroup END
 
-  " By default, the error is red which is a bit illegible.
-  hi CocError ctermfg=LightGreen
+  function! s:set_coc_inlay_hints() abort
+      if g:platform ==# 'windows'
+          hi! CocInlayHint ctermfg=241 ctermbg=234 guifg=#626262 guibg=#1c1c1c
+      else
+          hi! CocInlayHint ctermfg=239 ctermbg=233
+      endif
 
-  " Played around with these floating error colors
-  " 219 pink " Faded pink
-  " 198 DeepPink " Neon pink
-  " 205 HotPink " Dusky pink
-  " 203 IndianRed " Soft orangey red
-  " 207 MediumOrchid1 " Strong pink
-  " 186 LightGoldenrod " Soft light yellow
-  hi CocErrorFloat ctermfg=205
-  hi CocWarningFloat ctermfg=203
+      hi! default link CocInlayHintType CocInlayHint
+      hi! default link CocInlayHintParameter CocInlayHint
+
+      " By default, the error is red which is a bit illegible.
+      hi CocError ctermfg=LightGreen
+
+      " Played around with these floating error colors
+      " 219 pink " Faded pink
+      " 198 DeepPink " Neon pink
+      " 205 HotPink " Dusky pink
+      " 203 IndianRed " Soft orangey red
+      " 207 MediumOrchid1 " Strong pink
+      " 186 LightGoldenrod " Soft light yellow
+      hi CocErrorFloat ctermfg=205
+      hi CocWarningFloat ctermfg=203
+  endfunction
+
+  " Trigger immediately in case CoC is already active when sourcing
+  call s:set_coc_inlay_hints()
 endif
 
 " The default filetype plugin configures
